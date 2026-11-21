@@ -1,0 +1,783 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Chess, Square } from 'chess.js';
+import type { Key } from 'chessground/types';
+import { Minus, Plus, Settings, Volume2, VolumeX } from 'lucide-react';
+import AppearanceSettingsModal from './components/AppearanceSettingsModal';
+import ChessboardPanel, { type PendingPromotion } from './components/ChessboardPanel';
+import SettingsPanel from './components/SettingsPanel';
+import TrainingSidebar from './components/TrainingSidebar';
+import WoodpeckerIntroModal from './components/WoodpeckerIntroModal';
+import type {
+  AppearanceSettings,
+  CycleResult,
+  Puzzle,
+  TrainingConfig,
+  TrainingSession,
+} from './types';
+import {
+  BOARD_SIZES,
+  BOARD_SIZE_CLASS_MAP,
+  loadAppearanceSettings,
+  saveAppearanceSettings,
+} from './utils/appearance';
+import {
+  applyUciMove,
+  getLegalDests,
+  isPromotionMove,
+  loadSessionFromStorage,
+  saveSessionToStorage,
+} from './utils/chessHelpers';
+import { playMoveSound } from './utils/sound';
+
+const PREVIEW_FEN = '1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1';
+const USERNAME_STORAGE_KEY = 'ctg_username_v1';
+const INTRO_COMPLETED_STORAGE_KEY = 'ctg_intro_completed_v1';
+
+const DEFAULT_CONFIG: TrainingConfig = {
+  puzzleCount: 50,
+  totalCycles: 4,
+  difficulty: 'medium',
+};
+
+interface BoardState {
+  fen: string;
+  playerColor: 'white' | 'black';
+  turnColor: 'white' | 'black';
+  dests: Map<Key, Key[]>;
+  lastMove?: [Key, Key];
+  check: 'white' | 'black' | false;
+  locked: boolean;
+}
+
+function readSavedUsername(): string {
+  try {
+    return (localStorage.getItem(USERNAME_STORAGE_KEY) ?? '').trim();
+  } catch {
+    return '';
+  }
+}
+
+function readIntroCompleted(): boolean {
+  try {
+    return localStorage.getItem(INTRO_COMPLETED_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export default function App() {
+  const [username, setUsername] = useState<string>(() => readSavedUsername());
+  const [showWoodpeckerIntro, setShowWoodpeckerIntro] = useState<boolean>(
+    () => !(readSavedUsername() && readIntroCompleted())
+  );
+
+  const [config, setConfig] = useState<TrainingConfig>(DEFAULT_CONFIG);
+  const [session, setSession] = useState<TrainingSession | null>(() => loadSessionFromStorage());
+  const [appearance, setAppearance] = useState<AppearanceSettings>(() => loadAppearanceSettings());
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [muted, setMuted] = useState(false);
+  const [syncToken, setSyncToken] = useState(0);
+  const [hintArrow, setHintArrow] = useState<[Key, Key] | null>(null);
+  const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: 'idle' | 'continue' | 'error' | 'solved';
+    message: string;
+  }>({ type: 'idle', message: 'Find the best move' });
+
+  const [autoAdvanceSeconds, setAutoAdvanceSeconds] = useState<number | null>(null);
+  const [autoAdvancePaused, setAutoAdvancePaused] = useState(false);
+
+  const [boardState, setBoardState] = useState<BoardState>({
+    fen: PREVIEW_FEN,
+    playerColor: 'white',
+    turnColor: 'white',
+    dests: new Map(),
+    check: false,
+    locked: true,
+  });
+
+  const chessRef = useRef<Chess>(new Chess(PREVIEW_FEN));
+  const moveIndexRef = useRef<number>(1);
+  const timersRef = useRef<number[]>([]);
+  const lastTickRef = useRef<number>(Date.now());
+  const sessionRef = useRef<TrainingSession | null>(session);
+  sessionRef.current = session;
+
+  const clearScheduledTimeouts = useCallback(() => {
+    for (const id of timersRef.current) {
+      window.clearTimeout(id);
+    }
+    timersRef.current = [];
+  }, []);
+
+  const scheduleTimeout = useCallback((fn: () => void, ms: number) => {
+    const id = window.setTimeout(fn, ms);
+    timersRef.current.push(id);
+    return id;
+  }, []);
+
+  // Persist appearance & session whenever key state changes and on beforeunload
+  useEffect(() => {
+    saveAppearanceSettings(appearance);
+  }, [appearance]);
+
+  useEffect(() => {
+    saveSessionToStorage(session);
+  }, [session]);
+
+  useEffect(() => {
+    const handleUnload = () => {
+      saveSessionToStorage(sessionRef.current);
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, []);
+
+  // Live training timer (only active once inside the training workspace)
+  useEffect(() => {
+    if (showWoodpeckerIntro) return;
+    if (!session || session.status !== 'training') return;
+    lastTickRef.current = Date.now();
+    const interval = window.setInterval(() => {
+      const now = Date.now();
+      const delta = now - lastTickRef.current;
+      lastTickRef.current = now;
+      if (delta <= 0 || delta > 5000) return;
+
+      setSession((prev) => {
+        if (!prev || prev.status !== 'training') return prev;
+        return {
+          ...prev,
+          cycleElapsedMs: prev.cycleElapsedMs + delta,
+          puzzleElapsedMs: prev.puzzleElapsedMs + delta,
+        };
+      });
+    }, 500);
+
+    return () => window.clearInterval(interval);
+  }, [
+    showWoodpeckerIntro,
+    session?.status,
+    session?.id,
+    session?.currentCycle,
+    session?.currentPuzzleIndex,
+  ]);
+
+  // Load current puzzle onto the chessboard when puzzle index, cycle, or auth view changes
+  const currentPuzzle: Puzzle | null =
+    session && session.puzzles[session.currentPuzzleIndex]
+      ? session.puzzles[session.currentPuzzleIndex]
+      : null;
+
+  useEffect(() => {
+    clearScheduledTimeouts();
+    setPendingPromotion(null);
+    setHintArrow(null);
+
+    if (!session || session.status !== 'training' || !currentPuzzle) {
+      if (!session) {
+        chessRef.current = new Chess(PREVIEW_FEN);
+        setBoardState({
+          fen: PREVIEW_FEN,
+          playerColor: 'white',
+          turnColor: 'white',
+          dests: new Map(),
+          lastMove: undefined,
+          check: false,
+          locked: true,
+        });
+      }
+      return;
+    }
+
+    const initialChess = new Chess(currentPuzzle.fen);
+    chessRef.current = initialChess;
+    moveIndexRef.current = 1;
+
+    const setupTurn = initialChess.turn() === 'w' ? 'white' : 'black';
+    const expectedPlayerColor = setupTurn === 'white' ? 'black' : 'white';
+
+    setFeedback({
+      type: 'idle',
+      message: `Find the best move for ${expectedPlayerColor === 'white' ? 'White' : 'Black'}`,
+    });
+
+    setBoardState({
+      fen: currentPuzzle.fen,
+      playerColor: expectedPlayerColor,
+      turnColor: setupTurn,
+      dests: new Map(),
+      lastMove: undefined,
+      check: initialChess.inCheck() ? setupTurn : false,
+      locked: true,
+    });
+
+    scheduleTimeout(() => {
+      const setupUci = currentPuzzle.moves[0];
+      const moveResult = applyUciMove(initialChess, setupUci);
+      if (!moveResult) return;
+
+      const nextTurn = initialChess.turn() === 'w' ? 'white' : 'black';
+      setBoardState({
+        fen: initialChess.fen(),
+        playerColor: nextTurn,
+        turnColor: nextTurn,
+        dests: getLegalDests(initialChess),
+        lastMove: [setupUci.slice(0, 2) as Key, setupUci.slice(2, 4) as Key],
+        check: initialChess.inCheck() ? nextTurn : false,
+        locked: false,
+      });
+
+      if (initialChess.inCheck()) {
+        playMoveSound('check', muted);
+      } else if (moveResult.captured) {
+        playMoveSound('capture', muted);
+      } else {
+        playMoveSound('move', muted);
+      }
+    }, 200);
+
+    return () => {
+      clearScheduledTimeouts();
+    };
+  }, [
+    session?.id,
+    session?.status,
+    session?.currentCycle,
+    session?.currentPuzzleIndex,
+    currentPuzzle,
+    clearScheduledTimeouts,
+  ]);
+
+  const startNextCycle = useCallback(() => {
+    clearScheduledTimeouts();
+    setAutoAdvanceSeconds(null);
+    setAutoAdvancePaused(false);
+    setSession((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        currentCycle: prev.currentCycle + 1,
+        currentPuzzleIndex: 0,
+        cycleCorrect: 0,
+        cycleIncorrect: 0,
+        cycleElapsedMs: 0,
+        puzzleElapsedMs: 0,
+        currentPuzzleFailed: false,
+        status: 'training',
+      };
+    });
+  }, [clearScheduledTimeouts]);
+
+  // Handle auto-advance countdown between cycles
+  useEffect(() => {
+    if (showWoodpeckerIntro || !session || session.status !== 'cycle_complete') {
+      setAutoAdvanceSeconds(null);
+      return;
+    }
+    if (autoAdvanceSeconds === null) {
+      setAutoAdvanceSeconds(4);
+      return;
+    }
+    if (autoAdvancePaused) return;
+    if (autoAdvanceSeconds <= 0) {
+      startNextCycle();
+      return;
+    }
+    const id = window.setTimeout(() => {
+      setAutoAdvanceSeconds((s) => (s !== null ? s - 1 : null));
+    }, 1000);
+    return () => window.clearTimeout(id);
+  }, [showWoodpeckerIntro, session?.status, autoAdvanceSeconds, autoAdvancePaused, startNextCycle]);
+
+  const advanceToNextPuzzle = useCallback(
+    (overrideCounts?: { correct: number; incorrect: number }) => {
+      clearScheduledTimeouts();
+      setSession((prev) => {
+        if (!prev) return prev;
+        const correct = overrideCounts ? overrideCounts.correct : prev.cycleCorrect;
+        const incorrect = overrideCounts ? overrideCounts.incorrect : prev.cycleIncorrect;
+        const nextIndex = prev.currentPuzzleIndex + 1;
+
+        if (nextIndex < prev.puzzles.length) {
+          return {
+            ...prev,
+            currentPuzzleIndex: nextIndex,
+            puzzleElapsedMs: 0,
+            currentPuzzleFailed: false,
+          };
+        }
+
+        const total = prev.puzzles.length;
+        const accuracy = total > 0 ? (correct / total) * 100 : 0;
+        const cycleResult: CycleResult = {
+          cycleNumber: prev.currentCycle,
+          correct,
+          incorrect,
+          totalTimeMs: prev.cycleElapsedMs,
+          accuracy,
+          completedAt: Date.now(),
+        };
+        const updatedResults = [...prev.cycleResults, cycleResult];
+        const isFinalCycle = prev.currentCycle >= prev.config.totalCycles;
+
+        return {
+          ...prev,
+          cycleCorrect: correct,
+          cycleIncorrect: incorrect,
+          cycleResults: updatedResults,
+          status: isFinalCycle ? 'all_complete' : 'cycle_complete',
+        };
+      });
+    },
+    [clearScheduledTimeouts]
+  );
+
+  const executeUserMove = useCallback(
+    (orig: Key, dest: Key, promotion?: 'q' | 'r' | 'b' | 'n') => {
+      if (!session || session.status !== 'training' || !currentPuzzle) return;
+
+      const testChess = new Chess(chessRef.current.fen());
+      let moveResult;
+      try {
+        moveResult = testChess.move({
+          from: orig as Square,
+          to: dest as Square,
+          promotion,
+        });
+      } catch {
+        setSyncToken((t) => t + 1);
+        return;
+      }
+
+      if (!moveResult) {
+        setSyncToken((t) => t + 1);
+        return;
+      }
+
+      const mIdx = moveIndexRef.current;
+      const expectedUci = currentPuzzle.moves[mIdx];
+      const playedUci = `${orig}${dest}${promotion ?? ''}`;
+      const isLastMove = mIdx === currentPuzzle.moves.length - 1;
+      const isCorrect =
+        playedUci === expectedUci || (isLastMove && testChess.isCheckmate());
+
+      if (!isCorrect) {
+        playMoveSound('error', muted);
+        setFeedback({
+          type: 'error',
+          message: 'Incorrect move — try again',
+        });
+
+        setSession((prev) => {
+          if (!prev || prev.currentPuzzleFailed) return prev;
+          return {
+            ...prev,
+            cycleIncorrect: prev.cycleIncorrect + 1,
+            currentPuzzleFailed: true,
+          };
+        });
+
+        setBoardState((prev) => ({ ...prev, locked: true }));
+        scheduleTimeout(() => {
+          const validChess = chessRef.current;
+          const playerCol = validChess.turn() === 'w' ? 'white' : 'black';
+          setBoardState((prev) => ({
+            ...prev,
+            fen: validChess.fen(),
+            turnColor: playerCol,
+            dests: getLegalDests(validChess),
+            check: validChess.inCheck() ? playerCol : false,
+            locked: false,
+          }));
+          setSyncToken((t) => t + 1);
+        }, 250);
+        return;
+      }
+
+      // Move is correct!
+      chessRef.current = testChess;
+      setHintArrow(null);
+
+      if (mIdx + 1 >= currentPuzzle.moves.length) {
+        playMoveSound('success', muted);
+        const oppColor = testChess.turn() === 'w' ? 'white' : 'black';
+        setBoardState((prev) => ({
+          ...prev,
+          fen: testChess.fen(),
+          turnColor: oppColor,
+          dests: new Map(),
+          lastMove: [orig, dest],
+          check: testChess.inCheck() ? oppColor : false,
+          locked: true,
+        }));
+        setFeedback({ type: 'solved', message: 'Puzzle solved' });
+
+        const nextCorrect = session.currentPuzzleFailed
+          ? session.cycleCorrect
+          : session.cycleCorrect + 1;
+        const nextIncorrect = session.cycleIncorrect;
+
+        setSession((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            cycleCorrect: prev.currentPuzzleFailed ? prev.cycleCorrect : prev.cycleCorrect + 1,
+          };
+        });
+
+        scheduleTimeout(() => {
+          advanceToNextPuzzle({ correct: nextCorrect, incorrect: nextIncorrect });
+        }, 550);
+        return;
+      }
+
+      if (testChess.inCheck()) {
+        playMoveSound('check', muted);
+      } else if (moveResult.captured) {
+        playMoveSound('capture', muted);
+      } else {
+        playMoveSound('move', muted);
+      }
+
+      const oppTurn = testChess.turn() === 'w' ? 'white' : 'black';
+      setBoardState((prev) => ({
+        ...prev,
+        fen: testChess.fen(),
+        turnColor: oppTurn,
+        dests: new Map(),
+        lastMove: [orig, dest],
+        check: testChess.inCheck() ? oppTurn : false,
+        locked: true,
+      }));
+      setFeedback({ type: 'continue', message: 'Best move — continue the sequence' });
+
+      scheduleTimeout(() => {
+        const oppUci = currentPuzzle.moves[mIdx + 1];
+        const oppResult = applyUciMove(testChess, oppUci);
+        if (!oppResult) return;
+
+        moveIndexRef.current = mIdx + 2;
+        const playerTurn = testChess.turn() === 'w' ? 'white' : 'black';
+
+        if (testChess.inCheck()) {
+          playMoveSound('check', muted);
+        } else if (oppResult.captured) {
+          playMoveSound('capture', muted);
+        } else {
+          playMoveSound('move', muted);
+        }
+
+        setBoardState((prev) => ({
+          ...prev,
+          fen: testChess.fen(),
+          turnColor: playerTurn,
+          dests: getLegalDests(testChess),
+          lastMove: [oppUci.slice(0, 2) as Key, oppUci.slice(2, 4) as Key],
+          check: testChess.inCheck() ? playerTurn : false,
+          locked: false,
+        }));
+        setFeedback({
+          type: 'idle',
+          message: `Your turn (${playerTurn === 'white' ? 'White' : 'Black'})`,
+        });
+      }, 280);
+    },
+    [session, currentPuzzle, muted, scheduleTimeout, advanceToNextPuzzle]
+  );
+
+  const handleUserMove = useCallback(
+    (orig: Key, dest: Key) => {
+      if (boardState.locked || !session || session.status !== 'training') return;
+      if (isPromotionMove(chessRef.current, orig as Square, dest as Square)) {
+        const promoColor = chessRef.current.turn() === 'w' ? 'white' : 'black';
+        setPendingPromotion({
+          from: orig,
+          to: dest,
+          color: promoColor,
+        });
+        return;
+      }
+      executeUserMove(orig, dest);
+    },
+    [boardState.locked, session, executeUserMove]
+  );
+
+  const handleSelectPromotion = useCallback(
+    (piece: 'q' | 'r' | 'b' | 'n') => {
+      if (!pendingPromotion) return;
+      const { from, to } = pendingPromotion;
+      setPendingPromotion(null);
+      executeUserMove(from, to, piece);
+    },
+    [pendingPromotion, executeUserMove]
+  );
+
+  const handleCancelPromotion = useCallback(() => {
+    setPendingPromotion(null);
+    setSyncToken((t) => t + 1);
+  }, []);
+
+  const handleRequestHint = useCallback(() => {
+    if (!currentPuzzle || !session || session.status !== 'training') return;
+    const expected = currentPuzzle.moves[moveIndexRef.current];
+    if (!expected || expected.length < 4) return;
+    setHintArrow([expected.slice(0, 2) as Key, expected.slice(2, 4) as Key]);
+  }, [currentPuzzle, session]);
+
+  const handleStartTraining = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const params = new URLSearchParams({
+        count: String(config.puzzleCount),
+        difficulty: config.difficulty,
+      });
+      const res = await fetch(`/api/puzzles/sample?${params.toString()}`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to load puzzles');
+      }
+      if (!Array.isArray(data.puzzles) || data.puzzles.length === 0) {
+        throw new Error('No endgame puzzles returned from database');
+      }
+
+      const newSession: TrainingSession = {
+        id:
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : String(Date.now()),
+        config: { ...config },
+        puzzles: data.puzzles,
+        currentCycle: 1,
+        currentPuzzleIndex: 0,
+        cycleCorrect: 0,
+        cycleIncorrect: 0,
+        cycleElapsedMs: 0,
+        puzzleElapsedMs: 0,
+        currentPuzzleFailed: false,
+        status: 'training',
+        cycleResults: [],
+      };
+      setAutoAdvancePaused(false);
+      setAutoAdvanceSeconds(null);
+      setSession(newSession);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Unable to start training');
+    } finally {
+      setLoading(false);
+    }
+  }, [config]);
+
+  const handleResetSession = useCallback(() => {
+    clearScheduledTimeouts();
+    setPendingPromotion(null);
+    setHintArrow(null);
+    setAutoAdvanceSeconds(null);
+    setAutoAdvancePaused(false);
+    setSession(null);
+    saveSessionToStorage(null);
+  }, [clearScheduledTimeouts]);
+
+  const handleRepeatSameSet = useCallback(() => {
+    clearScheduledTimeouts();
+    setAutoAdvanceSeconds(null);
+    setAutoAdvancePaused(false);
+    setSession((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        id:
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : String(Date.now()),
+        currentCycle: 1,
+        currentPuzzleIndex: 0,
+        cycleCorrect: 0,
+        cycleIncorrect: 0,
+        cycleElapsedMs: 0,
+        puzzleElapsedMs: 0,
+        currentPuzzleFailed: false,
+        status: 'training',
+        cycleResults: [],
+      };
+    });
+  }, [clearScheduledTimeouts]);
+
+  const handleCompleteIntro = useCallback((enteredUsername: string) => {
+    const cleanUsername = enteredUsername.trim();
+    if (!cleanUsername) return;
+    try {
+      localStorage.setItem(USERNAME_STORAGE_KEY, cleanUsername);
+      localStorage.setItem(INTRO_COMPLETED_STORAGE_KEY, 'true');
+    } catch {
+      // Ignore storage quota errors gracefully
+    }
+    setUsername(cleanUsername);
+    setShowWoodpeckerIntro(false);
+  }, []);
+
+  const sizeIndex = BOARD_SIZES.indexOf(appearance.boardSize as (typeof BOARD_SIZES)[number]);
+  const canDecreaseSize = sizeIndex > 0;
+  const canIncreaseSize = sizeIndex !== -1 && sizeIndex < BOARD_SIZES.length - 1;
+
+  const handleDecreaseBoardSize = () => {
+    setAppearance((prev) => {
+      const idx = BOARD_SIZES.indexOf(prev.boardSize as (typeof BOARD_SIZES)[number]);
+      if (idx <= 0) return prev;
+      return { ...prev, boardSize: BOARD_SIZES[idx - 1] };
+    });
+  };
+
+  const handleIncreaseBoardSize = () => {
+    setAppearance((prev) => {
+      const idx = BOARD_SIZES.indexOf(prev.boardSize as (typeof BOARD_SIZES)[number]);
+      if (idx === -1 || idx >= BOARD_SIZES.length - 1) return prev;
+      return { ...prev, boardSize: BOARD_SIZES[idx + 1] };
+    });
+  };
+
+  const boardSizeClass =
+    BOARD_SIZE_CLASS_MAP[appearance.boardSize] ?? 'max-w-[min(560px,100%)]';
+
+  return (
+    <div className="min-h-screen bg-[#101b2f] text-white flex flex-col">
+      <header className="border-b border-white/10 bg-[#0d1627]">
+        <div className="max-w-[1220px] mx-auto px-4 sm:px-6 h-15 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5 shrink-0">
+            <img
+              src="/assets/aistudio/Add_a_heading__16_-removebg-preview_c70fa2ca.png"
+              alt="Chess Tactics Guide logo"
+              className="w-7 h-7 object-contain select-none shrink-0"
+              draggable={false}
+            />
+            <h1 className="text-base sm:text-lg font-bold tracking-tight text-white whitespace-nowrap shrink-0">
+              Chess Tactics Guide
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0 min-w-0">
+            {username && (
+              <span className="text-xs sm:text-sm font-semibold text-white/90 whitespace-nowrap truncate max-w-[180px] sm:max-w-[280px]">
+                Welcome, {username}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setMuted((m) => !m)}
+              className="p-2 rounded-xl text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 transition-all duration-150 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0"
+              aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}
+              title={muted ? 'Unmute sounds' : 'Mute sounds'}
+            >
+              {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 w-full max-w-[1220px] mx-auto px-4 sm:px-6 py-5 sm:py-7 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 lg:gap-8">
+        {/* Chessboard Primary Anchor */}
+        <section
+          className={`w-full ${boardSizeClass} transition-[max-width] duration-200 ease-out flex flex-col gap-3 shrink-0`}
+        >
+          <ChessboardPanel
+            fen={boardState.fen}
+            orientation={boardState.playerColor}
+            turnColor={boardState.turnColor}
+            dests={boardState.dests}
+            lastMove={boardState.lastMove}
+            check={boardState.check}
+            hintArrow={hintArrow}
+            viewOnly={boardState.locked || !session || session.status !== 'training'}
+            syncToken={syncToken}
+            boardTheme={appearance.boardTheme}
+            pieceSet={appearance.pieceSet}
+            onUserMove={handleUserMove}
+            pendingPromotion={pendingPromotion}
+            onSelectPromotion={handleSelectPromotion}
+            onCancelPromotion={handleCancelPromotion}
+          />
+
+          <div className="flex items-center justify-between px-0.5">
+            <div className="flex items-center gap-2" role="group" aria-label="Board size">
+              <button
+                type="button"
+                onClick={handleDecreaseBoardSize}
+                disabled={!canDecreaseSize}
+                className="p-2 rounded-xl bg-[#16233b] border border-white/15 hover:border-[#39ff88] hover:text-[#39ff88] disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all duration-150 shadow-sm cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
+                aria-label="Decrease board size"
+                title="Decrease board size"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleIncreaseBoardSize}
+                disabled={!canIncreaseSize}
+                className="p-2 rounded-xl bg-[#16233b] border border-white/15 hover:border-[#39ff88] hover:text-[#39ff88] disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all duration-150 shadow-sm cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
+                aria-label="Increase board size"
+                title="Increase board size"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              className="p-2 rounded-xl bg-[#16233b] border border-white/15 hover:border-[#39ff88] text-white hover:text-[#39ff88] transition-all duration-150 shadow-sm cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
+              aria-label="Board settings"
+              title="Board settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+
+        {/* Right Panel: Setup or Active Training */}
+        <aside className="w-full max-w-[560px] lg:w-[370px] shrink-0">
+          {!session || !currentPuzzle ? (
+            <SettingsPanel
+              config={config}
+              onChange={setConfig}
+              onStart={handleStartTraining}
+              loading={loading}
+              error={loadError}
+            />
+          ) : (
+            <TrainingSidebar
+              session={session}
+              currentPuzzle={currentPuzzle}
+              playerColor={boardState.playerColor}
+              feedback={feedback}
+              hintActive={Boolean(hintArrow)}
+              onRequestHint={handleRequestHint}
+              onNextPuzzle={() => advanceToNextPuzzle()}
+              onResetSession={handleResetSession}
+              onStartNextCycleNow={startNextCycle}
+              autoAdvanceSeconds={autoAdvanceSeconds}
+              autoAdvancePaused={autoAdvancePaused}
+              onToggleAutoAdvancePause={() => setAutoAdvancePaused((p) => !p)}
+              onRepeatSameSet={handleRepeatSameSet}
+            />
+          )}
+        </aside>
+      </main>
+
+      <AppearanceSettingsModal
+        open={settingsOpen}
+        settings={appearance}
+        onChange={setAppearance}
+        onClose={() => setSettingsOpen(false)}
+      />
+
+      <WoodpeckerIntroModal
+        open={showWoodpeckerIntro}
+        initialUsername={username}
+        onComplete={handleCompleteIntro}
+      />
+    </div>
+  );
+}

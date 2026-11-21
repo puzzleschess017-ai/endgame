@@ -1,0 +1,275 @@
+import express from 'express';
+import fs from 'node:fs';
+import path from 'node:path';
+import Database from 'better-sqlite3';
+
+const PORT = 3000;
+const DB_PATH = path.resolve(process.cwd(), 'endgame.db');
+const FONTS_DIR = path.resolve(process.cwd(), 'public', 'fonts');
+
+const VALID_COUNTS = new Set([10, 50, 100, 200]);
+const VALID_DIFFICULTIES = new Set(['easy', 'medium', 'hard', 'expert']);
+const DIFFICULTY_TO_CODE: Record<string, number> = {
+  easy: 0,
+  medium: 1,
+  hard: 2,
+  expert: 3,
+};
+
+interface PuzzleRow {
+  puzzle_id: string;
+  fen: string;
+  moves: string;
+  rating: number;
+  rating_deviation: number;
+  popularity: number;
+  themes: string;
+  num_moves: number;
+}
+
+interface RangeMeta {
+  minId: number;
+  maxId: number;
+  count: number;
+}
+
+let db: Database.Database | null = null;
+let cachedMeta: {
+  totalPuzzles: number;
+  dbSizeBytes: number;
+  ranges: Record<string, RangeMeta>;
+  byDifficulty: Record<string, number>;
+  byTheme: Record<string, number>;
+} | null = null;
+
+function getDb(): Database.Database {
+  if (!db) {
+    if (!fs.existsSync(DB_PATH)) {
+      throw new Error('endgame.db not found on disk');
+    }
+    db = new Database(DB_PATH, { readonly: true, fileMustExist: true });
+  }
+  return db;
+}
+
+function getMeta() {
+  if (cachedMeta) return cachedMeta;
+  const database = getDb();
+  const rows = database.prepare('SELECT key, value FROM db_meta').all() as Array<{ key: string; value: string }>;
+  const map = new Map<string, string>();
+  for (const row of rows) {
+    map.set(row.key, row.value);
+  }
+  const actualSize = fs.statSync(DB_PATH).size;
+  cachedMeta = {
+    totalPuzzles: Number(map.get('total_puzzles') ?? 0),
+    dbSizeBytes: actualSize,
+    ranges: JSON.parse(map.get('ranges') ?? '{}'),
+    byDifficulty: JSON.parse(map.get('difficulty_counts') ?? '{}'),
+    byTheme: JSON.parse(map.get('theme_counts') ?? '{}'),
+  };
+  return cachedMeta;
+}
+
+function formatPuzzle(row: PuzzleRow) {
+  return {
+    puzzleId: row.puzzle_id,
+    fen: row.fen,
+    moves: row.moves.split(' '),
+    rating: row.rating,
+    ratingDeviation: row.rating_deviation,
+    popularity: row.popularity,
+    themes: row.themes.split(' '),
+    numMoves: row.num_moves,
+  };
+}
+
+async function startServer() {
+  const app = express();
+  app.disable('x-powered-by');
+  app.use(express.json({ limit: '100kb' }));
+
+  // Serve dynamic @font-face declarations when Futura font files are provided in public/fonts/
+  app.get('/fonts/futura.css', (_req, res) => {
+    res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache');
+    if (!fs.existsSync(FONTS_DIR)) {
+      res.send('/* Place Futura font files (.woff2/.woff/.ttf/.otf) in public/fonts/ to activate custom @font-face rules. */\n');
+      return;
+    }
+    const formatMap: Record<string, string> = {
+      '.woff2': 'woff2',
+      '.woff': 'woff',
+      '.ttf': 'truetype',
+      '.otf': 'opentype',
+    };
+    const files = fs
+      .readdirSync(FONTS_DIR)
+      .filter((name) => /\.(woff2|woff|ttf|otf)$/i.test(name) && /^[a-zA-Z0-9._-]+$/.test(name));
+    if (files.length === 0) {
+      res.send('/* Place Futura font files (.woff2/.woff/.ttf/.otf) in public/fonts/ to activate custom @font-face rules. */\n');
+      return;
+    }
+    const rules = files.map((file) => {
+      const ext = path.extname(file).toLowerCase();
+      const fmt = formatMap[ext] ?? 'woff2';
+      const lower = file.toLowerCase();
+      const weight = lower.includes('bold') ? 700 : lower.includes('medium') || lower.includes('500') ? 500 : 400;
+      const style = lower.includes('italic') || lower.includes('oblique') ? 'italic' : 'normal';
+      return `@font-face {\n  font-family: "Futura";\n  src: url("/fonts/${encodeURIComponent(file)}") format("${fmt}");\n  font-weight: ${weight};\n  font-style: ${style};\n  font-display: swap;\n}`;
+    });
+    res.send(rules.join('\n\n') + '\n');
+  });
+
+  app.get('/api/health', (_req, res) => {
+    try {
+      const meta = getMeta();
+      res.json({
+        ok: true,
+        totalPuzzles: meta.totalPuzzles,
+        dbSizeBytes: meta.dbSizeBytes,
+      });
+    } catch (err) {
+      res.status(503).json({
+        ok: false,
+        error: err instanceof Error ? err.message : 'Database unavailable',
+      });
+    }
+  });
+
+  app.get('/api/stats', (_req, res) => {
+    try {
+      const meta = getMeta();
+      res.json({
+        totalPuzzles: meta.totalPuzzles,
+        dbSizeBytes: meta.dbSizeBytes,
+        byDifficulty: meta.byDifficulty,
+        byTheme: meta.byTheme,
+      });
+    } catch (err) {
+      res.status(500).json({
+        error: err instanceof Error ? err.message : 'Failed to load database stats',
+      });
+    }
+  });
+
+  app.get('/api/puzzles/sample', (req, res) => {
+    const rawCount = Number(req.query.count);
+    const difficulty = typeof req.query.difficulty === 'string' ? req.query.difficulty.toLowerCase() : '';
+
+    if (!Number.isInteger(rawCount) || !VALID_COUNTS.has(rawCount)) {
+      res.status(400).json({ error: 'Invalid count. Must be 10, 50, 100, or 200.' });
+      return;
+    }
+    if (!VALID_DIFFICULTIES.has(difficulty)) {
+      res.status(400).json({ error: 'Invalid difficulty. Must be easy, medium, hard, or expert.' });
+      return;
+    }
+
+    try {
+      const database = getDb();
+      const meta = getMeta();
+      const range = meta.ranges[difficulty];
+      if (!range || range.count < rawCount) {
+        res.status(500).json({ error: 'Insufficient puzzles available for selected difficulty.' });
+        return;
+      }
+
+      const span = range.maxId - range.minId + 1;
+      const chosenIds = new Set<number>();
+      while (chosenIds.size < rawCount) {
+        const randId = range.minId + Math.floor(Math.random() * span);
+        chosenIds.add(randId);
+      }
+
+      const ids = Array.from(chosenIds);
+      const placeholders = ids.map(() => '?').join(',');
+      const stmt = database.prepare(`
+        SELECT puzzle_id, fen, moves, rating, rating_deviation, popularity, themes, num_moves
+        FROM puzzles
+        WHERE id IN (${placeholders})
+      `);
+      const rows = stmt.all(...ids) as PuzzleRow[];
+
+      // Shuffle selected rows using Fisher-Yates so order is randomized uniformly
+      for (let i = rows.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = rows[i];
+        rows[i] = rows[j];
+        rows[j] = tmp;
+      }
+
+      res.json({
+        difficulty,
+        count: rows.length,
+        puzzles: rows.map(formatPuzzle),
+      });
+    } catch (err) {
+      res.status(500).json({
+        error: err instanceof Error ? err.message : 'Failed to sample puzzles',
+      });
+    }
+  });
+
+  app.get('/api/puzzles', (req, res) => {
+    const difficulty = typeof req.query.difficulty === 'string' ? req.query.difficulty.toLowerCase() : 'medium';
+    if (!VALID_DIFFICULTIES.has(difficulty)) {
+      res.status(400).json({ error: 'Invalid difficulty.' });
+      return;
+    }
+    const rawLimit = Number(req.query.limit ?? 20);
+    const rawOffset = Number(req.query.offset ?? 0);
+    const limit = Number.isInteger(rawLimit) && rawLimit >= 1 && rawLimit <= 200 ? rawLimit : 20;
+    const offset = Number.isInteger(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
+
+    try {
+      const database = getDb();
+      const diffCode = DIFFICULTY_TO_CODE[difficulty];
+      const rows = database
+        .prepare(
+          `SELECT puzzle_id, fen, moves, rating, rating_deviation, popularity, themes, num_moves
+           FROM puzzles
+           WHERE difficulty = ?
+           ORDER BY id ASC
+           LIMIT ? OFFSET ?`
+        )
+        .all(diffCode, limit, offset) as PuzzleRow[];
+
+      res.json({
+        difficulty,
+        limit,
+        offset,
+        puzzles: rows.map(formatPuzzle),
+      });
+    } catch (err) {
+      res.status(500).json({
+        error: err instanceof Error ? err.message : 'Failed to query puzzles',
+      });
+    }
+  });
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (!isProduction) {
+    const { createServer: createViteServer } = await import('vite');
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distDir = path.resolve(process.cwd(), 'dist');
+    app.use(express.static(distDir));
+    app.get('*', (_req, res) => {
+      res.sendFile(path.join(distDir, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Chess Tactics Guide server listening on http://0.0.0.0:${PORT}`);
+  });
+}
+
+startServer().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});

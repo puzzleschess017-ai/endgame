@@ -1,0 +1,6 @@
+{
+  "name": "Endgame Woodpecker",
+  "description": "Chess endgame training using the Woodpecker Method with puzzles from the Lichess puzzle database.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
