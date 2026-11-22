@@ -124,7 +124,6 @@ function measureCalibrationSvg(): Promise<SvgCalibration> {
       whiteRgb: [255, 255, 255],
     };
 
-    // 128x128 transparent-bg SVG mimics a chess piece so Chrome/Samsung DarkModeImageClassifier treats it identically
     const testSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
       <rect x="12" y="12" width="40" height="40" fill="#000000"/>
       <rect x="76" y="76" width="40" height="40" fill="#ffffff"/>
@@ -269,7 +268,6 @@ async function rasterizeSvgAtHiRes(url: string, size = 256): Promise<HTMLCanvasE
       URL.revokeObjectURL(blobUrl);
     }
   } catch {
-    // Fallback to direct Image loading if fetch/parse fails
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -677,11 +675,11 @@ export default function ChessboardPanel({
       });
     };
 
-    const boardEl = el.querySelector('cg-board');
+    // Observe the outer container (never replaced by Chessground redrawAll)
     let observer: MutationObserver | null = null;
-    if (boardEl && typeof MutationObserver !== 'undefined') {
+    if (typeof MutationObserver !== 'undefined') {
       observer = new MutationObserver(schedulePiecesDraw);
-      observer.observe(boardEl, {
+      observer.observe(el, {
         childList: true,
         attributes: true,
         subtree: true,
@@ -689,10 +687,57 @@ export default function ChessboardPanel({
       });
     }
 
+    // Continuous 60fps sync while pointer/touch is dragging (+250ms tail for snap-back)
+    let pointerActive = false;
+    let dragLoopRaf: number | null = null;
+    let tailUntil = 0;
+
+    const runDragLoop = () => {
+      dragLoopRaf = null;
+      drawPiecesRef.current();
+      if (pointerActive || performance.now() < tailUntil) {
+        dragLoopRaf = window.requestAnimationFrame(runDragLoop);
+      }
+    };
+
+    const startDragLoop = () => {
+      pointerActive = true;
+      if (dragLoopRaf === null) {
+        dragLoopRaf = window.requestAnimationFrame(runDragLoop);
+      }
+    };
+
+    const stopDragLoop = () => {
+      if (!pointerActive) return;
+      pointerActive = false;
+      tailUntil = performance.now() + 250;
+      if (dragLoopRaf === null) {
+        dragLoopRaf = window.requestAnimationFrame(runDragLoop);
+      }
+    };
+
+    el.addEventListener('pointerdown', startDragLoop, { passive: true });
+    el.addEventListener('touchstart', startDragLoop, { passive: true });
+    el.addEventListener('mousedown', startDragLoop, { passive: true });
+    window.addEventListener('pointerup', stopDragLoop, { passive: true });
+    window.addEventListener('pointercancel', stopDragLoop, { passive: true });
+    window.addEventListener('touchend', stopDragLoop, { passive: true });
+    window.addEventListener('touchcancel', stopDragLoop, { passive: true });
+    window.addEventListener('mouseup', stopDragLoop, { passive: true });
+
     schedulePiecesDraw();
 
     return () => {
       if (scheduledRaf !== null) window.cancelAnimationFrame(scheduledRaf);
+      if (dragLoopRaf !== null) window.cancelAnimationFrame(dragLoopRaf);
+      el.removeEventListener('pointerdown', startDragLoop);
+      el.removeEventListener('touchstart', startDragLoop);
+      el.removeEventListener('mousedown', startDragLoop);
+      window.removeEventListener('pointerup', stopDragLoop);
+      window.removeEventListener('pointercancel', stopDragLoop);
+      window.removeEventListener('touchend', stopDragLoop);
+      window.removeEventListener('touchcancel', stopDragLoop);
+      window.removeEventListener('mouseup', stopDragLoop);
       observer?.disconnect();
       api.destroy();
       cgApiRef.current = null;
