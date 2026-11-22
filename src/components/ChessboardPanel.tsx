@@ -115,6 +115,18 @@ interface SvgCalibration {
 }
 
 let cachedCalibration: Promise<SvgCalibration> | null = null;
+const svgTextCache = new Map<string, Promise<string | null>>();
+
+function fetchSvgTextCached(url: string): Promise<string | null> {
+  let pending = svgTextCache.get(url);
+  if (!pending) {
+    pending = fetch(url)
+      .then((res) => (res.ok ? res.text() : null))
+      .catch(() => null);
+    svgTextCache.set(url, pending);
+  }
+  return pending;
+}
 
 function measureCalibrationSvg(): Promise<SvgCalibration> {
   return new Promise((resolve) => {
@@ -219,18 +231,17 @@ function measureOpaqueRange(canvas: HTMLCanvasElement): { min: number; max: numb
       if (luma > max) max = luma;
       count++;
     }
-    if (count < 50) return null;
+    if (count < 40) return null;
     return { min, max };
   } catch {
     return null;
   }
 }
 
-async function rasterizeSvgAtHiRes(url: string, size = 256): Promise<HTMLCanvasElement | null> {
+async function rasterizeSvgExact(url: string, size: number): Promise<HTMLCanvasElement | null> {
   try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    let svgText = await res.text();
+    let svgText = await fetchSvgTextCached(url);
+    if (!svgText) return null;
 
     const parser = new DOMParser();
     const doc = parser.parseFromString(svgText, 'image/svg+xml');
@@ -260,8 +271,6 @@ async function rasterizeSvgAtHiRes(url: string, size = 256): Promise<HTMLCanvasE
       c.height = size;
       const ctx = c.getContext('2d');
       if (!ctx) return null;
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, size, size);
       return c;
     } finally {
@@ -279,8 +288,6 @@ async function rasterizeSvgAtHiRes(url: string, size = 256): Promise<HTMLCanvasE
           resolve(null);
           return;
         }
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, size, size);
         resolve(c);
       };
@@ -288,6 +295,29 @@ async function rasterizeSvgAtHiRes(url: string, size = 256): Promise<HTMLCanvasE
       img.src = url;
     });
   }
+}
+
+function parseTranslatePx(transform: string): [number, number] | null {
+  if (!transform || transform.includes('scale')) return null;
+  const idx = transform.indexOf('translate');
+  if (idx === -1) return null;
+  const open = transform.indexOf('(', idx);
+  const close = transform.indexOf(')', open);
+  if (open === -1 || close === -1) return null;
+  const parts = transform.slice(open + 1, close).split(',');
+  if (parts.length < 2) return null;
+
+  const parseVal = (s: string): number => {
+    const t = s.trim();
+    if (t === '0') return 0;
+    if (!t.endsWith('px')) return NaN;
+    return parseFloat(t);
+  };
+
+  const x = parseVal(parts[0]);
+  const y = parseVal(parts[1]);
+  if (Number.isNaN(x) || Number.isNaN(y)) return null;
+  return [x, y];
 }
 
 function keyToRowCol(key: Key, orientation: 'white' | 'black'): { row: number; col: number } | null {
@@ -321,8 +351,6 @@ function PromotionPieceCanvas({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
     ctx.clearRect(0, 0, size, size);
     if (sprite) {
       ctx.drawImage(sprite, 0, 0, size, size);
@@ -369,10 +397,13 @@ export default function ChessboardPanel({
   const [spritesVersion, setSpritesVersion] = useState(0);
   const [boardPx, setBoardPx] = useState<number | null>(null);
 
+  const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 3) : 1;
+  const spritePx = boardPx ? Math.max(48, Math.round((boardPx / 8) * dpr)) : null;
+
+  // Rasterize all 12 piece SVGs 1:1 at the exact physical square pixel size
   useEffect(() => {
+    if (!spritePx) return;
     let cancelled = false;
-    const nextMap = new Map<string, PieceSprite>();
-    spritesRef.current = nextMap;
 
     (async () => {
       const cal = await getSvgCalibration();
@@ -380,7 +411,7 @@ export default function ChessboardPanel({
 
       const entries = await Promise.all(
         PIECE_CODES.map(async (code) => {
-          const canvas = await rasterizeSvgAtHiRes(`/pieces/${pieceSet}/${code}.svg`, 256);
+          const canvas = await rasterizeSvgExact(`/pieces/${pieceSet}/${code}.svg`, spritePx);
           return [code, canvas] as const;
         })
       );
@@ -403,6 +434,7 @@ export default function ChessboardPanel({
         }
       }
 
+      const nextMap = new Map<string, PieceSprite>();
       for (const [code, canvas] of entries) {
         if (!canvas) continue;
         if (effectiveCal.needsRestore) {
@@ -412,6 +444,7 @@ export default function ChessboardPanel({
       }
 
       if (!cancelled) {
+        spritesRef.current = nextMap;
         setSpritesVersion((v) => v + 1);
       }
     })();
@@ -419,7 +452,7 @@ export default function ChessboardPanel({
     return () => {
       cancelled = true;
     };
-  }, [pieceSet]);
+  }, [pieceSet, spritePx]);
 
   useEffect(() => {
     const stageEl = stageRef.current;
@@ -459,13 +492,13 @@ export default function ChessboardPanel({
   useEffect(() => {
     const canvas = boardCanvasRef.current;
     if (!canvas || !boardPx) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 3);
-    canvas.width = Math.round(boardPx * dpr);
-    canvas.height = Math.round(boardPx * dpr);
+    const curDpr = Math.min(window.devicePixelRatio || 1, 3);
+    canvas.width = Math.round(boardPx * curDpr);
+    canvas.height = Math.round(boardPx * curDpr);
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.setTransform(curDpr, 0, 0, curDpr, 0, 0);
     const palette = BOARD_THEME_PALETTES[boardTheme] ?? BOARD_THEME_PALETTES.green;
     const sq = boardPx / 8;
 
@@ -524,12 +557,9 @@ export default function ChessboardPanel({
     const boardEl = containerEl.querySelector('cg-board');
     if (!boardEl) return;
 
-    const boardRect = boardEl.getBoundingClientRect();
-    if (boardRect.width <= 0 || boardRect.height <= 0) return;
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 3);
-    const targetW = Math.round(boardPx * dpr);
-    const targetH = Math.round(boardPx * dpr);
+    const curDpr = Math.min(window.devicePixelRatio || 1, 3);
+    const targetW = Math.round(boardPx * curDpr);
+    const targetH = Math.round(boardPx * curDpr);
     if (canvas.width !== targetW || canvas.height !== targetH) {
       canvas.width = targetW;
       canvas.height = targetH;
@@ -538,25 +568,22 @@ export default function ChessboardPanel({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    ctx.setTransform(curDpr, 0, 0, curDpr, 0, 0);
     ctx.clearRect(0, 0, boardPx, boardPx);
 
-    const pieces = boardEl.querySelectorAll('piece');
-    const draggingPieces: HTMLElement[] = [];
+    const sq = boardPx / 8;
+    const pieces = boardEl.getElementsByTagName('piece');
+    let cachedBoardRect: DOMRect | null = null;
+    let draggingEl: HTMLElement | null = null;
 
     const drawOnePiece = (el: HTMLElement) => {
-      const color = el.classList.contains('white')
-        ? 'w'
-        : el.classList.contains('black')
-          ? 'b'
-          : null;
+      const cls = el.classList;
+      const color = cls.contains('white') ? 'w' : cls.contains('black') ? 'b' : null;
       if (!color) return;
 
       let roleChar: string | null = null;
       for (const [roleClass, code] of Object.entries(ROLE_TO_CODE)) {
-        if (el.classList.contains(roleClass)) {
+        if (cls.contains(roleClass)) {
           roleChar = code;
           break;
         }
@@ -566,33 +593,51 @@ export default function ChessboardPanel({
       const sprite = spritesRef.current.get(`${color}${roleChar}`);
       if (!sprite) return;
 
-      const r = el.getBoundingClientRect();
-      if (r.width <= 0 || r.height <= 0) return;
+      let x = 0;
+      let y = 0;
+      let w = sq;
+      let h = sq;
 
-      const x = r.left - boardRect.left;
-      const y = r.top - boardRect.top;
-
-      ctx.save();
-      if (el.classList.contains('ghost')) {
-        ctx.globalAlpha = 0.32;
-      } else if (el.classList.contains('fading')) {
-        ctx.globalAlpha = 0.45;
+      const parsed = parseTranslatePx(el.style.transform);
+      if (parsed) {
+        x = parsed[0];
+        y = parsed[1];
+      } else {
+        if (!cachedBoardRect) {
+          cachedBoardRect = boardEl.getBoundingClientRect();
+        }
+        if (cachedBoardRect.width <= 0) return;
+        const r = el.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) return;
+        x = r.left - cachedBoardRect.left;
+        y = r.top - cachedBoardRect.top;
+        w = r.width;
+        h = r.height;
       }
-      ctx.drawImage(sprite, x, y, r.width, r.height);
-      ctx.restore();
+
+      const isGhost = cls.contains('ghost');
+      const isFading = cls.contains('fading');
+      if (isGhost || isFading) {
+        ctx.save();
+        ctx.globalAlpha = isGhost ? 0.32 : 0.45;
+        ctx.drawImage(sprite, x, y, w, h);
+        ctx.restore();
+      } else {
+        ctx.drawImage(sprite, x, y, w, h);
+      }
     };
 
-    for (const node of pieces) {
-      const el = node as HTMLElement;
+    for (let i = 0; i < pieces.length; i++) {
+      const el = pieces[i] as HTMLElement;
       if (el.classList.contains('dragging')) {
-        draggingPieces.push(el);
+        draggingEl = el;
       } else {
         drawOnePiece(el);
       }
     }
 
-    for (const el of draggingPieces) {
-      drawOnePiece(el);
+    if (draggingEl) {
+      drawOnePiece(draggingEl);
     }
   }, [boardPx]);
 
@@ -666,19 +711,13 @@ export default function ChessboardPanel({
 
     cgApiRef.current = api;
 
-    let scheduledRaf: number | null = null;
-    const schedulePiecesDraw = () => {
-      if (scheduledRaf !== null) return;
-      scheduledRaf = window.requestAnimationFrame(() => {
-        scheduledRaf = null;
-        drawPiecesRef.current();
-      });
-    };
-
-    // Observe the outer container (never replaced by Chessground redrawAll)
+    // MutationObserver runs as a microtask immediately after Chessground mutates piece transforms
+    // inside its rAF, so piecesCanvas repaints in the EXACT same frame before browser paint.
     let observer: MutationObserver | null = null;
     if (typeof MutationObserver !== 'undefined') {
-      observer = new MutationObserver(schedulePiecesDraw);
+      observer = new MutationObserver(() => {
+        drawPiecesRef.current();
+      });
       observer.observe(el, {
         childList: true,
         attributes: true,
@@ -687,57 +726,9 @@ export default function ChessboardPanel({
       });
     }
 
-    // Continuous 60fps sync while pointer/touch is dragging (+250ms tail for snap-back)
-    let pointerActive = false;
-    let dragLoopRaf: number | null = null;
-    let tailUntil = 0;
-
-    const runDragLoop = () => {
-      dragLoopRaf = null;
-      drawPiecesRef.current();
-      if (pointerActive || performance.now() < tailUntil) {
-        dragLoopRaf = window.requestAnimationFrame(runDragLoop);
-      }
-    };
-
-    const startDragLoop = () => {
-      pointerActive = true;
-      if (dragLoopRaf === null) {
-        dragLoopRaf = window.requestAnimationFrame(runDragLoop);
-      }
-    };
-
-    const stopDragLoop = () => {
-      if (!pointerActive) return;
-      pointerActive = false;
-      tailUntil = performance.now() + 250;
-      if (dragLoopRaf === null) {
-        dragLoopRaf = window.requestAnimationFrame(runDragLoop);
-      }
-    };
-
-    el.addEventListener('pointerdown', startDragLoop, { passive: true });
-    el.addEventListener('touchstart', startDragLoop, { passive: true });
-    el.addEventListener('mousedown', startDragLoop, { passive: true });
-    window.addEventListener('pointerup', stopDragLoop, { passive: true });
-    window.addEventListener('pointercancel', stopDragLoop, { passive: true });
-    window.addEventListener('touchend', stopDragLoop, { passive: true });
-    window.addEventListener('touchcancel', stopDragLoop, { passive: true });
-    window.addEventListener('mouseup', stopDragLoop, { passive: true });
-
-    schedulePiecesDraw();
+    drawPiecesRef.current();
 
     return () => {
-      if (scheduledRaf !== null) window.cancelAnimationFrame(scheduledRaf);
-      if (dragLoopRaf !== null) window.cancelAnimationFrame(dragLoopRaf);
-      el.removeEventListener('pointerdown', startDragLoop);
-      el.removeEventListener('touchstart', startDragLoop);
-      el.removeEventListener('mousedown', startDragLoop);
-      window.removeEventListener('pointerup', stopDragLoop);
-      window.removeEventListener('pointercancel', stopDragLoop);
-      window.removeEventListener('touchend', stopDragLoop);
-      window.removeEventListener('touchcancel', stopDragLoop);
-      window.removeEventListener('mouseup', stopDragLoop);
       observer?.disconnect();
       api.destroy();
       cgApiRef.current = null;
@@ -795,15 +786,9 @@ export default function ChessboardPanel({
       },
     });
 
-    let rafId = 0;
-    const endAt = performance.now() + 230;
-    const tick = () => {
+    const rafId = window.requestAnimationFrame(() => {
       drawPiecesRef.current();
-      if (performance.now() < endAt) {
-        rafId = window.requestAnimationFrame(tick);
-      }
-    };
-    rafId = window.requestAnimationFrame(tick);
+    });
     return () => window.cancelAnimationFrame(rafId);
   }, [fen, orientation, turnColor, dests, lastMove, check, hintArrow, viewOnly, syncToken, drawPiecesCanvas]);
 
