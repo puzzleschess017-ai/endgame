@@ -128,6 +128,24 @@ function fetchSvgTextCached(url: string): Promise<string | null> {
   return pending;
 }
 
+function isCssAutoDarkActive(): boolean {
+  try {
+    const div = document.createElement('div');
+    div.style.position = 'fixed';
+    div.style.left = '-9999px';
+    div.style.width = '1px';
+    div.style.height = '1px';
+    div.style.backgroundColor = 'canvas';
+    div.style.colorScheme = 'light';
+    document.body.appendChild(div);
+    const bg = getComputedStyle(div).backgroundColor;
+    document.body.removeChild(div);
+    return bg !== 'rgb(255, 255, 255)';
+  } catch {
+    return false;
+  }
+}
+
 function measureCalibrationSvg(): Promise<SvgCalibration> {
   return new Promise((resolve) => {
     const fallback: SvgCalibration = {
@@ -391,16 +409,20 @@ export default function ChessboardPanel({
   const onUserMoveRef = useRef(onUserMove);
   onUserMoveRef.current = onUserMove;
   const drawPiecesRef = useRef<() => void>(() => {});
+  const useCanvasPiecesRef = useRef(false);
   const prevFenRef = useRef<string>(fen);
   const prevSyncTokenRef = useRef<number>(syncToken);
   const spritesRef = useRef<Map<string, PieceSprite>>(new Map());
   const [spritesVersion, setSpritesVersion] = useState(0);
   const [boardPx, setBoardPx] = useState<number | null>(null);
+  const [useCanvasPieces, setUseCanvasPieces] = useState(false);
+
+  useCanvasPiecesRef.current = useCanvasPieces;
 
   const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 3) : 1;
   const spritePx = boardPx ? Math.max(48, Math.round((boardPx / 8) * dpr)) : null;
 
-  // Rasterize all 12 piece SVGs 1:1 at the exact physical square pixel size
+  // Detect Force Dark on SVGs/CSS; only enable canvas piece overlay when browser alters colors
   useEffect(() => {
     if (!spritePx) return;
     let cancelled = false;
@@ -409,30 +431,43 @@ export default function ChessboardPanel({
       const cal = await getSvgCalibration();
       if (cancelled) return;
 
+      const cssForced = isCssAutoDarkActive();
+      let effectiveCal = cal;
+      let shouldUseCanvasPieces = cal.needsRestore || cssForced;
+
+      // Also check a real white piece SVG in case classifier skips simple geometric test SVGs
+      const sampleCanvas = await rasterizeSvgExact(`/pieces/${pieceSet}/wP.svg`, spritePx);
+      if (cancelled) return;
+
+      if (!effectiveCal.needsRestore && sampleCanvas) {
+        const range = measureOpaqueRange(sampleCanvas);
+        if (range && range.max < 215 && range.max > range.min + 20) {
+          effectiveCal = {
+            needsRestore: true,
+            blackRgb: [range.min, range.min, range.min],
+            whiteRgb: [range.max, range.max, range.max],
+          };
+          shouldUseCanvasPieces = true;
+        }
+      }
+
+      if (!shouldUseCanvasPieces) {
+        if (!cancelled) {
+          setUseCanvasPieces(false);
+        }
+        return;
+      }
+
       const entries = await Promise.all(
         PIECE_CODES.map(async (code) => {
+          if (code === 'wP' && sampleCanvas) {
+            return [code, sampleCanvas] as const;
+          }
           const canvas = await rasterizeSvgExact(`/pieces/${pieceSet}/${code}.svg`, spritePx);
           return [code, canvas] as const;
         })
       );
       if (cancelled) return;
-
-      let effectiveCal = cal;
-      if (!effectiveCal.needsRestore) {
-        const whiteSample =
-          entries.find(([c, cv]) => c === 'wP' && cv)?.[1] ??
-          entries.find(([c, cv]) => c === 'wK' && cv)?.[1];
-        if (whiteSample) {
-          const range = measureOpaqueRange(whiteSample);
-          if (range && range.max < 215 && range.max > range.min + 20) {
-            effectiveCal = {
-              needsRestore: true,
-              blackRgb: [range.min, range.min, range.min],
-              whiteRgb: [range.max, range.max, range.max],
-            };
-          }
-        }
-      }
 
       const nextMap = new Map<string, PieceSprite>();
       for (const [code, canvas] of entries) {
@@ -445,6 +480,7 @@ export default function ChessboardPanel({
 
       if (!cancelled) {
         spritesRef.current = nextMap;
+        setUseCanvasPieces(true);
         setSpritesVersion((v) => v + 1);
       }
     })();
@@ -550,6 +586,7 @@ export default function ChessboardPanel({
   }, [boardPx, boardTheme, orientation, lastMove]);
 
   const drawPiecesCanvas = useCallback(() => {
+    if (!useCanvasPiecesRef.current) return;
     const canvas = piecesCanvasRef.current;
     const containerEl = containerRef.current;
     if (!canvas || !containerEl || !boardPx) return;
@@ -711,12 +748,24 @@ export default function ChessboardPanel({
 
     cgApiRef.current = api;
 
-    // MutationObserver runs as a microtask immediately after Chessground mutates piece transforms
-    // inside its rAF, so piecesCanvas repaints in the EXACT same frame before browser paint.
+    let lastDrawAt = 0;
+    let pendingRaf: number | null = null;
     let observer: MutationObserver | null = null;
+
     if (typeof MutationObserver !== 'undefined') {
       observer = new MutationObserver(() => {
-        drawPiecesRef.current();
+        if (!useCanvasPiecesRef.current) return;
+        const now = performance.now();
+        if (now - lastDrawAt >= 12) {
+          lastDrawAt = now;
+          drawPiecesRef.current();
+        } else if (pendingRaf === null) {
+          pendingRaf = window.requestAnimationFrame(() => {
+            pendingRaf = null;
+            lastDrawAt = performance.now();
+            drawPiecesRef.current();
+          });
+        }
       });
       observer.observe(el, {
         childList: true,
@@ -729,6 +778,7 @@ export default function ChessboardPanel({
     drawPiecesRef.current();
 
     return () => {
+      if (pendingRaf !== null) window.cancelAnimationFrame(pendingRaf);
       observer?.disconnect();
       api.destroy();
       cgApiRef.current = null;
@@ -786,15 +836,19 @@ export default function ChessboardPanel({
       },
     });
 
-    const rafId = window.requestAnimationFrame(() => {
-      drawPiecesRef.current();
-    });
-    return () => window.cancelAnimationFrame(rafId);
+    if (useCanvasPiecesRef.current) {
+      const rafId = window.requestAnimationFrame(() => {
+        drawPiecesRef.current();
+      });
+      return () => window.cancelAnimationFrame(rafId);
+    }
   }, [fen, orientation, turnColor, dests, lastMove, check, hintArrow, viewOnly, syncToken, drawPiecesCanvas]);
 
   useEffect(() => {
-    drawPiecesRef.current();
-  }, [spritesVersion, drawPiecesCanvas]);
+    if (useCanvasPieces) {
+      drawPiecesRef.current();
+    }
+  }, [spritesVersion, useCanvasPieces, drawPiecesCanvas]);
 
   useEffect(() => {
     if (!pendingPromotion) return;
@@ -821,7 +875,9 @@ export default function ChessboardPanel({
   return (
     <div className="w-full flex flex-col gap-2.5">
       <div
-        className={`board-shell board-theme-${boardTheme} piece-set-${pieceSet} relative w-full rounded-2xl border border-white/10 shadow-[0_14px_38px_rgba(4,9,20,0.5)] overflow-hidden bg-[#16233b] p-1`}
+        className={`board-shell board-theme-${boardTheme} piece-set-${pieceSet} ${
+          useCanvasPieces ? 'canvas-pieces-active' : ''
+        } relative w-full rounded-2xl border border-white/10 shadow-[0_14px_38px_rgba(4,9,20,0.5)] overflow-hidden bg-[#16233b] p-1`}
       >
         <div ref={stageRef} className="relative w-full aspect-square flex items-center justify-center">
           <div
@@ -840,11 +896,13 @@ export default function ChessboardPanel({
 
             <div ref={containerRef} className="w-full h-full relative" />
 
-            <canvas
-              ref={piecesCanvasRef}
-              aria-hidden="true"
-              className="absolute inset-0 w-full h-full pointer-events-none z-20"
-            />
+            {useCanvasPieces && (
+              <canvas
+                ref={piecesCanvasRef}
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full pointer-events-none z-20"
+              />
+            )}
 
             {pendingPromotion && (
               <div
@@ -869,10 +927,19 @@ export default function ChessboardPanel({
                       aria-label={`Promote to ${p.name}`}
                       title={`Promote to ${p.name}`}
                     >
-                      <PromotionPieceCanvas
-                        sprite={spritesRef.current.get(`${colorPrefix}${p.svgCode}`)}
-                        label={`${pendingPromotion.color} ${p.name}`}
-                      />
+                      {useCanvasPieces ? (
+                        <PromotionPieceCanvas
+                          sprite={spritesRef.current.get(`${colorPrefix}${p.svgCode}`)}
+                          label={`${pendingPromotion.color} ${p.name}`}
+                        />
+                      ) : (
+                        <img
+                          src={`/pieces/${pieceSet}/${colorPrefix}${p.svgCode}.svg`}
+                          alt={`${pendingPromotion.color} ${p.name}`}
+                          className="w-[86%] h-[86%] object-contain pointer-events-none select-none"
+                          draggable={false}
+                        />
+                      )}
                     </button>
                   ))}
                 </div>
