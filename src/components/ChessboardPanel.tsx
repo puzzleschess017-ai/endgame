@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { AlertTriangle, X } from 'lucide-react';
 import { Chessground } from 'chessground';
 import type { Api } from 'chessground/api';
 import type { Key } from 'chessground/types';
@@ -72,6 +73,40 @@ export default function ChessboardPanel({
   const prevFenRef = useRef<string>(fen);
   const prevSyncTokenRef = useRef<number>(syncToken);
   const [boardPx, setBoardPx] = useState<number | null>(null);
+  const [forcedDarkDetected, setForcedDarkDetected] = useState(false);
+  const [warningDismissed, setWarningDismissed] = useState(false);
+
+  // Detect browser-level forced dark mode (e.g. Samsung Internet / Force Dark)
+  // that overrides SVG piece colors despite CSS color-scheme declarations.
+  useEffect(() => {
+    let cancelled = false;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      if (cancelled) return;
+      try {
+        ctx.clearRect(0, 0, 1, 1);
+        ctx.drawImage(img, 0, 0);
+        const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+        if (a > 200 && (r < 220 || g < 220 || b < 220)) {
+          setForcedDarkDetected(true);
+        }
+      } catch {
+        // Ignore canvas readback errors
+      }
+    };
+    img.src =
+      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMSIgaGVpZ2h0PSIxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmZmZmYiLz48L3N2Zz4=';
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const stageEl = stageRef.current;
@@ -256,54 +291,78 @@ export default function ChessboardPanel({
   const colorPrefix = pendingPromotion?.color === 'black' ? 'b' : 'w';
 
   return (
-    <div
-      className={`board-shell board-theme-${boardTheme} piece-set-${pieceSet} relative w-full rounded-2xl border border-white/10 shadow-[0_14px_38px_rgba(4,9,20,0.5)] overflow-hidden bg-[#16233b] p-1`}
-    >
-      <div ref={stageRef} className="relative w-full aspect-square flex items-center justify-center">
+    <div className="w-full flex flex-col gap-2.5">
+      {forcedDarkDetected && !warningDismissed && (
         <div
-          style={boardPx ? { width: `${boardPx}px`, height: `${boardPx}px` } : undefined}
-          className={
-            boardPx
-              ? 'relative rounded-xl overflow-hidden shrink-0'
-              : 'relative w-full h-full rounded-xl overflow-hidden'
-          }
+          role="status"
+          className="flex items-start gap-2.5 rounded-xl bg-[#16233b] border border-[#39ff88]/50 px-3.5 py-2.5 text-xs text-white/90 leading-snug shadow-sm"
         >
-          <div ref={containerRef} className="w-full h-full" />
+          <AlertTriangle className="w-4 h-4 text-[#39ff88] shrink-0 mt-0.5" aria-hidden="true" />
+          <p className="flex-1">
+            Browser dark mode is altering board and piece colors. Turn off{' '}
+            <span className="font-bold text-white">Dark mode for websites</span> in browser
+            settings or open in Chrome for normal piece contrast.
+          </p>
+          <button
+            type="button"
+            onClick={() => setWarningDismissed(true)}
+            className="p-1 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+            aria-label="Dismiss dark mode warning"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
-          {pendingPromotion && (
-            <div
-              className="absolute inset-0 z-30 bg-[#101b2f]/60"
-              onClick={onCancelPromotion}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Choose promotion piece"
-            >
+      <div
+        className={`board-shell board-theme-${boardTheme} piece-set-${pieceSet} relative w-full rounded-2xl border border-white/10 shadow-[0_14px_38px_rgba(4,9,20,0.5)] overflow-hidden bg-[#16233b] p-1`}
+      >
+        <div ref={stageRef} className="relative w-full aspect-square flex items-center justify-center">
+          <div
+            style={boardPx ? { width: `${boardPx}px`, height: `${boardPx}px` } : undefined}
+            className={
+              boardPx
+                ? 'relative rounded-xl overflow-hidden shrink-0'
+                : 'relative w-full h-full rounded-xl overflow-hidden'
+            }
+          >
+            <div ref={containerRef} className="w-full h-full" />
+
+            {pendingPromotion && (
               <div
-                className={`absolute w-[12.5%] min-w-[44px] bg-[#dce3ef] border-2 border-[#39ff88] shadow-2xl overflow-hidden flex divide-y divide-[#101b2f]/15 ${
-                  promoAtTop ? 'top-0 rounded-b-xl flex-col' : 'bottom-0 rounded-t-xl flex-col-reverse'
-                } ${promoHorizontalClass}`}
-                onClick={(e) => e.stopPropagation()}
+                className="absolute inset-0 z-30 bg-[#101b2f]/60"
+                onClick={onCancelPromotion}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Choose promotion piece"
               >
-                {PROMO_PIECES.map((p) => (
-                  <button
-                    key={p.role}
-                    type="button"
-                    onClick={() => onSelectPromotion(p.role)}
-                    className="relative w-full aspect-square min-h-[44px] bg-[#dce3ef] hover:bg-[#39ff88]/45 active:bg-[#39ff88]/65 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#39ff88] transition-colors flex items-center justify-center cursor-pointer p-1"
-                    aria-label={`Promote to ${p.name}`}
-                    title={`Promote to ${p.name}`}
-                  >
-                    <img
-                      src={`/pieces/${pieceSet}/${colorPrefix}${p.svgCode}.svg`}
-                      alt={`${pendingPromotion.color} ${p.name}`}
-                      className="w-[86%] h-[86%] object-contain pointer-events-none select-none"
-                      draggable={false}
-                    />
-                  </button>
-                ))}
+                <div
+                  className={`absolute w-[12.5%] min-w-[44px] bg-[#dce3ef] border-2 border-[#39ff88] shadow-2xl overflow-hidden flex divide-y divide-[#101b2f]/15 ${
+                    promoAtTop ? 'top-0 rounded-b-xl flex-col' : 'bottom-0 rounded-t-xl flex-col-reverse'
+                  } ${promoHorizontalClass}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {PROMO_PIECES.map((p) => (
+                    <button
+                      key={p.role}
+                      type="button"
+                      onClick={() => onSelectPromotion(p.role)}
+                      className="relative w-full aspect-square min-h-[44px] bg-[#dce3ef] hover:bg-[#39ff88]/45 active:bg-[#39ff88]/65 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#39ff88] transition-colors flex items-center justify-center cursor-pointer p-1"
+                      aria-label={`Promote to ${p.name}`}
+                      title={`Promote to ${p.name}`}
+                    >
+                      <img
+                        src={`/pieces/${pieceSet}/${colorPrefix}${p.svgCode}.svg`}
+                        alt={`${pendingPromotion.color} ${p.name}`}
+                        className="w-[86%] h-[86%] object-contain pointer-events-none select-none"
+                        draggable={false}
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
