@@ -9,6 +9,7 @@
  */
 @layer base {
   :root {
+    color-scheme: dark;
     --font-sans: "Futura", "Futura PT", "Futura Std", "Century Gothic", "Trebuchet MS", sans-serif;
   }
 
@@ -42,6 +43,13 @@
 .board-shell,
 .board-shell * {
   box-sizing: border-box;
+}
+
+.board-shell,
+.board-shell cg-board,
+.board-shell .cg-wrap piece {
+  color-scheme: only light;
+  forced-color-adjust: none;
 }
 
 .board-shell .cg-wrap {
@@ -465,9 +473,6 @@
 .piece-set-neo .cg-wrap piece.king.black { background-image: url('/pieces/neo/bK.svg'); }
 .piece-set-neo .cg-wrap piece.queen.black { background-image: url('/pieces/neo/bQ.svg'); }
 .piece-set-neo .cg-wrap piece.rook.black { background-image: url('/pieces/neo/bR.svg'); }
-.piece-set-neo .cg-wrap piece.bishop.black { background-image: url('/pieces/neo/bB.svg'); }
-.piece-set-neo .cg-wrap piece.knight.black { background-image: url('/pieces/neo/bN.svg'); }
-.piece-set-neo .cg-wrap piece.pawn.black { background-image: url('/pieces/neo/bP.svg'); }
 .piece-set-neo .cg-wrap piece.bishop.black { background-image: url('/pieces/neo/bB.svg'); }
 .piece-set-neo .cg-wrap piece.knight.black { background-image: url('/pieces/neo/bN.svg'); }
 .piece-set-neo .cg-wrap piece.pawn.black { background-image: url('/pieces/neo/bP.svg'); }
