@@ -10,6 +10,7 @@
 @layer base {
   :root {
     color-scheme: dark;
+    forced-color-adjust: none;
     --font-sans: "Futura", "Futura PT", "Futura Std", "Century Gothic", "Trebuchet MS", sans-serif;
   }
 
