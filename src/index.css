@@ -104,6 +104,12 @@
   height: 12.5%;
   margin: 0;
   padding: 0;
+  background-size: contain;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.board-shell.canvas-pieces-active .cg-wrap piece {
   background-image: none !important;
   opacity: 0 !important;
 }
@@ -247,3 +253,91 @@
 .board-theme-pink cg-board square.selected {
   background-color: rgba(105, 25, 55, 0.45);
 }
+
+/* =========================================================
+   6 SVG CHESS PIECE SETS (used when Force Dark is inactive)
+   ========================================================= */
+
+/* 1. Merida */
+.piece-set-merida .cg-wrap piece.king.white { background-image: url('/pieces/merida/wK.svg'); }
+.piece-set-merida .cg-wrap piece.queen.white { background-image: url('/pieces/merida/wQ.svg'); }
+.piece-set-merida .cg-wrap piece.rook.white { background-image: url('/pieces/merida/wR.svg'); }
+.piece-set-merida .cg-wrap piece.bishop.white { background-image: url('/pieces/merida/wB.svg'); }
+.piece-set-merida .cg-wrap piece.knight.white { background-image: url('/pieces/merida/wN.svg'); }
+.piece-set-merida .cg-wrap piece.pawn.white { background-image: url('/pieces/merida/wP.svg'); }
+.piece-set-merida .cg-wrap piece.king.black { background-image: url('/pieces/merida/bK.svg'); }
+.piece-set-merida .cg-wrap piece.queen.black { background-image: url('/pieces/merida/bQ.svg'); }
+.piece-set-merida .cg-wrap piece.rook.black { background-image: url('/pieces/merida/bR.svg'); }
+.piece-set-merida .cg-wrap piece.bishop.black { background-image: url('/pieces/merida/bB.svg'); }
+.piece-set-merida .cg-wrap piece.knight.black { background-image: url('/pieces/merida/bN.svg'); }
+.piece-set-merida .cg-wrap piece.pawn.black { background-image: url('/pieces/merida/bP.svg'); }
+
+/* 2. Cburnett */
+.piece-set-cburnett .cg-wrap piece.king.white { background-image: url('/pieces/cburnett/wK.svg'); }
+.piece-set-cburnett .cg-wrap piece.queen.white { background-image: url('/pieces/cburnett/wQ.svg'); }
+.piece-set-cburnett .cg-wrap piece.rook.white { background-image: url('/pieces/cburnett/wR.svg'); }
+.piece-set-cburnett .cg-wrap piece.bishop.white { background-image: url('/pieces/cburnett/wB.svg'); }
+.piece-set-cburnett .cg-wrap piece.knight.white { background-image: url('/pieces/cburnett/wN.svg'); }
+.piece-set-cburnett .cg-wrap piece.pawn.white { background-image: url('/pieces/cburnett/wP.svg'); }
+.piece-set-cburnett .cg-wrap piece.king.black { background-image: url('/pieces/cburnett/bK.svg'); }
+.piece-set-cburnett .cg-wrap piece.queen.black { background-image: url('/pieces/cburnett/bQ.svg'); }
+.piece-set-cburnett .cg-wrap piece.rook.black { background-image: url('/pieces/cburnett/bR.svg'); }
+.piece-set-cburnett .cg-wrap piece.bishop.black { background-image: url('/pieces/cburnett/bB.svg'); }
+.piece-set-cburnett .cg-wrap piece.knight.black { background-image: url('/pieces/cburnett/bN.svg'); }
+.piece-set-cburnett .cg-wrap piece.pawn.black { background-image: url('/pieces/cburnett/bP.svg'); }
+
+/* 3. Alpha */
+.piece-set-alpha .cg-wrap piece.king.white { background-image: url('/pieces/alpha/wK.svg'); }
+.piece-set-alpha .cg-wrap piece.queen.white { background-image: url('/pieces/alpha/wQ.svg'); }
+.piece-set-alpha .cg-wrap piece.rook.white { background-image: url('/pieces/alpha/wR.svg'); }
+.piece-set-alpha .cg-wrap piece.bishop.white { background-image: url('/pieces/alpha/wB.svg'); }
+.piece-set-alpha .cg-wrap piece.knight.white { background-image: url('/pieces/alpha/wN.svg'); }
+.piece-set-alpha .cg-wrap piece.pawn.white { background-image: url('/pieces/alpha/wP.svg'); }
+.piece-set-alpha .cg-wrap piece.king.black { background-image: url('/pieces/alpha/bK.svg'); }
+.piece-set-alpha .cg-wrap piece.queen.black { background-image: url('/pieces/alpha/bQ.svg'); }
+.piece-set-alpha .cg-wrap piece.rook.black { background-image: url('/pieces/alpha/bR.svg'); }
+.piece-set-alpha .cg-wrap piece.bishop.black { background-image: url('/pieces/alpha/bB.svg'); }
+.piece-set-alpha .cg-wrap piece.knight.black { background-image: url('/pieces/alpha/bN.svg'); }
+.piece-set-alpha .cg-wrap piece.pawn.black { background-image: url('/pieces/alpha/bP.svg'); }
+
+/* 4. Staunty */
+.piece-set-staunty .cg-wrap piece.king.white { background-image: url('/pieces/staunty/wK.svg'); }
+.piece-set-staunty .cg-wrap piece.queen.white { background-image: url('/pieces/staunty/wQ.svg'); }
+.piece-set-staunty .cg-wrap piece.rook.white { background-image: url('/pieces/staunty/wR.svg'); }
+.piece-set-staunty .cg-wrap piece.bishop.white { background-image: url('/pieces/staunty/wB.svg'); }
+.piece-set-staunty .cg-wrap piece.knight.white { background-image: url('/pieces/staunty/wN.svg'); }
+.piece-set-staunty .cg-wrap piece.pawn.white { background-image: url('/pieces/staunty/wP.svg'); }
+.piece-set-staunty .cg-wrap piece.king.black { background-image: url('/pieces/staunty/bK.svg'); }
+.piece-set-staunty .cg-wrap piece.queen.black { background-image: url('/pieces/staunty/bQ.svg'); }
+.piece-set-staunty .cg-wrap piece.rook.black { background-image: url('/pieces/staunty/bR.svg'); }
+.piece-set-staunty .cg-wrap piece.bishop.black { background-image: url('/pieces/staunty/bB.svg'); }
+.piece-set-staunty .cg-wrap piece.knight.black { background-image: url('/pieces/staunty/bN.svg'); }
+.piece-set-staunty .cg-wrap piece.pawn.black { background-image: url('/pieces/staunty/bP.svg'); }
+
+/* 5. Chessnut */
+.piece-set-chessnut .cg-wrap piece.king.white { background-image: url('/pieces/chessnut/wK.svg'); }
+.piece-set-chessnut .cg-wrap piece.queen.white { background-image: url('/pieces/chessnut/wQ.svg'); }
+.piece-set-chessnut .cg-wrap piece.rook.white { background-image: url('/pieces/chessnut/wR.svg'); }
+.piece-set-chessnut .cg-wrap piece.bishop.white { background-image: url('/pieces/chessnut/wB.svg'); }
+.piece-set-chessnut .cg-wrap piece.knight.white { background-image: url('/pieces/chessnut/wN.svg'); }
+.piece-set-chessnut .cg-wrap piece.pawn.white { background-image: url('/pieces/chessnut/wP.svg'); }
+.piece-set-chessnut .cg-wrap piece.king.black { background-image: url('/pieces/chessnut/bK.svg'); }
+.piece-set-chessnut .cg-wrap piece.queen.black { background-image: url('/pieces/chessnut/bQ.svg'); }
+.piece-set-chessnut .cg-wrap piece.rook.black { background-image: url('/pieces/chessnut/bR.svg'); }
+.piece-set-chessnut .cg-wrap piece.bishop.black { background-image: url('/pieces/chessnut/bB.svg'); }
+.piece-set-chessnut .cg-wrap piece.knight.black { background-image: url('/pieces/chessnut/bN.svg'); }
+.piece-set-chessnut .cg-wrap piece.pawn.black { background-image: url('/pieces/chessnut/bP.svg'); }
+
+/* 6. Neo */
+.piece-set-neo .cg-wrap piece.king.white { background-image: url('/pieces/neo/wK.svg'); }
+.piece-set-neo .cg-wrap piece.queen.white { background-image: url('/pieces/neo/wQ.svg'); }
+.piece-set-neo .cg-wrap piece.rook.white { background-image: url('/pieces/neo/wR.svg'); }
+.piece-set-neo .cg-wrap piece.bishop.white { background-image: url('/pieces/neo/wB.svg'); }
+.piece-set-neo .cg-wrap piece.knight.white { background-image: url('/pieces/neo/wN.svg'); }
+.piece-set-neo .cg-wrap piece.pawn.white { background-image: url('/pieces/neo/wP.svg'); }
+.piece-set-neo .cg-wrap piece.king.black { background-image: url('/pieces/neo/bK.svg'); }
+.piece-set-neo .cg-wrap piece.queen.black { background-image: url('/pieces/neo/bQ.svg'); }
+.piece-set-neo .cg-wrap piece.rook.black { background-image: url('/pieces/neo/bR.svg'); }
+.piece-set-neo .cg-wrap piece.bishop.black { background-image: url('/pieces/neo/bB.svg'); }
+.piece-set-neo .cg-wrap piece.knight.black { background-image: url('/pieces/neo/bN.svg'); }
+.piece-set-neo .cg-wrap piece.pawn.black { background-image: url('/pieces/neo/bP.svg'); }
