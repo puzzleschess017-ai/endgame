@@ -106,89 +106,189 @@ const BOARD_THEME_PALETTES: Record<
   },
 };
 
-type PieceSprite = HTMLImageElement | HTMLCanvasElement;
+type PieceSprite = HTMLCanvasElement;
 
 interface SvgCalibration {
   needsRestore: boolean;
-  blackLevel: number;
-  whiteLevel: number;
+  blackRgb: [number, number, number];
+  whiteRgb: [number, number, number];
 }
 
 let cachedCalibration: Promise<SvgCalibration> | null = null;
 
-function measure1x1SvgLevel(hexColor: string): Promise<number | null> {
+function measureCalibrationSvg(): Promise<SvgCalibration> {
   return new Promise((resolve) => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="${hexColor}"/></svg>`;
+    const fallback: SvgCalibration = {
+      needsRestore: false,
+      blackRgb: [0, 0, 0],
+      whiteRgb: [255, 255, 255],
+    };
+
+    // 128x128 transparent-bg SVG mimics a chess piece so Chrome/Samsung DarkModeImageClassifier treats it identically
+    const testSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+      <rect x="12" y="12" width="40" height="40" fill="#000000"/>
+      <rect x="76" y="76" width="40" height="40" fill="#ffffff"/>
+    </svg>`;
+
+    const blob = new Blob([testSvg], { type: 'image/svg+xml;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
     const img = new Image();
+
     img.onload = () => {
       try {
         const c = document.createElement('canvas');
-        c.width = 1;
-        c.height = 1;
+        c.width = 128;
+        c.height = 128;
         const ctx = c.getContext('2d');
         if (!ctx) {
-          resolve(null);
+          resolve(fallback);
           return;
         }
-        ctx.drawImage(img, 0, 0);
-        const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
-        if (a < 200) {
-          resolve(null);
+        ctx.drawImage(img, 0, 0, 128, 128);
+        const b = ctx.getImageData(32, 32, 1, 1).data;
+        const w = ctx.getImageData(96, 96, 1, 1).data;
+        if (b[3] < 200 || w[3] < 200) {
+          resolve(fallback);
           return;
         }
-        resolve((r + g + b) / 3);
+        const blackRgb: [number, number, number] = [b[0], b[1], b[2]];
+        const whiteRgb: [number, number, number] = [w[0], w[1], w[2]];
+        const maxBlack = Math.max(b[0], b[1], b[2]);
+        const minWhite = Math.min(w[0], w[1], w[2]);
+        const needsRestore = (minWhite < 242 || maxBlack > 15) && minWhite > maxBlack + 20;
+        resolve({ needsRestore, blackRgb, whiteRgb });
       } catch {
-        resolve(null);
+        resolve(fallback);
+      } finally {
+        URL.revokeObjectURL(blobUrl);
       }
     };
-    img.onerror = () => resolve(null);
-    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+
+    img.onerror = () => {
+      URL.revokeObjectURL(blobUrl);
+      resolve(fallback);
+    };
+
+    img.src = blobUrl;
   });
 }
 
 function getSvgCalibration(): Promise<SvgCalibration> {
   if (!cachedCalibration) {
-    cachedCalibration = Promise.all([
-      measure1x1SvgLevel('#000000'),
-      measure1x1SvgLevel('#ffffff'),
-    ]).then(([black, white]) => {
-      const b = black ?? 0;
-      const w = white ?? 255;
-      const needsRestore = (w < 240 || b > 20) && w > b + 20;
-      return {
-        needsRestore,
-        blackLevel: b,
-        whiteLevel: w,
-      };
-    });
+    cachedCalibration = measureCalibrationSvg();
   }
   return cachedCalibration;
 }
 
-function normalizeSpriteIfNeeded(img: HTMLImageElement, cal: SvgCalibration): PieceSprite {
-  if (!cal.needsRestore) return img;
-  const size = 128;
-  const c = document.createElement('canvas');
-  c.width = size;
-  c.height = size;
-  const ctx = c.getContext('2d');
-  if (!ctx) return img;
-  ctx.drawImage(img, 0, 0, size, size);
+function restoreCanvasContrast(canvas: HTMLCanvasElement, cal: SvgCalibration): void {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
   try {
-    const imageData = ctx.getImageData(0, 0, size, size);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
-    const span = Math.max(1, cal.whiteLevel - cal.blackLevel);
+    const spanR = Math.max(1, cal.whiteRgb[0] - cal.blackRgb[0]);
+    const spanG = Math.max(1, cal.whiteRgb[1] - cal.blackRgb[1]);
+    const spanB = Math.max(1, cal.whiteRgb[2] - cal.blackRgb[2]);
+
     for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] === 0) continue;
-      for (let ch = 0; ch < 3; ch++) {
-        const norm = ((data[i + ch] - cal.blackLevel) / span) * 255;
-        data[i + ch] = norm < 0 ? 0 : norm > 255 ? 255 : Math.round(norm);
-      }
+      const r = ((data[i] - cal.blackRgb[0]) / spanR) * 255;
+      const g = ((data[i + 1] - cal.blackRgb[1]) / spanG) * 255;
+      const b = ((data[i + 2] - cal.blackRgb[2]) / spanB) * 255;
+      data[i] = r < 0 ? 0 : r > 255 ? 255 : Math.round(r);
+      data[i + 1] = g < 0 ? 0 : g > 255 ? 255 : Math.round(g);
+      data[i + 2] = b < 0 ? 0 : b > 255 ? 255 : Math.round(b);
     }
     ctx.putImageData(imageData, 0, 0);
-    return c;
   } catch {
-    return img;
+    // Ignore readback errors
+  }
+}
+
+function measureOpaqueRange(canvas: HTMLCanvasElement): { min: number; max: number } | null {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  try {
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let min = 255;
+    let max = 0;
+    let count = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] < 245) continue;
+      const luma = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      if (luma < min) min = luma;
+      if (luma > max) max = luma;
+      count++;
+    }
+    if (count < 50) return null;
+    return { min, max };
+  } catch {
+    return null;
+  }
+}
+
+async function rasterizeSvgAtHiRes(url: string, size = 256): Promise<HTMLCanvasElement | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    let svgText = await res.text();
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgText, 'image/svg+xml');
+    const svgEl = doc.documentElement;
+    if (svgEl && svgEl.nodeName.toLowerCase() === 'svg') {
+      if (!svgEl.getAttribute('viewBox')) {
+        const wAttr = parseFloat(svgEl.getAttribute('width') || '45') || 45;
+        const hAttr = parseFloat(svgEl.getAttribute('height') || '45') || 45;
+        svgEl.setAttribute('viewBox', `0 0 ${wAttr} ${hAttr}`);
+      }
+      svgEl.setAttribute('width', String(size));
+      svgEl.setAttribute('height', String(size));
+      svgText = new XMLSerializer().serializeToString(svgEl);
+    }
+
+    const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = reject;
+        i.src = blobUrl;
+      });
+      const c = document.createElement('canvas');
+      c.width = size;
+      c.height = size;
+      const ctx = c.getContext('2d');
+      if (!ctx) return null;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, size, size);
+      return c;
+    } finally {
+      URL.revokeObjectURL(blobUrl);
+    }
+  } catch {
+    // Fallback to direct Image loading if fetch/parse fails
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = size;
+        c.height = size;
+        const ctx = c.getContext('2d');
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, size, size);
+        resolve(c);
+      };
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
   }
 }
 
@@ -223,6 +323,8 @@ function PromotionPieceCanvas({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.clearRect(0, 0, size, size);
     if (sprite) {
       ctx.drawImage(sprite, 0, 0, size, size);
@@ -274,18 +376,47 @@ export default function ChessboardPanel({
     const nextMap = new Map<string, PieceSprite>();
     spritesRef.current = nextMap;
 
-    getSvgCalibration().then((cal) => {
+    (async () => {
+      const cal = await getSvgCalibration();
       if (cancelled) return;
-      for (const code of PIECE_CODES) {
-        const img = new Image();
-        img.onload = () => {
-          if (cancelled) return;
-          nextMap.set(code, normalizeSpriteIfNeeded(img, cal));
-          setSpritesVersion((v) => v + 1);
-        };
-        img.src = `/pieces/${pieceSet}/${code}.svg`;
+
+      const entries = await Promise.all(
+        PIECE_CODES.map(async (code) => {
+          const canvas = await rasterizeSvgAtHiRes(`/pieces/${pieceSet}/${code}.svg`, 256);
+          return [code, canvas] as const;
+        })
+      );
+      if (cancelled) return;
+
+      let effectiveCal = cal;
+      if (!effectiveCal.needsRestore) {
+        const whiteSample =
+          entries.find(([c, cv]) => c === 'wP' && cv)?.[1] ??
+          entries.find(([c, cv]) => c === 'wK' && cv)?.[1];
+        if (whiteSample) {
+          const range = measureOpaqueRange(whiteSample);
+          if (range && range.max < 215 && range.max > range.min + 20) {
+            effectiveCal = {
+              needsRestore: true,
+              blackRgb: [range.min, range.min, range.min],
+              whiteRgb: [range.max, range.max, range.max],
+            };
+          }
+        }
       }
-    });
+
+      for (const [code, canvas] of entries) {
+        if (!canvas) continue;
+        if (effectiveCal.needsRestore) {
+          restoreCanvasContrast(canvas, effectiveCal);
+        }
+        nextMap.set(code, canvas);
+      }
+
+      if (!cancelled) {
+        setSpritesVersion((v) => v + 1);
+      }
+    })();
 
     return () => {
       cancelled = true;
@@ -410,6 +541,8 @@ export default function ChessboardPanel({
     if (!ctx) return;
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.clearRect(0, 0, boardPx, boardPx);
 
     const pieces = boardEl.querySelectorAll('piece');
