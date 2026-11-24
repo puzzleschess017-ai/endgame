@@ -190,6 +190,22 @@
   background-color: rgba(20, 85, 30, 0.48);
 }
 
+/* 2b. Maple (same markers as Brown) */
+.board-theme-maple cg-board square.move-dest {
+  background: radial-gradient(rgba(20, 85, 30, 0.45) 19%, rgba(0, 0, 0, 0) 21%);
+}
+.board-theme-maple cg-board square.oc.move-dest {
+  background: radial-gradient(transparent 0%, transparent 76%, rgba(20, 85, 0, 0.38) 78%);
+}
+@media (hover: hover) {
+  .board-theme-maple cg-board square.move-dest:hover {
+    background: rgba(20, 85, 30, 0.25);
+  }
+}
+.board-theme-maple cg-board square.selected {
+  background-color: rgba(20, 85, 30, 0.48);
+}
+
 /* 3. Blue */
 .board-theme-blue cg-board square.move-dest {
   background: radial-gradient(rgba(20, 60, 100, 0.42) 19%, rgba(0, 0, 0, 0) 21%);

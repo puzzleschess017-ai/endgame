@@ -61,7 +61,7 @@ export interface DatabaseStats {
   byTheme: Record<string, number>;
 }
 
-export type BoardTheme = 'green' | 'brown' | 'blue' | 'purple' | 'grey' | 'pink';
+export type BoardTheme = 'green' | 'brown' | 'maple' | 'blue' | 'purple' | 'grey' | 'pink';
 
 export type PieceSet = 'merida' | 'cburnett' | 'alpha' | 'staunty' | 'chessnut' | 'neo';
 
