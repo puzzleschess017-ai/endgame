@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../auth';
 import { signOutAndSync } from '../sync';
 import SoundMenu from './SoundMenu';
+import SiteLinks from './SiteLinks';
 
 export interface NavItem {
   id: string;
@@ -264,7 +265,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
       <div className="flex flex-wrap xl:flex-col items-center xl:items-stretch gap-x-3 gap-y-2 px-4 pt-3 xl:pt-0 xl:flex-1 xl:min-h-0">
         <a
           href="/"
-          className="flex items-center gap-3 shrink-0 xl:py-5 xl:border-b xl:border-white/10"
+          className="flex items-center gap-3 shrink-0 xl:py-4 xl:border-b xl:border-white/10"
           aria-label="Chess Tactics Guide home"
         >
           <img
@@ -292,7 +293,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         <nav
           ref={navRef}
           aria-label="Training modes"
-          className="w-full xl:flex-1 xl:min-h-0 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-x-visible xl:overflow-y-auto pb-3 xl:py-3"
+          className="w-full xl:flex-1 xl:min-h-0 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-x-visible xl:overflow-y-auto pb-3 xl:py-2"
         >
           <NavLink item={HOME_ITEM} active={HOME_ITEM.href === path} />
           {NAV_GROUPS.map((group) => {
@@ -300,7 +301,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
             // The group of the current page stays open, so the current entry is never hidden.
             const open = hasActive || !collapsed.includes(group.id);
             return (
-              <div key={group.id} className="contents xl:flex xl:flex-col xl:gap-1 xl:mt-3">
+              <div key={group.id} className="contents xl:flex xl:flex-col xl:gap-1 xl:mt-2.5">
                 <button
                   type="button"
                   onClick={() => toggle(group.id)}
@@ -325,7 +326,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         </nav>
       </div>
 
-      <div className="hidden xl:flex items-center justify-between gap-2 px-4 py-3 border-t border-white/10">
+      <div className="hidden xl:flex items-center justify-between gap-2 px-4 py-2.5 border-t border-white/10">
         <a
           href="/login"
           data-testid="sidebar-name"
@@ -337,6 +338,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         <AccountControls />
         <SoundMenu />
       </div>
+      <SiteLinks className="hidden xl:flex flex-nowrap pb-1 -mt-1" />
     </aside>
   );
 }

@@ -65,7 +65,8 @@ describe('renderPage', () => {
     assert.equal(html.match(/name="twitter:card"/g)?.length, 1);
     assert.equal(html.match(/rel="canonical"/g)?.length, 1);
     assert.ok(html.includes('<div id="root"></div>'));
-    assert.ok(html.includes('googletagmanager'));
+    // Google Tag Manager is not in the page: the app loads it only after the visitor accepts cookies.
+    assert.ok(!html.includes('googletagmanager'));
   });
   it('keeps the Google Search Console verification tag on every page', () => {
     for (const page of [...PAGES, undefined]) {
@@ -81,7 +82,9 @@ describe('renderPage', () => {
       const match = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
       assert.ok(match, page.path);
       const data = JSON.parse(match[1]);
-      assert.equal(data['@type'], page.kind === 'website' ? 'WebSite' : 'WebApplication');
+      const expected =
+        page.kind === 'website' ? ['WebSite'] : page.kind === 'info' ? ['AboutPage', 'ContactPage', 'WebPage'] : ['WebApplication'];
+      assert.ok(expected.includes(data['@type']), page.path);
       assert.ok(String(data.url).startsWith(SITE));
     }
   });
