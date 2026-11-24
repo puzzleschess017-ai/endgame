@@ -207,7 +207,7 @@ function AccountControls({ compact }: { compact?: boolean }) {
     <button
       type="button"
       data-testid="sign-out-button"
-      onClick={() => void auth.signOut()}
+      onClick={() => void auth.signOut().then(() => window.location.assign('/'))}
       className={`${button} min-h-[40px] min-w-[40px]`}
       aria-label="Sign out"
       title="Sign out"
