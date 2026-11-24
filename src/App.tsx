@@ -5,7 +5,6 @@ import ChessboardPanel, { type PendingPromotion } from './components/ChessboardP
 import SettingsPanel from './components/SettingsPanel';
 import TrainerLayout from './components/TrainerLayout';
 import TrainingSidebar from './components/TrainingSidebar';
-import WoodpeckerIntroModal from './components/WoodpeckerIntroModal';
 import type {
   CycleResult,
   Puzzle,
@@ -24,7 +23,7 @@ import { authHeaders, useAuth } from './auth';
 import { checkWoodpecker, defaultWoodpecker } from './utils/access';
 import { playMoveSound } from './utils/sound';
 import { recordFinishedCycles } from './utils/woodpeckerHistory';
-import { INTRO_COMPLETED_STORAGE_KEY, USERNAME_STORAGE_KEY } from './utils/profile';
+import { readSavedUsername } from './utils/profile';
 
 const PREVIEW_FEN = '1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1';
 
@@ -38,27 +37,8 @@ interface BoardState {
   locked: boolean;
 }
 
-function readSavedUsername(): string {
-  try {
-    return (localStorage.getItem(USERNAME_STORAGE_KEY) ?? '').trim();
-  } catch {
-    return '';
-  }
-}
-
-function readIntroCompleted(): boolean {
-  try {
-    return localStorage.getItem(INTRO_COMPLETED_STORAGE_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
-
 export default function App() {
-  const [username, setUsername] = useState<string>(() => readSavedUsername());
-  const [showWoodpeckerIntro, setShowWoodpeckerIntro] = useState<boolean>(
-    () => !(readSavedUsername() && readIntroCompleted())
-  );
+  const [username] = useState<string>(() => readSavedUsername());
 
   const { tier } = useAuth();
   const [config, setConfig] = useState<TrainingConfig>(() => defaultWoodpecker(tier));
@@ -131,7 +111,6 @@ export default function App() {
 
   // Live training timer (only active once inside the training workspace)
   useEffect(() => {
-    if (showWoodpeckerIntro) return;
     if (!session || session.status !== 'training') return;
     lastTickRef.current = Date.now();
     const interval = window.setInterval(() => {
@@ -152,7 +131,6 @@ export default function App() {
 
     return () => window.clearInterval(interval);
   }, [
-    showWoodpeckerIntro,
     session?.status,
     session?.id,
     session?.currentCycle,
@@ -267,7 +245,7 @@ export default function App() {
 
   // Handle auto-advance countdown between cycles
   useEffect(() => {
-    if (showWoodpeckerIntro || !session || session.status !== 'cycle_complete') {
+    if (!session || session.status !== 'cycle_complete') {
       setAutoAdvanceSeconds(null);
       return;
     }
@@ -284,7 +262,7 @@ export default function App() {
       setAutoAdvanceSeconds((s) => (s !== null ? s - 1 : null));
     }, 1000);
     return () => window.clearTimeout(id);
-  }, [showWoodpeckerIntro, session?.status, autoAdvanceSeconds, autoAdvancePaused, startNextCycle]);
+  }, [session?.status, autoAdvanceSeconds, autoAdvancePaused, startNextCycle]);
 
   const advanceToNextPuzzle = useCallback(
     (overrideCounts?: { correct: number; incorrect: number }) => {
@@ -622,19 +600,6 @@ export default function App() {
     });
   }, [clearScheduledTimeouts]);
 
-  const handleCompleteIntro = useCallback((enteredUsername: string) => {
-    const cleanUsername = enteredUsername.trim();
-    if (!cleanUsername) return;
-    try {
-      localStorage.setItem(USERNAME_STORAGE_KEY, cleanUsername);
-      localStorage.setItem(INTRO_COMPLETED_STORAGE_KEY, 'true');
-    } catch {
-      // Ignore storage quota errors gracefully
-    }
-    setUsername(cleanUsername);
-    setShowWoodpeckerIntro(false);
-  }, []);
-
   return (
     <TrainerLayout
       username={username}
@@ -691,12 +656,6 @@ export default function App() {
           )}
         </>
       }
-    >
-      <WoodpeckerIntroModal
-        open={showWoodpeckerIntro}
-        initialUsername={username}
-        onComplete={handleCompleteIntro}
-      />
-    </TrainerLayout>
+    />
   );
 }

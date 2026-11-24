@@ -1,6 +1,6 @@
 // The one auth store of the page, wired to the real Supabase project and the browser.
 import { useSyncExternalStore } from 'react';
-import { INTRO_COMPLETED_STORAGE_KEY, USERNAME_STORAGE_KEY } from '../utils/profile';
+import { USERNAME_STORAGE_KEY } from '../utils/profile';
 import { createAuthClient } from './client';
 import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './project';
 import { AUTH_STORAGE_KEY, createAuthStore, type AuthState } from './store';
@@ -28,7 +28,7 @@ export const auth = createAuthStore({
 });
 
 if (typeof window !== 'undefined') {
-  // A signed-in visitor is greeted by the account name on every page, and is not asked for a name again.
+  // A signed-in visitor is greeted by the account name on every page.
   // Signing out takes that name away again, so the next visitor of this browser is a guest, not the account.
   let wasSignedIn = false;
   auth.subscribe(() => {
@@ -37,7 +37,6 @@ if (typeof window !== 'undefined') {
       if (!session) {
         if (wasSignedIn) {
           localStorage.removeItem(USERNAME_STORAGE_KEY);
-          localStorage.removeItem(INTRO_COMPLETED_STORAGE_KEY);
         }
         wasSignedIn = false;
         return;
@@ -45,7 +44,6 @@ if (typeof window !== 'undefined') {
       wasSignedIn = true;
       if (!name) return;
       if (localStorage.getItem(USERNAME_STORAGE_KEY) !== name) localStorage.setItem(USERNAME_STORAGE_KEY, name);
-      localStorage.setItem(INTRO_COMPLETED_STORAGE_KEY, 'true');
     } catch {
       // storage blocked: the pages simply ask for a name as before
     }
