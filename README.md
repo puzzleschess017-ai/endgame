@@ -30,7 +30,7 @@ that exposes the puzzle API and serves the Vite dev server as middleware). Runni
 
 | Path | What it is |
 | --- | --- |
-| `src/` | React frontend (`App.tsx`, `components/`, `utils/`) |
+| `src/` | React frontend (`App.tsx` is the Woodpecker trainer, `pages/` has one component per extra page such as `/coordinates`, plus `components/` and `utils/`) |
 | `server.ts` | Express server: `/api/puzzles/sample`, `/api/puzzles`, `/api/stats`, `/api/health` |
 | `endgame.db` | SQLite database with 40,000 Lichess puzzles (read-only at runtime) |
 | `scripts/build-endgame-db.mjs` | Rebuilds the database from the Lichess CSV dump |
@@ -54,6 +54,17 @@ NODE_ENV=production npm start
 
 In production `server.ts` serves the built files from `dist/` and falls back to
 `index.html` for every other path.
+
+## Pages
+
+| Path | What it is |
+| --- | --- |
+| `/` | Woodpecker endgame trainer |
+| `/coordinates` | Coordinates trainer: find the named square or name the highlighted one against the clock |
+
+Every path is served by the same app (`main.tsx` picks the page from the URL). Logic that can be
+tested without a browser lives in `src/utils/`; run its tests with
+`npx tsx --test src/utils/coordinates.test.ts`.
 
 ## Saved progress
 

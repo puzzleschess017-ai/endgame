@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Chess, Square } from 'chess.js';
 import type { Key } from 'chessground/types';
-import { Minus, Plus, Settings, Volume2, VolumeX } from 'lucide-react';
+import { Minus, Plus, Settings } from 'lucide-react';
 import AppearanceSettingsModal from './components/AppearanceSettingsModal';
 import ChessboardPanel, { type PendingPromotion } from './components/ChessboardPanel';
 import SettingsPanel from './components/SettingsPanel';
+import SiteHeader from './components/SiteHeader';
 import TrainingSidebar from './components/TrainingSidebar';
 import WoodpeckerIntroModal from './components/WoodpeckerIntroModal';
 import type {
@@ -660,38 +661,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#101b2f] text-white flex flex-col">
-      <header className="border-b border-white/10 bg-[#0d1627]">
-        <div className="max-w-[1220px] mx-auto px-4 sm:px-6 h-15 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5 shrink-0">
-            <img
-              src="/assets/aistudio/Add_a_heading__16_-removebg-preview_c70fa2ca.png"
-              alt="Chess Tactics Guide logo"
-              className="w-7 h-7 object-contain select-none shrink-0"
-              draggable={false}
-            />
-            <h1 className="text-base sm:text-lg font-bold tracking-tight text-white whitespace-nowrap shrink-0">
-              Chess Tactics Guide
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-3 sm:gap-4 shrink-0 min-w-0">
-            {username && (
-              <span className="text-xs sm:text-sm font-semibold text-white/90 whitespace-nowrap truncate max-w-[180px] sm:max-w-[280px]">
-                Welcome, {username}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={() => setMuted((m) => !m)}
-              className="p-2 rounded-xl text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 transition-all duration-150 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0"
-              aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}
-              title={muted ? 'Unmute sounds' : 'Mute sounds'}
-            >
-              {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
-      </header>
+      <SiteHeader username={username} muted={muted} onToggleMute={() => setMuted((m) => !m)} />
 
       <main className="flex-1 w-full max-w-[1220px] mx-auto px-4 sm:px-6 py-5 sm:py-7 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 lg:gap-8">
         {/* Chessboard Primary Anchor */}
