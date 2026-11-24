@@ -4,6 +4,7 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
 import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
+import { createTablebase } from './server/tablebase.ts';
 import {
   RATING_BANDS,
   parseSampleQuery,
@@ -525,6 +526,18 @@ async function startServer() {
         error: err instanceof Error ? err.message : 'Failed to pick blindfold puzzles',
       });
     }
+  });
+
+  // Endgame tablebase (Lichess Syzygy, up to 7 pieces) for the Tablebase page. Answers are kept for a day.
+  const tablebase = createTablebase({ baseUrl: process.env.TABLEBASE_URL });
+  app.get('/api/tablebase', async (req, res) => {
+    const lookup = await tablebase.lookup(req.query.fen);
+    if (!lookup.ok) {
+      res.status(lookup.status).json({ error: lookup.error });
+      return;
+    }
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.json(lookup.result);
   });
 
   app.get('/api/puzzles', (req, res) => {

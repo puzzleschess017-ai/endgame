@@ -30,7 +30,7 @@ that exposes the puzzle API and serves the Vite dev server as middleware). Runni
 
 | Path | What it is |
 | --- | --- |
-| `src/` | React frontend (`App.tsx` is the Woodpecker trainer, `pages/` has one component per extra page such as `/coordinates`, plus `components/` and `utils/`) |
+| `src/` | React frontend (`App.tsx` is the Woodpecker trainer, `pages/` has one component per extra page such as `/coordinates` or `/editor`, plus `components/` and `utils/`) |
 | `server.ts` | Express server: `/api/puzzles/sample`, `/api/puzzles/ladder`, `/api/puzzles`, `/api/stats`, `/api/health` |
 | `server/ladder.ts` | Builds the easy-to-hard puzzle ladder for Streak and Race |
 | `endgame.db` | SQLite database with about 80,000 Lichess puzzles, 18.6 MB (read-only at runtime) |
@@ -89,13 +89,15 @@ a dependency, run `bun install` and commit `bun.lock` together with
 
 | Path | What it is |
 | --- | --- |
-| `/` | Home, a dashboard: six overview tiles (puzzles solved, total training time and sessions, daily streak, average accuracy, best Puzzle Streak, Woodpecker cycles) and four bar charts (sessions, minutes, puzzles, accuracy per day) with a 7 / 30 / 90 days switch. Everything is read from the browser. Unknown paths show Home too |
+| `/` | Home, a dashboard: a Tools section (links to the Board Editor and the Endgame Tablebase), then six overview tiles (puzzles solved, total training time and sessions, daily streak, average accuracy, best Puzzle Streak, Woodpecker cycles) and four bar charts (sessions, minutes, puzzles, accuracy per day) with a 7 / 30 / 90 days switch. Everything is read from the browser. Unknown paths show Home too |
 | `/woodpecker` | Woodpecker endgame trainer (it used to be on `/`) |
 | `/statistics` | Statistics: personal records of every mode and the last Woodpecker cycles |
 | `/coordinates` | Coordinates trainer: click the named square against the clock (30 or 60 s, white, black or random side). The board has no labels, on purpose |
 | `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
 | `/race` | Puzzle Race: solve as many puzzles as possible in 1, 3 or 5 minutes, easy to hard from the whole database. A wrong move costs 10 seconds and moves on to the next puzzle. Best score per time saved in the browser (a run ended early is not saved) |
 | `/blindfold` | Blindfold: *Mate in 1* (memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; levels by number of pieces: up to 6, 8, 10 or any; a round is 10 puzzles) and *Drills* (60 s without a board: square color, same diagonal, knight route). Best scores saved in the browser |
+| `/editor` | Board Editor: set up any position by dragging pieces in from the palette (or choosing a piece and tapping squares), moving them, or dragging them off the board; side to move, castling rights and en passant; load or copy a FEN; "Check in the Tablebase" opens it on the Tablebase page. A position is only analyzable when it is legal (both kings, no pawns on the first or last rank, the side not to move is not in check) |
+| `/tablebase` | Endgame Tablebase: perfect play for any position with 7 pieces or fewer (Syzygy tables, through the public Lichess tablebase). Shows who wins (with the mate distance when known), draws by the 50-move rule, and every legal move marked Wins / Draws / Loses, best first; click a move to play it, hover to see it as an arrow. Play on the board, step through the game (buttons, arrow keys, Home/End), try the example positions (K+Q vs K, K+R vs K, K+P vs K, Lucena), load a FEN, import and copy a PGN. `?fen=...` starts from a position. Positions with more than 7 pieces or with castling rights cannot be looked up and say so |
 
 Every path is served by the same app (`main.tsx` picks the page from the URL). Logic that can be
 tested without a browser lives in `src/utils/`; run all its tests with
@@ -144,6 +146,25 @@ and mute are one setting for the whole site, saved in `ctg_sound_v1` and read wi
 `useSoundSettings()`. Pages just call `playMoveSound('move' | 'capture' | 'check' | 'error' |
 'success')`; nothing needs to pass a muted flag around. In the volume slider 50 % is the loudness
 the site always had and 100 % is twice that.
+
+### Board Editor and Endgame Tablebase
+
+The two tools share the board component with the trainers. `ChessboardPanel` has an optional `edit`
+prop that turns it into an editor (free movement, a piece dragged off the board is deleted, new
+pieces can be dragged in with chessground's `dragNewPiece`). The logic that needs no browser lives in
+`src/utils/editor.ts` (building, reading and validating FENs: castling rights and en passant are only
+written when they are possible), `src/utils/analysis.ts` (the game being looked at: moves, going
+back and forth, replacing a line, status text, PGN in and out) and `src/utils/tablebase.ts` (what can
+be looked up and how the answer is worded). All are covered by unit tests.
+
+The Tablebase page asks our own server, `GET /api/tablebase?fen=...`, never Lichess directly
+(`server/tablebase.ts`). The server checks the FEN (legal, 7 pieces or fewer, no castling rights),
+asks `https://tablebase.lichess.org/standard`, turns the move results around so they describe the
+player who makes the move, and keeps every answer for a day (the same position is one request, even
+when many people ask at once). Failures are never kept, and there is a ceiling of 240 requests per
+minute to Lichess in total. Set `TABLEBASE_URL` to use another host (the tests use a local fake).
+There is no engine: a chess engine would add a large download and its own licence, so only the
+endgames the tablebase covers are analysed.
 
 ## Saved progress
 
