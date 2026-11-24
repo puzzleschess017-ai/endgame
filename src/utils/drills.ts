@@ -1,8 +1,12 @@
 // Pure helpers for the Blindfold visualization drills (no React): question making, saved
 // settings and best scores. The drills train what blindfold play needs: knowing the board by heart.
 
-export type DrillKind = 'color' | 'check' | 'diagonal' | 'knight';
-export const DRILL_KINDS: DrillKind[] = ['color', 'check', 'diagonal', 'knight'];
+export type DrillKind = 'color' | 'check' | 'diagonal' | 'knight' | 'reconstruct';
+export const DRILL_KINDS: DrillKind[] = ['color', 'check', 'diagonal', 'knight', 'reconstruct'];
+
+/** The drills made of quick questions against the clock ("reconstruct" is a different kind of exercise). */
+export type QuestionKind = Exclude<DrillKind, 'reconstruct'>;
+export const QUESTION_KINDS: QuestionKind[] = ['color', 'check', 'diagonal', 'knight'];
 
 /** Every drill is a run against the clock. */
 export const DRILL_DURATION_MS = 60_000;
@@ -13,7 +17,7 @@ export const DRILLS_BEST_STORAGE_KEY = 'ctg_drills_best_v1';
 export const FILES = 'abcdefgh';
 
 export function isDrillKind(value: unknown): value is DrillKind {
-  return value === 'color' || value === 'check' || value === 'diagonal' || value === 'knight';
+  return value === 'color' || value === 'check' || value === 'diagonal' || value === 'knight' || value === 'reconstruct';
 }
 
 export function drillLabel(kind: DrillKind): string {
@@ -26,6 +30,8 @@ export function drillLabel(kind: DrillKind): string {
       return 'Same diagonal';
     case 'knight':
       return 'Knight route';
+    case 'reconstruct':
+      return 'Rebuild position';
   }
 }
 
@@ -39,6 +45,8 @@ export function drillDescription(kind: DrillKind): string {
       return 'Do two squares lie on the same diagonal? Think of a bishop.';
     case 'knight':
       return 'How many moves does a knight need to get from one square to the other?';
+    case 'reconstruct':
+      return 'Memorize a real position, then rebuild it from memory on an empty board.';
   }
 }
 
@@ -104,7 +112,7 @@ export interface DrillOption {
 }
 
 export interface DrillQuestion {
-  kind: DrillKind;
+  kind: QuestionKind;
   /** The question line shown to the player. */
   prompt: string;
   /** The squares the question is about (one or two). */
@@ -291,7 +299,7 @@ function buildCheckQuestion(rng: Rng): DrillQuestion {
 }
 
 /** A new random question. `previous` is avoided so the same question never comes twice in a row. */
-export function makeQuestion(kind: DrillKind, rng: Rng = Math.random, previous?: DrillQuestion): DrillQuestion {
+export function makeQuestion(kind: QuestionKind, rng: Rng = Math.random, previous?: DrillQuestion): DrillQuestion {
   for (let attempt = 0; attempt < 20; attempt++) {
     const q = buildQuestion(kind, rng);
     if (!previous || previous.prompt !== q.prompt) return q;
@@ -299,7 +307,7 @@ export function makeQuestion(kind: DrillKind, rng: Rng = Math.random, previous?:
   return buildQuestion(kind, rng);
 }
 
-function buildQuestion(kind: DrillKind, rng: Rng): DrillQuestion {
+function buildQuestion(kind: QuestionKind, rng: Rng): DrillQuestion {
   if (kind === 'check') return buildCheckQuestion(rng);
   if (kind === 'color') {
     const square = randomSquare(rng);

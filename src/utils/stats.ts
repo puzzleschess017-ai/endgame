@@ -4,7 +4,8 @@ import { BLINDFOLD_LEVELS, MATE_IN_OPTIONS, ROUND_SIZE, levelDescription, loadBl
 import { dayStreaks, formatTotalTime, loadActivity, totalActivity, type ActivityLog } from './activity';
 import { formatDuration, loadSessionFromStorage } from './chessHelpers';
 import { loadBestScore } from './coordinates';
-import { DRILL_KINDS, drillLabel, loadDrillBest } from './drills';
+import { QUESTION_KINDS, drillLabel, loadDrillBest } from './drills';
+import { RECONSTRUCT_LEVELS, RECONSTRUCT_ROUND, loadReconstructBest } from './reconstruct';
 import { RACE_DURATIONS, durationLabel, loadRaceBest } from './race';
 import { loadBestStreak } from './streak';
 import { loadWoodpeckerHistory, summarizeWoodpecker } from './woodpeckerHistory';
@@ -74,12 +75,15 @@ export function collectHomeStats(): HomeStats {
   const blindfoldBests = MATE_IN_OPTIONS.flatMap((mateIn) =>
     BLINDFOLD_LEVELS.map((level) => ({ mateIn, level, best: loadBlindfoldBest(level, mateIn) })),
   );
-  const drillBests = DRILL_KINDS.map((kind) => ({ kind, best: loadDrillBest(kind) }));
+  const drillBests = QUESTION_KINDS.map((kind) => ({ kind, best: loadDrillBest(kind) }));
   const blindfoldLines: StatLine[] = [
     ...blindfoldBests
       .filter((b) => b.best > 0)
       .map((b) => ({ label: `Mate in ${b.mateIn}, ${levelDescription(b.level)}`, value: `${b.best}/${ROUND_SIZE}` })),
     ...drillBests.filter((b) => b.best > 0).map((b) => ({ label: drillLabel(b.kind), value: String(b.best) })),
+    ...RECONSTRUCT_LEVELS.map((level) => ({ level, best: loadReconstructBest(level) }))
+      .filter((b) => b.best > 0)
+      .map((b) => ({ label: `Rebuild position, up to ${b.level} pieces`, value: `${b.best}/${RECONSTRUCT_ROUND}` })),
   ];
 
   const records =

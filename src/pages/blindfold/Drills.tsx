@@ -4,18 +4,14 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   StatTile,
-  segmentClass,
 } from '../../components/panelUi';
 import TrainerLayout from '../../components/TrainerLayout';
-import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
 import { useAuth } from '../../auth';
-import { canOpenBlindfold, clampDrill, tierFor, unlockHint } from '../../utils/access';
+import { canOpenBlindfold, clampDrill } from '../../utils/access';
 import { useAppearance } from '../../hooks/useAppearance';
 import {
   DRILL_DURATION_MS,
-  DRILL_KINDS,
   drillAccuracy,
-  drillDescription,
   drillLabel,
   loadDrillBest,
   loadDrillKind,
@@ -24,11 +20,13 @@ import {
   saveDrillKind,
   type DrillKind,
   type DrillQuestion,
+  type QuestionKind,
 } from '../../utils/drills';
 import { formatClock } from '../../utils/race';
 import { recordActivity } from '../../utils/activity';
 import { playMoveSound } from '../../utils/sound';
-import { GuestStart, ModeTabs, type BlindfoldModeProps } from './shared';
+import Reconstruct from './Reconstruct';
+import { DrillPicker, GuestStart, ModeTabs, type BlindfoldModeProps } from './shared';
 
 type Phase = 'setup' | 'running' | 'finished';
 
@@ -44,7 +42,6 @@ const TICK_MS = 100;
 
 export default function Drills({ username, mode, onModeChange }: BlindfoldModeProps) {
   const { tier } = useAuth();
-  const locks = useLocks(tier);
   const [kind, setKind] = useState<DrillKind>(() => clampDrill(tier, loadDrillKind()));
   const [appearance, setAppearance] = useAppearance();
   const [phase, setPhase] = useState<Phase>('setup');
@@ -129,7 +126,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
     setResult(null);
     endAtRef.current = performance.now() + DRILL_DURATION_MS;
     setMsLeft(DRILL_DURATION_MS);
-    const first = makeQuestion(kindRef.current);
+    const first = makeQuestion(kindRef.current as QuestionKind);
     questionRef.current = first;
     setQuestion(first);
     go('running');
@@ -150,7 +147,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
       setLast({ ok: false, text: q.explanation });
     }
     playMoveSound(ok ? 'move' : 'error');
-    const nextQuestion = makeQuestion(kindRef.current, Math.random, q);
+    const nextQuestion = makeQuestion(kindRef.current as QuestionKind, Math.random, q);
     questionRef.current = nextQuestion;
     setQuestion(nextQuestion);
   }, []);
@@ -177,6 +174,11 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
     setLast(null);
     go('setup');
   }, []);
+
+  // The rebuild drill is not a run of quick questions: it has its own page (and its own picker).
+  if (kind === 'reconstruct') {
+    return <Reconstruct username={username} mode={mode} onModeChange={onModeChange} kind={kind} onKindChange={setKind} />;
+  }
 
   const best = loadDrillBest(kind);
   const lowTime = msLeft > 0 && msLeft <= 10_000;
@@ -220,32 +222,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <span className="text-sm font-semibold text-white">Drill</span>
-                <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
-                  {DRILL_KINDS.map((k) => {
-                    const needs = tierFor((a) => a.blindfold.drills, k);
-                    const locked = locks.isLocked(needs);
-                    return (
-                      <button
-                        key={k}
-                        type="button"
-                        data-testid={`drill-${k}`}
-                        aria-pressed={kind === k}
-                        aria-disabled={locked || undefined}
-                        title={locked ? unlockHint(tier, needs) : undefined}
-                        onClick={locks.choose(`The ${drillLabel(k).toLowerCase()} drill`, needs, () => setKind(k))}
-                        className={`${segmentClass(kind === k)} ${locked ? LOCKED_CLASS : ''} !whitespace-normal leading-tight`}
-                      >
-                        {drillLabel(k)}
-                        {locked && <LockMark />}
-                      </button>
-                    );
-                  })}
-                </div>
-                <UnlockNotice notice={locks.notice} />
-                <p className="text-sm font-medium text-white/75 leading-relaxed">{drillDescription(kind)}</p>
-              </div>
+              <DrillPicker kind={kind} onChange={setKind} />
 
               <p className="text-sm font-semibold text-white/75 tabular-nums">
                 {best > 0 ? `Your best (${drillLabel(kind)}): ${best}` : 'No record yet for this drill.'}

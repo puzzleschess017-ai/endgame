@@ -33,7 +33,7 @@ export interface BlindfoldAccess {
   memorize: MemorizeSeconds[];
   /** How long the mate may be: in 1, 2 or 3 moves. */
   mateIn: MateIn[];
-  /** Which drills (square colours, check or not, diagonals, knight routes) may be played. */
+  /** Which drills (square colours, check or not, diagonals, knight routes, rebuild position) may be played. */
   drills: DrillKind[];
 }
 
@@ -159,6 +159,7 @@ const DRILL_NAME: Record<DrillKind, string> = {
   check: 'Check or not',
   diagonal: 'Diagonals',
   knight: 'Knight routes',
+  reconstruct: 'Rebuild position',
 };
 
 export function checkBlindfoldDrill(tier: Tier, kind: DrillKind): Check {

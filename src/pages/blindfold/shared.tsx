@@ -1,7 +1,11 @@
 import type { Key } from 'chessground/types';
 import { Lock } from 'lucide-react';
 import ChessboardPanel from '../../components/ChessboardPanel';
+import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
 import { PRIMARY_BUTTON_CLASS, segmentClass } from '../../components/panelUi';
+import { useAuth } from '../../auth';
+import { tierFor, unlockHint } from '../../utils/access';
+import { DRILL_KINDS, drillDescription, drillLabel, type DrillKind } from '../../utils/drills';
 import type { BoardTheme, PieceSet } from '../../types';
 
 export type BlindfoldMode = 'mate' | 'drills';
@@ -75,6 +79,40 @@ export function ViewBoard({
       onSelectPromotion={NOOP}
       onCancelPromotion={NOOP}
     />
+  );
+}
+
+/** The choice of drill (with the locks of the visitor's plan), shared by the timed drills and the rebuild drill. */
+export function DrillPicker({ kind, onChange }: { kind: DrillKind; onChange: (kind: DrillKind) => void }) {
+  const { tier } = useAuth();
+  const locks = useLocks(tier);
+  return (
+    <div className="space-y-2">
+      <span className="text-sm font-semibold text-white">Drill</span>
+      <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+        {DRILL_KINDS.map((k) => {
+          const needs = tierFor((a) => a.blindfold.drills, k);
+          const locked = locks.isLocked(needs);
+          return (
+            <button
+              key={k}
+              type="button"
+              data-testid={`drill-${k}`}
+              aria-pressed={kind === k}
+              aria-disabled={locked || undefined}
+              title={locked ? unlockHint(tier, needs) : undefined}
+              onClick={locks.choose(`The ${drillLabel(k).toLowerCase()} drill`, needs, () => onChange(k))}
+              className={`${segmentClass(kind === k)} ${locked ? LOCKED_CLASS : ''} !whitespace-normal leading-tight`}
+            >
+              {drillLabel(k)}
+              {locked && <LockMark />}
+            </button>
+          );
+        })}
+      </div>
+      <UnlockNotice notice={locks.notice} />
+      <p className="text-sm font-medium text-white/75 leading-relaxed">{drillDescription(kind)}</p>
+    </div>
   );
 }
 

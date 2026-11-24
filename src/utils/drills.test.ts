@@ -3,6 +3,7 @@ import { beforeEach, test } from 'node:test';
 import { Chess } from 'chess.js';
 import {
   DRILL_KINDS,
+  QUESTION_KINDS,
   DRILLS_SETTINGS_STORAGE_KEY,
   drillAccuracy,
   drillLabel,
@@ -68,7 +69,7 @@ test('knight distance', () => {
 });
 
 test('questions are well formed and the answer is one of the options', () => {
-  for (const kind of DRILL_KINDS) {
+  for (const kind of QUESTION_KINDS) {
     for (let i = 0; i < 300; i++) {
       const q = makeQuestion(kind);
       assert.equal(q.kind, kind);
@@ -214,4 +215,14 @@ test('Check or not: answers are right, about half are checks, questions are read
   assert.ok(yes > N * 0.38 && yes < N * 0.62, `yes = ${yes}`);
   assert.ok(withBlocker > N * 0.1, `blockers ${withBlocker}`);
   assert.ok(blocked > N * 0.05, `blocked ${blocked}`);
+});
+
+test('the rebuild drill is a drill kind but has no questions', () => {
+  assert.ok(isDrillKind('reconstruct'));
+  assert.ok(DRILL_KINDS.includes('reconstruct'));
+  assert.ok(!(QUESTION_KINDS as string[]).includes('reconstruct'));
+  assert.equal(drillLabel('reconstruct'), 'Rebuild position');
+  assert.deepEqual(QUESTION_KINDS, ['color', 'check', 'diagonal', 'knight']);
+  saveDrillKind('reconstruct');
+  assert.equal(loadDrillKind(), 'reconstruct');
 });
