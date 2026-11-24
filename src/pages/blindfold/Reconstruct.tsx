@@ -6,6 +6,9 @@ import { Eraser, Hand, Trash2 } from 'lucide-react';
 import ChessboardPanel from '../../components/ChessboardPanel';
 import {
   CARD_CLASS,
+  COMPACT_CARD_CLASS,
+  SETUP_TEXT_CLASS,
+  START_BUTTON_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   StatTile,
@@ -336,11 +339,11 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
       panel={
         <>
           {(phase === 'setup' || phase === 'loading') && (
-            <div className={CARD_CLASS}>
+            <div className={COMPACT_CARD_CLASS}>
               <ModeTabs mode={mode} onChange={onModeChange} />
               <div>
                 <h2 className="text-xl font-bold text-white tracking-tight">Rebuild the position</h2>
-                <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
+                <p className={SETUP_TEXT_CLASS}>
                   Memorize the position. Then the board is emptied and you put every piece back where it was.
                   A round is {RECONSTRUCT_ROUND} positions.
                 </p>
@@ -348,7 +351,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
 
               <DrillPicker kind={kind} onChange={onKindChange} />
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <span className="text-sm font-semibold text-white">Pieces on the board</span>
                 <div className="grid grid-cols-4 gap-1 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
                   {RECONSTRUCT_LEVELS.map((level) => (
@@ -360,7 +363,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
                       aria-label={levelDescription(level)}
                       disabled={phase === 'loading'}
                       onClick={() => setSettings({ ...settings, level })}
-                      className={segmentClass(settings.level === level)}
+                      className={segmentClass(settings.level === level, true)}
                     >
                       ≤ {level}
                     </button>
@@ -368,7 +371,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <span className="text-sm font-semibold text-white">Memorize time</span>
                 <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
                   {RECONSTRUCT_SECONDS.map((seconds) => (
@@ -379,7 +382,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
                       aria-pressed={settings.seconds === seconds}
                       disabled={phase === 'loading'}
                       onClick={() => setSettings({ ...settings, seconds })}
-                      className={segmentClass(settings.seconds === seconds)}
+                      className={segmentClass(settings.seconds === seconds, true)}
                     >
                       {seconds} s
                     </button>
@@ -396,7 +399,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
                 </div>
               )}
 
-              <p className="text-sm font-semibold text-white/75 tabular-nums">
+              <p className="text-[13px] font-semibold text-white/75 tabular-nums leading-snug">
                 {best > 0
                   ? `Your best (${levelDescription(settings.level)}): ${best}/${RECONSTRUCT_ROUND} perfect`
                   : 'No record yet for this level.'}
@@ -406,7 +409,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
                 type="button"
                 onClick={() => void startRound()}
                 disabled={phase === 'loading'}
-                className={PRIMARY_BUTTON_CLASS}
+                className={START_BUTTON_CLASS}
               >
                 {phase === 'loading' ? 'Loading positions…' : 'Start'}
               </button>

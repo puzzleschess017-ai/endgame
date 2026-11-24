@@ -7,6 +7,7 @@ import type {
 } from '../types';
 import { tierFor, unlockHint, type Tier } from '../utils/access';
 import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from './locks';
+import { COMPACT_CARD_CLASS, SETUP_TEXT_CLASS, START_BUTTON_CLASS } from './panelUi';
 
 const PUZZLE_COUNTS: PuzzleCountOption[] = [10, 50, 100, 200, 300, 500];
 const CYCLE_COUNTS: CycleCountOption[] = [2, 3, 4, 5, 6, 7, 8, 9];
@@ -23,7 +24,7 @@ const PUZZLE_MODES: Array<{ value: PuzzleMode; label: string; hint: string }> = 
 const MIXED: { value: Difficulty; label: string; range: string } = {
   value: 'mixed',
   label: 'Mixed',
-  range: 'All ratings, an even share of each',
+  range: 'All ratings, even share',
 };
 
 interface SettingsPanelProps {
@@ -47,19 +48,19 @@ export default function SettingsPanel({
   const puzzleMode: PuzzleMode = config.puzzleMode ?? 'endgame';
   const locks = useLocks(tier);
   return (
-    <div className="bg-[#16233b] border border-white/10 rounded-2xl p-6 flex flex-col gap-6 shadow-[0_16px_44px_rgba(4,9,20,0.45)]">
+    <div className={`${COMPACT_CARD_CLASS} !gap-2.5`}>
       <div>
-        <h2 className="text-xl font-bold text-white tracking-tight">
+        <h2 className="text-lg font-bold text-white tracking-tight">
           Woodpecker Setup
         </h2>
-        <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
+        <p className={SETUP_TEXT_CLASS}>
           {puzzleMode === 'classic'
-            ? 'Solve the same set of puzzles of every kind across consecutive cycles to sharpen pattern recognition and calculation speed.'
-            : 'Solve the same endgame set across consecutive cycles to sharpen pattern recognition and calculation speed.'}
+            ? 'Solve the same set of puzzles again and again.'
+            : 'Solve the same endgame set again and again.'}
         </p>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="flex items-baseline justify-between">
           <span className="text-sm font-semibold text-white">Number of Puzzles</span>
           <span className="text-xs font-semibold text-white/70 tabular-nums">
@@ -79,7 +80,7 @@ export default function SettingsPanel({
                 aria-disabled={locked || undefined}
                 title={locked ? unlockHint(tier, needs) : undefined}
                 onClick={locks.choose(`${count} puzzles per cycle`, needs, () => onChange({ ...config, puzzleCount: count }))}
-                className={`${locked ? LOCKED_CLASS : ''} py-2 px-2 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[40px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                className={`${locked ? LOCKED_CLASS : ''} py-1.5 px-2 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[36px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
                   active
                     ? 'bg-[#39ff88] text-[#101b2f] shadow-sm'
                     : 'text-white/85 hover:text-white hover:bg-white/10'
@@ -93,7 +94,7 @@ export default function SettingsPanel({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="flex items-baseline justify-between">
           <span className="text-sm font-semibold text-white">Number of Cycles</span>
           <span className="text-xs font-semibold text-white/70 tabular-nums">
@@ -113,7 +114,7 @@ export default function SettingsPanel({
                 aria-disabled={locked || undefined}
                 title={locked ? unlockHint(tier, needs) : undefined}
                 onClick={locks.choose(`${cycles} cycles`, needs, () => onChange({ ...config, totalCycles: cycles }))}
-                className={`${locked ? LOCKED_CLASS : ''} py-2 px-1 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[40px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                className={`${locked ? LOCKED_CLASS : ''} py-1.5 px-1 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[36px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
                   active
                     ? 'bg-[#39ff88] text-[#101b2f] shadow-sm'
                     : 'text-white/85 hover:text-white hover:bg-white/10'
@@ -127,7 +128,7 @@ export default function SettingsPanel({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <span className="text-sm font-semibold text-white">Puzzle Type</span>
         <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
           {PUZZLE_MODES.map((m) => {
@@ -143,7 +144,7 @@ export default function SettingsPanel({
                 aria-disabled={locked || undefined}
                 title={locked ? unlockHint(tier, needs) : undefined}
                 onClick={locks.choose(`The ${m.label} puzzle type`, needs, () => onChange({ ...config, puzzleMode: m.value }))}
-                className={`${locked ? LOCKED_CLASS : ''} py-2 px-3 rounded-lg text-left transition-all duration-150 cursor-pointer min-h-[46px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                className={`${locked ? LOCKED_CLASS : ''} py-1.5 px-3 rounded-lg text-left transition-all duration-150 cursor-pointer min-h-[40px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
                   active
                     ? 'bg-[#39ff88] text-[#101b2f] shadow-sm'
                     : 'text-white/85 hover:text-white hover:bg-white/10'
@@ -160,11 +161,11 @@ export default function SettingsPanel({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="flex items-baseline justify-between">
           <span className="text-sm font-semibold text-white">Difficulty</span>
         </div>
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-6 gap-2">
           {[...DIFFICULTIES, MIXED].map((d) => {
             const active = config.difficulty === d.value;
             const needs = tierFor((a) => a.woodpecker.difficulties, d.value);
@@ -178,8 +179,8 @@ export default function SettingsPanel({
                 aria-pressed={active}
                 aria-disabled={locked || undefined}
                 title={locked ? unlockHint(tier, needs) : undefined}
-                className={`${locked ? LOCKED_CLASS : ''} py-2.5 px-3.5 rounded-xl border text-left transition-all duration-150 cursor-pointer min-h-[46px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
-                  d.value === 'mixed' ? 'col-span-2' : ''
+                className={`${locked ? LOCKED_CLASS : ''} py-1.5 px-3 rounded-xl border text-left transition-all duration-150 cursor-pointer min-h-[40px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                  d.value === 'expert' || d.value === 'mixed' ? 'col-span-3' : 'col-span-2'
                 } ${
                   active
                     ? 'bg-[#39ff88]/15 border-[#39ff88] text-white'
@@ -212,7 +213,7 @@ export default function SettingsPanel({
         type="button"
         onClick={onStart}
         disabled={loading}
-        className="w-full py-3.5 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] disabled:opacity-60 disabled:cursor-not-allowed text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(57,255,136,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]"
+        className={START_BUTTON_CLASS}
       >
         {loading ? `Loading ${puzzleMode === 'classic' ? 'Classic' : 'Endgame'} Set...` : 'Start Training'}
       </button>

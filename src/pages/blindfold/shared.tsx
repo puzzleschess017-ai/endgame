@@ -31,7 +31,7 @@ export function ModeTabs({
           role="tab"
           aria-selected={mode === item.id}
           onClick={() => onChange(item.id)}
-          className={segmentClass(mode === item.id)}
+          className={segmentClass(mode === item.id, true)}
         >
           {item.label}
         </button>
@@ -87,7 +87,7 @@ export function DrillPicker({ kind, onChange }: { kind: DrillKind; onChange: (ki
   const { tier } = useAuth();
   const locks = useLocks(tier);
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <span className="text-sm font-semibold text-white">Drill</span>
       <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
         {DRILL_KINDS.map((k) => {
@@ -102,7 +102,7 @@ export function DrillPicker({ kind, onChange }: { kind: DrillKind; onChange: (ki
               aria-disabled={locked || undefined}
               title={locked ? unlockHint(tier, needs) : undefined}
               onClick={locks.choose(`The ${drillLabel(k).toLowerCase()} drill`, needs, () => onChange(k))}
-              className={`${segmentClass(kind === k)} ${locked ? LOCKED_CLASS : ''} !whitespace-normal leading-tight`}
+              className={`${segmentClass(kind === k, true)} ${locked ? LOCKED_CLASS : ''} !whitespace-normal leading-tight`}
             >
               {drillLabel(k)}
               {locked && <LockMark />}
@@ -111,7 +111,7 @@ export function DrillPicker({ kind, onChange }: { kind: DrillKind; onChange: (ki
         })}
       </div>
       <UnlockNotice notice={locks.notice} />
-      <p className="text-sm font-medium text-white/75 leading-relaxed">{drillDescription(kind)}</p>
+      <p className="text-[13px] font-medium text-white/75 leading-snug">{drillDescription(kind)}</p>
     </div>
   );
 }
