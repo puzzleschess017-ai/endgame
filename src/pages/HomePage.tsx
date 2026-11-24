@@ -1,23 +1,35 @@
-import { useEffect, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import AppShell from '../components/AppShell';
-import { MODE_ITEMS } from '../components/Sidebar';
-import { StatTile } from '../components/panelUi';
-import { loadLastMode } from '../utils/lastMode';
+import BarChart, { type BarDatum } from '../components/BarChart';
+import { segmentClass } from '../components/panelUi';
+import { dailySeries } from '../utils/activity';
 import { readSavedUsername } from '../utils/profile';
-import { collectHomeStats } from '../utils/stats';
+import { collectOverview } from '../utils/stats';
+
+const RANGES = [7, 30, 90] as const;
+type Range = (typeof RANGES)[number];
 
 const CARD_BASE =
   'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
 
-/** Landing page: the results of every mode, and a way back into training. */
+/** "2026-11-24" -> a local Date at noon. */
+function parseDay(day: string): Date {
+  const [y, m, d] = day.split('-').map(Number);
+  return new Date(y, m - 1, d, 12);
+}
+
+function labels(day: string, range: Range): { label: string; fullLabel: string } {
+  const date = parseDay(day);
+  const weekday = date.toLocaleDateString('en-GB', { weekday: 'short' });
+  const short = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  return { label: range === 7 ? weekday : short, fullLabel: `${weekday} ${short}` };
+}
+
+/** Landing page: a dashboard with the overview of your training and charts over time. */
 export default function HomePage() {
-  const [stats] = useState(() => collectHomeStats());
+  const [overview] = useState(() => collectOverview());
   const [username] = useState(() => readSavedUsername());
-  const [lastMode] = useState(() => {
-    const path = loadLastMode();
-    return MODE_ITEMS.find((item) => item.href === path) ?? null;
-  });
+  const [range, setRange] = useState<Range>(7);
   const [muted, setMuted] = useState(false);
 
   useEffect(() => {
@@ -30,84 +42,103 @@ export default function HomePage() {
       );
   }, []);
 
-  const { summary } = stats;
-  const cont = lastMode ?? MODE_ITEMS[0];
+  const series = useMemo(() => dailySeries(overview.log, range), [overview.log, range]);
+  const toData = (pick: (p: (typeof series)[number]) => number | null): BarDatum[] =>
+    series.map((p) => ({ key: p.day, ...labels(p.day, range), value: pick(p) }));
+
+  const rangeLabel = `last ${range} days`;
 
   return (
     <AppShell username={username} muted={muted} onToggleMute={() => setMuted((v) => !v)}>
-      <div className="max-w-[980px] flex flex-col gap-6" data-testid="home">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            {username ? `Welcome back, ${username}` : 'Welcome to Chess Tactics Guide'}
-          </h2>
-          <p className="mt-1.5 text-sm sm:text-base font-medium text-white/70">
-            Your results at a glance. Everything is saved in this browser only.
-          </p>
-        </div>
+      <div className="max-w-[1100px] flex flex-col gap-8" data-testid="home">
+        <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+          {username ? `Hello, ${username}!` : 'Hello!'}
+        </h2>
 
-        <a
-          href={cont.href}
-          data-testid="continue"
-          className={`${CARD_BASE} px-5 py-4 flex items-center justify-between gap-4 hover:border-[#39ff88]/60 transition-colors focus-visible:outline-2 focus-visible:outline-[#39ff88]`}
-        >
-          <span className="flex flex-col gap-0.5">
-            <span className="text-xs font-semibold text-white/60">
-              {lastMode ? 'Continue where you left off' : 'New here? Start with'}
-            </span>
-            <span className="text-lg font-bold text-white">{cont.label}</span>
-          </span>
-          <span className="flex items-center gap-2 text-sm font-bold text-[#39ff88]">
-            {lastMode ? 'Continue' : 'Start'}
-            <ArrowRight className="w-4 h-4" aria-hidden="true" />
-          </span>
-        </a>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5" data-testid="summary">
-          <StatTile label="Records set" value={String(summary.records)} tone="good" />
-          <StatTile label="Woodpecker cycles" value={String(summary.woodpeckerCycles)} />
-          <StatTile label="Best streak" value={summary.bestStreak > 0 ? String(summary.bestStreak) : '–'} />
-          <StatTile label="Best 3 min race" value={summary.bestRace3 > 0 ? String(summary.bestRace3) : '–'} />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {MODE_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const lines = stats.modes[item.id] ?? [];
-            return (
-              <a
-                key={item.id}
-                href={item.href}
-                data-testid={`mode-${item.id}`}
-                className={`${CARD_BASE} p-5 flex flex-col gap-3 hover:border-[#39ff88]/60 transition-colors focus-visible:outline-2 focus-visible:outline-[#39ff88]`}
+        <section className="flex flex-col gap-4" aria-label="Training overview">
+          <h3 className="text-xl font-bold text-white tracking-tight">Training Overview</h3>
+          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3" data-testid="overview">
+            {overview.tiles.map((tile) => (
+              <div
+                key={tile.id}
+                data-testid={`tile-${tile.id}`}
+                className={`${CARD_BASE} px-5 py-4 flex flex-col gap-1.5`}
               >
-                <span className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-2.5">
-                    <span className="w-9 h-9 rounded-xl bg-[#101b2f] border border-white/10 flex items-center justify-center">
-                      <Icon className="w-[18px] h-[18px] text-[#39ff88]" aria-hidden="true" />
-                    </span>
-                    <span className="text-lg font-bold text-white tracking-tight">{item.label}</span>
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-white/50" aria-hidden="true" />
+                <span className="text-sm font-semibold text-white leading-snug">{tile.label}</span>
+                <span
+                  className={`text-3xl font-bold tracking-tight tabular-nums ${tile.tone === 'good' ? 'text-[#39ff88]' : 'text-white'}`}
+                  data-testid={`value-${tile.id}`}
+                >
+                  {tile.value}
                 </span>
-                <span className="text-sm font-medium text-white/70 leading-relaxed">{item.description}</span>
-                <span className="mt-auto pt-2 border-t border-white/10 flex flex-col gap-1.5">
-                  {lines.length === 0 ? (
-                    <span className="text-sm font-medium text-white/50" data-testid={`empty-${item.id}`}>
-                      No results yet
-                    </span>
-                  ) : (
-                    lines.map((line) => (
-                      <span key={line.label} className="flex items-baseline justify-between gap-3 text-sm">
-                        <span className="font-medium text-white/70">{line.label}</span>
-                        <span className="font-bold text-white tabular-nums text-right">{line.value}</span>
-                      </span>
-                    ))
-                  )}
-                </span>
-              </a>
-            );
-          })}
-        </div>
+                <span className="text-sm font-medium text-white/60 leading-snug">{tile.sub}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-4" aria-label="Training analytics">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h3 className="text-xl font-bold text-white tracking-tight">Training Analytics</h3>
+              <p className="text-sm font-medium text-white/60">Performance trends across {rangeLabel}</p>
+            </div>
+            <div className="flex gap-1 bg-[#16233b] p-1 rounded-xl border border-white/10" role="group" aria-label="Time range">
+              {RANGES.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  aria-pressed={range === r}
+                  onClick={() => setRange(r)}
+                  className={`${segmentClass(range === r)} px-3.5`}
+                >
+                  {r} Days
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <BarChart
+              id="sessions"
+              title="Daily Training Activity"
+              subtitle={`Sessions per day, ${rangeLabel}`}
+              data={toData((p) => p.sessions)}
+              color="#39ff88"
+              unit="sessions"
+              emptyText="No training in this period yet"
+            />
+            <BarChart
+              id="minutes"
+              title="Training Time"
+              subtitle={`Minutes per day, ${rangeLabel}`}
+              data={toData((p) => p.minutes)}
+              color="#38bdf8"
+              unit="min"
+              emptyText="No training in this period yet"
+            />
+            <BarChart
+              id="puzzles"
+              title="Puzzles Solved"
+              subtitle={`Puzzles per day, ${rangeLabel}`}
+              data={toData((p) => p.puzzles)}
+              color="#fbbf24"
+              unit="puzzles"
+              emptyText="No puzzles solved in this period yet"
+            />
+            <BarChart
+              id="accuracy"
+              title="Accuracy"
+              subtitle={`Correct answers per day, ${rangeLabel}`}
+              data={toData((p) => p.accuracy)}
+              color="#a78bfa"
+              unit="%"
+              fixedMax={100}
+              formatValue={(v) => String(Math.round(v))}
+              emptyText="No answers in this period yet"
+            />
+          </div>
+        </section>
       </div>
     </AppShell>
   );

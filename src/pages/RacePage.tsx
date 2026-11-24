@@ -14,6 +14,7 @@ import { BOARD_SIZE_CLASS_MAP, loadAppearanceSettings } from '../utils/appearanc
 import { LadderFeed } from '../utils/ladderFeed';
 import { readSavedUsername } from '../utils/profile';
 import { playMoveSound } from '../utils/sound';
+import { recordActivity } from '../utils/activity';
 import {
   RACE_DURATIONS,
   RACE_LADDER,
@@ -69,6 +70,7 @@ export default function RacePage() {
   const solvedRef = useRef(0);
   const wrongRef = useRef(0);
   const endAtRef = useRef(0);
+  const runStartedAtRef = useRef(Date.now());
   const nextTimerRef = useRef<number | undefined>(undefined);
   const penaltyTimerRef = useRef<number | undefined>(undefined);
   const mutedRef = useRef(muted);
@@ -115,6 +117,13 @@ export default function RacePage() {
     const solvedCount = solvedRef.current;
     const wrongCount = wrongRef.current;
     const { best, isNewBest } = saveRaceBest(duration, solvedCount);
+    recordActivity({
+      mode: 'race',
+      ms: Math.min(duration * 1000, Date.now() - runStartedAtRef.current),
+      correct: solvedCount,
+      wrong: wrongCount,
+      puzzles: solvedCount,
+    });
     setResult({
       solved: solvedCount,
       wrong: wrongCount,
@@ -231,6 +240,7 @@ export default function RacePage() {
     if (runId !== runIdRef.current) return;
     const totalMs = settingsRef.current.duration * 1000;
     endAtRef.current = performance.now() + totalMs;
+    runStartedAtRef.current = Date.now();
     setTimeLeftMs(totalMs);
     setPhaseBoth('running');
     void showNextPuzzleRef.current();

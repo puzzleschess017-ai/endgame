@@ -8,6 +8,7 @@ import { BOARD_SIZE_CLASS_MAP, loadAppearanceSettings } from '../utils/appearanc
 import { LadderFeed } from '../utils/ladderFeed';
 import { readSavedUsername } from '../utils/profile';
 import { playMoveSound } from '../utils/sound';
+import { recordActivity } from '../utils/activity';
 import { STREAK_LADDER, STREAK_SKIPS_ALLOWED, loadBestStreak, saveBestStreak } from '../utils/streak';
 
 type Phase = 'setup' | 'loading' | 'running' | 'finished';
@@ -70,6 +71,13 @@ export default function StreakPage() {
     runIdRef.current += 1; // anything still loading belongs to a finished run
     advancingRef.current = false;
     const { best, isNewBest } = saveBestStreak(streakRef.current);
+    recordActivity({
+      mode: 'streak',
+      ms: Date.now() - runStartedAtRef.current,
+      correct: streakRef.current,
+      wrong: reason === 'wrong' ? 1 : 0,
+      puzzles: streakRef.current,
+    });
     setResult({
       streak: streakRef.current,
       best,
@@ -127,6 +135,7 @@ export default function StreakPage() {
       setNeedsRetry(true);
     }
   }, [finishRun, solver]);
+  const runStartedAtRef = useRef(Date.now());
   const showNextPuzzleRef = useRef(showNextPuzzle);
   showNextPuzzleRef.current = showNextPuzzle;
 
@@ -153,6 +162,7 @@ export default function StreakPage() {
       await feed.prepare();
     } catch (err) {
       if (runId !== runIdRef.current) return;
+    runStartedAtRef.current = Date.now();
       setError(err instanceof Error ? err.message : 'Could not load puzzles. Check your connection.');
       setPhaseBoth('setup');
       return;

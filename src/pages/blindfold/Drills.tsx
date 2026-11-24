@@ -23,6 +23,7 @@ import {
   type DrillQuestion,
 } from '../../utils/drills';
 import { formatClock } from '../../utils/race';
+import { recordActivity } from '../../utils/activity';
 import { playMoveSound } from '../../utils/sound';
 import { ModeTabs, type BlindfoldModeProps } from './shared';
 
@@ -81,6 +82,12 @@ export default function Drills({ username, muted, onToggleMute, mode, onModeChan
   const finish = useCallback(() => {
     if (phaseRef.current !== 'running') return;
     const { best, isNewBest } = saveDrillBest(kindRef.current, correctRef.current);
+    recordActivity({
+      mode: 'drills',
+      ms: DRILL_DURATION_MS,
+      correct: correctRef.current,
+      wrong: wrongRef.current,
+    });
     setResult({
       correct: correctRef.current,
       wrong: wrongRef.current,

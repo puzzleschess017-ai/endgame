@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { beforeEach, test } from 'node:test';
+import { loadActivity } from './activity.ts';
 import {
   WOODPECKER_HISTORY_LIMIT,
   WOODPECKER_HISTORY_STORAGE_KEY,
@@ -81,4 +82,13 @@ test('summary: cycles, puzzles, best accuracy, fastest perfect cycle', () => {
     bestAccuracy: 100,
     fastestPerfectMs: 480_000,
   });
+});
+
+test('finished cycles also count as training activity, once', () => {
+  const session = { id: 'act', config, cycleResults: [cycle(1, 45, 5, 600_000)] };
+  recordFinishedCycles(session);
+  recordFinishedCycles(session);
+  const days = Object.values(loadActivity());
+  assert.equal(days.length, 1);
+  assert.deepEqual(days[0], { sessions: 1, ms: 600_000, puzzles: 45, correct: 45, wrong: 5 });
 });

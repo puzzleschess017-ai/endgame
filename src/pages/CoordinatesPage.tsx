@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CoordinateBoard, { type SquareMark } from '../components/CoordinateBoard';
 import { CARD_CLASS, StatTile, segmentClass } from '../components/panelUi';
 import TrainerLayout from '../components/TrainerLayout';
+import { recordActivity } from '../utils/activity';
 import { BOARD_SIZE_CLASS_MAP, loadAppearanceSettings } from '../utils/appearance';
 import {
   accuracyPercent,
@@ -93,6 +94,7 @@ export default function CoordinatesPage() {
     const m = missesRef.current;
     const { duration } = settingsRef.current;
     const { best, isNewBest } = saveBestScore(duration, c);
+    recordActivity({ mode: 'coordinates', ms: duration * 1000, correct: c, wrong: m });
     setResult({ correct: c, misses: m, accuracy: accuracyPercent(c, m), best, isNewBest });
     setTimeLeftMs(0);
     setFlash(null);
