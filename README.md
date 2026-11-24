@@ -130,14 +130,13 @@ finished Woodpecker cycles are also kept in `ctg_woodpecker_history_v1` (last 30
 
 ### Sound
 
-Sounds are made with the Web Audio API in `src/utils/sound.ts` (no audio files). There are two
-styles, *Robotic* (the original electronic blips, the default) and *Classic* (a piece set down on a
-wooden board, built from filtered noise clicks and a short fading tone). The speaker button in the
-menu (`src/components/SoundMenu.tsx`) opens a bubble with the volume slider, a mute switch and the
-choice of style. Volume, style and mute are one setting for the whole site, saved in
-`ctg_sound_v1` and read with `useSoundSettings()`. Pages just call `playMoveSound('move' | 'capture' |
-'check' | 'error' | 'success')`; nothing needs to pass a muted flag around. In the volume slider 50 %
-is the loudness the site always had and 100 % is twice that.
+Sounds are made with the Web Audio API in `src/utils/sound.ts` (no audio files): short electronic
+blips. The speaker button in the menu (`src/components/SoundMenu.tsx`) opens a bubble with the volume
+slider and a mute switch; letting go of the slider plays one sound so the level can be heard. Volume
+and mute are one setting for the whole site, saved in `ctg_sound_v1` and read with
+`useSoundSettings()`. Pages just call `playMoveSound('move' | 'capture' | 'check' | 'error' |
+'success')`; nothing needs to pass a muted flag around. In the volume slider 50 % is the loudness
+the site always had and 100 % is twice that.
 
 ## Saved progress
 
