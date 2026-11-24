@@ -32,8 +32,10 @@ that exposes the puzzle API and serves the Vite dev server as middleware). Runni
 | --- | --- |
 | `src/` | React frontend (`App.tsx` is the Woodpecker trainer, `pages/` has one component per extra page such as `/coordinates`, plus `components/` and `utils/`) |
 | `server.ts` | Express server: `/api/puzzles/sample`, `/api/puzzles`, `/api/stats`, `/api/health` |
-| `endgame.db` | SQLite database with 40,000 Lichess puzzles (read-only at runtime) |
-| `scripts/build-endgame-db.mjs` | Rebuilds the database from the Lichess CSV dump |
+| `endgame.db` | SQLite database with about 80,000 Lichess puzzles, 18.6 MB (read-only at runtime) |
+| `scripts/build-endgame-db.mjs` | Original build of the database from the Lichess CSV dump |
+| `scripts/extend-db.mjs` | Adds more puzzles to the existing database (see "What is in the database") |
+| `scripts/lib/endgame-rule.mjs` | The material rule that decides what counts as a real endgame (used by both scripts) |
 | `public/` | Piece sets and fonts |
 
 ## Puzzle selection
@@ -41,9 +43,24 @@ that exposes the puzzle API and serves the Vite dev server as middleware). Runni
 Puzzles are sampled at random for the chosen difficulty (rating ranges: easy < 1200,
 medium 1200–1599, hard 1600–1999, expert 2000+). Only puzzles flagged `is_endgame = 1`
 are used. The flag is computed with the material rule in
-`applyFirstMoveAndCheckEndgame` (`scripts/build-endgame-db.mjs`); the Lichess
+`applyFirstMoveAndCheckEndgame` (`scripts/lib/endgame-rule.mjs`); the Lichess
 `endgame` tag alone is much too loose and also matches positions with many pieces.
 If the database has no `is_endgame` column, the server falls back to the tag.
+
+## What is in the database
+
+| Rows | What |
+| --- | --- |
+| 47,851 with `is_endgame = 1` | Real endgames. Only these are used by Woodpecker |
+| about 32,000 with `is_endgame = 0` | Puzzles of every other kind (opening, middlegame, tactics) plus endgame-tagged puzzles with too much material. Meant for Streak, Race and Blindfold, which use every row |
+| 10,445 one-move mates | Puzzles with exactly two moves (mate in 1); 4,419 of them have at most 10 pieces, for Blindfold |
+
+The database is kept small on purpose because the site runs on free hosting (about 230 bytes
+per puzzle). To add puzzles, download `lichess_db_puzzle.csv.zst` from
+https://database.lichess.org/#puzzles and run
+`node scripts/extend-db.mjs lichess_db_puzzle.csv.zst --dry` to see how many candidates there are, then
+without `--dry` to write them. Existing rows are never changed, the choice is deterministic and
+the new rows must pass the same quality filter (popularity at least 95, rating deviation at most 120).
 
 ## Production
 
