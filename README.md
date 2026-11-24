@@ -89,14 +89,14 @@ a dependency, run `bun install` and commit `bun.lock` together with
 
 | Path | What it is |
 | --- | --- |
-| `/` | Home, a dashboard: a Tools section (links to the Board Editor and the Endgame Tablebase), then six overview tiles (puzzles solved, total training time and sessions, daily streak, average accuracy, best Puzzle Streak, Woodpecker cycles) and four bar charts (sessions, minutes, puzzles, accuracy per day) with a 7 / 30 / 90 days switch. Everything is read from the browser. Unknown paths show Home too |
+| `/` | Home, a dashboard: six overview tiles (puzzles solved, total training time and sessions, daily streak, average accuracy, best Puzzle Streak, Woodpecker cycles) and four bar charts (sessions, minutes, puzzles, accuracy per day) with a 7 / 30 / 90 days switch. Everything is read from the browser. Unknown paths show Home too |
 | `/woodpecker` | Woodpecker endgame trainer (it used to be on `/`) |
 | `/statistics` | Statistics: personal records of every mode and the last Woodpecker cycles |
 | `/coordinates` | Coordinates trainer: click the named square against the clock (30 or 60 s, white, black or random side). The board has no labels, on purpose |
 | `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
 | `/race` | Puzzle Race: solve as many puzzles as possible in 1, 3 or 5 minutes, easy to hard from the whole database. A wrong move costs 10 seconds and moves on to the next puzzle. Best score per time saved in the browser (a run ended early is not saved) |
 | `/blindfold` | Blindfold: *Mate in 1* (memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; levels by number of pieces: up to 6, 8, 10 or any; a round is 10 puzzles) and *Drills* (60 s without a board: square color, same diagonal, knight route). Best scores saved in the browser |
-| `/editor` | Board Editor: set up any position by dragging pieces in from the palette (or choosing a piece and tapping squares), moving them, or dragging them off the board; side to move, castling rights and en passant; load or copy a FEN; "Check in the Tablebase" opens it on the Tablebase page. A position is only analyzable when it is legal (both kings, no pawns on the first or last rank, the side not to move is not in check) |
+| `/editor` | Board Editor: set up any position by dragging pieces in from the palette (or choosing a piece and tapping squares), moving them, or dragging them off the board; side to move, castling rights and en passant; load or copy a FEN; "Check in the Tablebase" opens it on the Tablebase page. The button is only on when the position is legal (both kings, no pawns on the first or last rank, the side not to move is not in check) |
 | `/tablebase` | Endgame Tablebase: perfect play for any position with 7 pieces or fewer (Syzygy tables, through the public Lichess tablebase). Shows who wins (with the mate distance when known), draws by the 50-move rule, and every legal move marked Wins / Draws / Loses, best first; click a move to play it, hover to see it as an arrow. Play on the board, step through the game (buttons, arrow keys, Home/End), try the example positions (K+Q vs K, K+R vs K, K+P vs K, Lucena), load a FEN, import and copy a PGN. `?fen=...` starts from a position. Positions with more than 7 pieces or with castling rights cannot be looked up and say so |
 
 Every path is served by the same app (`main.tsx` picks the page from the URL). Logic that can be
@@ -128,7 +128,7 @@ To show the mode's records on the Statistics page, add its lines to `collectHome
 `src/utils/activity.ts` when a run ends (`mode`, time spent in ms, correct and wrong answers, puzzles).
 
 The menu (`Sidebar.tsx`) is a full-height panel on the left from 1280 px width, with the groups
-PUZZLES, TRAINING and PROGRESS that can be collapsed (remembered in `ctg_sidebar_collapsed_v1`);
+PUZZLES, TRAINING, TOOLS (Board Editor, Endgame Tablebase) and PROGRESS that can be collapsed (remembered in `ctg_sidebar_collapsed_v1`);
 on smaller screens it is a bar on top of the page with one scrolling row. Every page sits inside
 `AppShell.tsx`, so the menu never moves. Each entry has a coloured icon.
 
