@@ -5,6 +5,11 @@ import Database from 'better-sqlite3';
 import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
 import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
 import { createTablebase } from './server/tablebase.ts';
+import { createTierLookup } from './server/tier.ts';
+import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './src/auth/project.ts';
+import { checkBlindfoldLevel, checkWoodpecker } from './src/utils/access.ts';
+import type { BlindfoldLevel } from './src/utils/blindfold.ts';
+import type { PuzzleCountOption } from './src/types.ts';
 import { cleanSiteUrl, pageFor, renderPage, robotsTxt, sitemapXml } from './server/seo.ts';
 import {
   RATING_BANDS,
@@ -449,13 +454,30 @@ async function startServer() {
     }
   });
 
-  app.get('/api/puzzles/sample', (req, res) => {
+  // Woodpecker sets and Blindfold levels depend on the plan (guest, signed in, Premium): see src/utils/access.ts.
+  const tierOf = createTierLookup({
+    url: process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL,
+    key: process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_KEY,
+  });
+
+  app.get('/api/puzzles/sample', async (req, res) => {
     const query = parseSampleQuery(req.query);
     if (!query.ok) {
       res.status(400).json({ error: query.error });
       return;
     }
     const { count: rawCount, difficulty, mode } = query;
+
+    const visitor = await tierOf(req.headers.authorization);
+    if (!visitor.ok) {
+      res.status(visitor.status).json({ error: visitor.error });
+      return;
+    }
+    const allowed = checkWoodpecker(visitor.tier, { puzzleCount: rawCount as PuzzleCountOption, difficulty, puzzleMode: mode });
+    if (!allowed.ok) {
+      res.status(403).json({ error: allowed.reason, needs: allowed.needs });
+      return;
+    }
 
     try {
       const database = getDb();
@@ -506,12 +528,22 @@ async function startServer() {
   });
 
   // Puzzles for Blindfold: random mate-in-1 puzzles, limited by the number of pieces on the board.
-  app.get('/api/puzzles/blindfold', (req, res) => {
+  app.get('/api/puzzles/blindfold', async (req, res) => {
     const params = parseBlindfoldParams(req.query);
     if (!params) {
       res.status(400).json({
-        error: 'Invalid blindfold request. maxPieces must be 6, 8, 10 or 32 and count 1-20.',
+        error: 'Invalid blindfold request. maxPieces must be 6, 7, 8, 10 or 32 and count 1-20.',
       });
+      return;
+    }
+    const visitor = await tierOf(req.headers.authorization);
+    if (!visitor.ok) {
+      res.status(visitor.status).json({ error: visitor.error });
+      return;
+    }
+    const allowed = checkBlindfoldLevel(visitor.tier, params.maxPieces as BlindfoldLevel);
+    if (!allowed.ok) {
+      res.status(403).json({ error: allowed.reason, needs: allowed.needs });
       return;
     }
     try {

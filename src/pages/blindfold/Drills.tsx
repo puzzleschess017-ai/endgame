@@ -7,6 +7,9 @@ import {
   segmentClass,
 } from '../../components/panelUi';
 import TrainerLayout from '../../components/TrainerLayout';
+import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
+import { useAuth } from '../../auth';
+import { clampDrill, tierFor, unlockHint } from '../../utils/access';
 import { useAppearance } from '../../hooks/useAppearance';
 import {
   DRILL_DURATION_MS,
@@ -40,7 +43,9 @@ interface DrillResult {
 const TICK_MS = 100;
 
 export default function Drills({ username, mode, onModeChange }: BlindfoldModeProps) {
-  const [kind, setKind] = useState<DrillKind>(() => loadDrillKind());
+  const { tier } = useAuth();
+  const locks = useLocks(tier);
+  const [kind, setKind] = useState<DrillKind>(() => clampDrill(tier, loadDrillKind()));
   const [appearance, setAppearance] = useAppearance();
   const [phase, setPhase] = useState<Phase>('setup');
   const [question, setQuestion] = useState<DrillQuestion | null>(null);
@@ -72,6 +77,12 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
         'Chess visualization drills: square colors, diagonals and knight routes, with no board to look at.',
       );
   }, []);
+
+  // A drill saved earlier (or left open by signing out) may not be allowed now.
+  useEffect(() => {
+    const allowed = clampDrill(tier, kind);
+    if (allowed !== kind) setKind(allowed);
+  }, [tier, kind]);
 
   useEffect(() => {
     saveDrillKind(kind);
@@ -208,18 +219,27 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
               <div className="space-y-2">
                 <span className="text-sm font-semibold text-white">Drill</span>
                 <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
-                  {DRILL_KINDS.map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      aria-pressed={kind === k}
-                      onClick={() => setKind(k)}
-                      className={`${segmentClass(kind === k)} !whitespace-normal leading-tight`}
-                    >
-                      {drillLabel(k)}
-                    </button>
-                  ))}
+                  {DRILL_KINDS.map((k) => {
+                    const needs = tierFor((a) => a.blindfold.drills, k);
+                    const locked = locks.isLocked(needs);
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        data-testid={`drill-${k}`}
+                        aria-pressed={kind === k}
+                        aria-disabled={locked || undefined}
+                        title={locked ? unlockHint(tier, needs) : undefined}
+                        onClick={locks.choose(`The ${drillLabel(k).toLowerCase()} drill`, needs, () => setKind(k))}
+                        className={`${segmentClass(kind === k)} ${locked ? LOCKED_CLASS : ''} !whitespace-normal leading-tight`}
+                      >
+                        {drillLabel(k)}
+                        {locked && <LockMark />}
+                      </button>
+                    );
+                  })}
                 </div>
+                <UnlockNotice notice={locks.notice} />
                 <p className="text-sm font-medium text-white/75 leading-relaxed">{drillDescription(kind)}</p>
               </div>
 

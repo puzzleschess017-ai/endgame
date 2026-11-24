@@ -185,8 +185,9 @@ export async function fetchBlindfoldRound(
   level: BlindfoldLevel,
   count: number = ROUND_SIZE,
   fetchImpl: typeof fetch = fetch,
+  headers: Record<string, string> = {},
 ): Promise<BlindfoldItem[]> {
-  const response = await fetchImpl(`/api/puzzles/blindfold?maxPieces=${level}&count=${count}`);
+  const response = await fetchImpl(`/api/puzzles/blindfold?maxPieces=${level}&count=${count}`, { headers });
   if (!response.ok) {
     let message = `Could not load puzzles (${response.status})`;
     try {

@@ -5,6 +5,8 @@ import type {
   PuzzleMode,
   TrainingConfig,
 } from '../types';
+import { tierFor, unlockHint, type Tier } from '../utils/access';
+import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from './locks';
 
 const PUZZLE_COUNTS: PuzzleCountOption[] = [10, 50, 100, 200];
 const CYCLE_COUNTS: CycleCountOption[] = [2, 3, 4, 5, 6, 7];
@@ -30,6 +32,8 @@ interface SettingsPanelProps {
   onStart: () => void;
   loading: boolean;
   error: string | null;
+  /** Who is training: decides which choices are open. */
+  tier: Tier;
 }
 
 export default function SettingsPanel({
@@ -38,8 +42,10 @@ export default function SettingsPanel({
   onStart,
   loading,
   error,
+  tier,
 }: SettingsPanelProps) {
   const puzzleMode: PuzzleMode = config.puzzleMode ?? 'endgame';
+  const locks = useLocks(tier);
   return (
     <div className="bg-[#16233b] border border-white/10 rounded-2xl p-6 flex flex-col gap-6 shadow-[0_16px_44px_rgba(4,9,20,0.45)]">
       <div>
@@ -63,18 +69,24 @@ export default function SettingsPanel({
         <div className="grid grid-cols-4 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
           {PUZZLE_COUNTS.map((count) => {
             const active = config.puzzleCount === count;
+            const needs = tierFor((a) => a.woodpecker.counts, count);
+            const locked = locks.isLocked(needs);
             return (
               <button
                 key={count}
                 type="button"
-                onClick={() => onChange({ ...config, puzzleCount: count })}
-                className={`py-2 px-2 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[40px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                data-testid={`count-${count}`}
+                aria-disabled={locked || undefined}
+                title={locked ? unlockHint(tier, needs) : undefined}
+                onClick={locks.choose(`${count} puzzles per cycle`, needs, () => onChange({ ...config, puzzleCount: count }))}
+                className={`${locked ? LOCKED_CLASS : ''} py-2 px-2 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[40px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
                   active
                     ? 'bg-[#39ff88] text-[#101b2f] shadow-sm'
                     : 'text-white/85 hover:text-white hover:bg-white/10'
                 }`}
               >
                 {count}
+                {locked && <LockMark />}
               </button>
             );
           })}
@@ -91,18 +103,24 @@ export default function SettingsPanel({
         <div className="grid grid-cols-6 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
           {CYCLE_COUNTS.map((cycles) => {
             const active = config.totalCycles === cycles;
+            const needs = tierFor((a) => a.woodpecker.cycles, cycles);
+            const locked = locks.isLocked(needs);
             return (
               <button
                 key={cycles}
                 type="button"
-                onClick={() => onChange({ ...config, totalCycles: cycles })}
-                className={`py-2 px-1 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[40px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                data-testid={`cycles-${cycles}`}
+                aria-disabled={locked || undefined}
+                title={locked ? unlockHint(tier, needs) : undefined}
+                onClick={locks.choose(`${cycles} cycles`, needs, () => onChange({ ...config, totalCycles: cycles }))}
+                className={`${locked ? LOCKED_CLASS : ''} py-2 px-1 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[40px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
                   active
                     ? 'bg-[#39ff88] text-[#101b2f] shadow-sm'
                     : 'text-white/85 hover:text-white hover:bg-white/10'
                 }`}
               >
                 {cycles}
+                {locked && <LockMark />}
               </button>
             );
           })}
@@ -114,13 +132,18 @@ export default function SettingsPanel({
         <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
           {PUZZLE_MODES.map((m) => {
             const active = puzzleMode === m.value;
+            const needs = tierFor((a) => a.woodpecker.types, m.value);
+            const locked = locks.isLocked(needs);
             return (
               <button
                 key={m.value}
                 type="button"
+                data-testid={`type-${m.value}`}
                 aria-pressed={active}
-                onClick={() => onChange({ ...config, puzzleMode: m.value })}
-                className={`py-2 px-3 rounded-lg text-left transition-all duration-150 cursor-pointer min-h-[46px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                aria-disabled={locked || undefined}
+                title={locked ? unlockHint(tier, needs) : undefined}
+                onClick={locks.choose(`The ${m.label} puzzle type`, needs, () => onChange({ ...config, puzzleMode: m.value }))}
+                className={`${locked ? LOCKED_CLASS : ''} py-2 px-3 rounded-lg text-left transition-all duration-150 cursor-pointer min-h-[46px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
                   active
                     ? 'bg-[#39ff88] text-[#101b2f] shadow-sm'
                     : 'text-white/85 hover:text-white hover:bg-white/10'
@@ -130,6 +153,7 @@ export default function SettingsPanel({
                 <div className={`text-xs font-semibold mt-0.5 ${active ? 'text-[#101b2f]/75' : 'text-white/60'}`}>
                   {m.hint}
                 </div>
+                {locked && <LockMark />}
               </button>
             );
           })}
@@ -143,13 +167,18 @@ export default function SettingsPanel({
         <div className="grid grid-cols-2 gap-2.5">
           {[...DIFFICULTIES, MIXED].map((d) => {
             const active = config.difficulty === d.value;
+            const needs = tierFor((a) => a.woodpecker.difficulties, d.value);
+            const locked = locks.isLocked(needs);
             return (
               <button
                 key={d.value}
                 type="button"
-                onClick={() => onChange({ ...config, difficulty: d.value })}
+                data-testid={`difficulty-${d.value}`}
+                onClick={locks.choose(`The ${d.label} difficulty`, needs, () => onChange({ ...config, difficulty: d.value }))}
                 aria-pressed={active}
-                className={`py-2.5 px-3.5 rounded-xl border text-left transition-all duration-150 cursor-pointer min-h-[46px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                aria-disabled={locked || undefined}
+                title={locked ? unlockHint(tier, needs) : undefined}
+                className={`${locked ? LOCKED_CLASS : ''} py-2.5 px-3.5 rounded-xl border text-left transition-all duration-150 cursor-pointer min-h-[46px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
                   d.value === 'mixed' ? 'col-span-2' : ''
                 } ${
                   active
@@ -161,11 +190,14 @@ export default function SettingsPanel({
                 <div className={`text-xs font-semibold tabular-nums mt-0.5 ${active ? 'text-[#39ff88]' : 'text-white/65'}`}>
                   {d.range}
                 </div>
+                {locked && <LockMark />}
               </button>
             );
           })}
         </div>
       </div>
+
+      <UnlockNotice notice={locks.notice} />
 
       {error && (
         <div

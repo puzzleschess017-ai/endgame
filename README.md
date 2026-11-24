@@ -96,7 +96,7 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
 | `/race` | Puzzle Race: solve as many puzzles as possible in 1, 3 or 5 minutes, easy to hard from the whole database. A wrong move costs 10 seconds and moves on to the next puzzle. Best score per time saved in the browser (a run ended early is not saved) |
 | `/login` | Sign in, create an account or play as a guest; the account page (name, email, plan, Sign out) for someone signed in |
-| `/blindfold` | Blindfold: *Mate in 1* (memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; levels by number of pieces: up to 6, 8, 10 or any; a round is 10 puzzles) and *Drills* (60 s without a board: square color, same diagonal, knight route). Best scores saved in the browser |
+| `/blindfold` | Blindfold: *Mate in 1* (memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; levels by number of pieces: up to 6, 7, 8, 10 or any; a round is 10 puzzles) and *Drills* (60 s without a board: square color, same diagonal, knight route). Best scores saved in the browser |
 | `/editor` | Board Editor: set up any position by dragging pieces in from the palette (or choosing a piece and tapping squares), moving them, or dragging them off the board; side to move, castling rights and en passant; load or copy a FEN; "Check in the Tablebase" opens it on the Tablebase page. The button is only on when the position is legal (both kings, no pawns on the first or last rank, the side not to move is not in check) |
 | `/tablebase` | Endgame Tablebase: perfect play for any position with 7 pieces or fewer (Syzygy tables, through the public Lichess tablebase). Shows who wins (with the mate distance when known), draws by the 50-move rule, and every legal move marked Wins / Draws / Loses, best first; click a move to play it, hover to see it as an arrow. Play on the board, step through the game (buttons, arrow keys, Home/End), try the example positions (K+Q vs K, K+R vs K, K+P vs K, Lucena), load a FEN, import and copy a PGN. `?fen=...` starts from a position. Positions with more than 7 pieces or with castling rights cannot be looked up and say so |
 
@@ -104,7 +104,7 @@ Every path is served by the same app (`main.tsx` picks the page from the URL). L
 tested without a browser lives in `src/utils/`; run all its tests with
 `npx tsx --test src/utils/*.test.ts`.
 
-Blindfold gets random mate-in-1 puzzles from `GET /api/puzzles/blindfold?maxPieces=8&count=10` (`maxPieces` is 6, 8, 10 or 32 = any; pieces are counted after the opponent's first move; the list of eligible ids is built once in memory by `server/blindfold.ts`). Run its tests with `npx tsx --test server/*.test.ts`.
+Blindfold gets random mate-in-1 puzzles from `GET /api/puzzles/blindfold?maxPieces=8&count=10` (`maxPieces` is 6, 7, 8, 10 or 32 = any; pieces are counted after the opponent's first move; the list of eligible ids is built once in memory by `server/blindfold.ts`). Run its tests with `npx tsx --test server/*.test.ts`.
 
 Streak and Race get their puzzles from `GET /api/puzzles/ladder?start=500&step=40&count=30` (Race asks for `step=25`): one
 random puzzle per rating step (start, start + step, ...), easy first, from every puzzle in the
@@ -180,7 +180,7 @@ should stay 50-170 characters and titles under 70; `server/seo.test.ts` checks t
 
 ### Accounts (sign-in)
 
-Sign-in uses [Supabase](https://supabase.com) (project address and public key in `src/auth/index.ts`;
+Sign-in uses [Supabase](https://supabase.com) (project address and public key in `src/auth/project.ts`;
 they are public by design, the data is protected by row level security; `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_PUBLISHABLE_KEY` override them). There is no extra package: `src/auth/client.ts` talks to
 Supabase with `fetch`, `src/auth/store.ts` keeps who is signed in (saved in `ctg_auth_v1`, token refreshed
@@ -191,8 +191,30 @@ shows the account and Sign out. `?next=/streak` sends the visitor back to that p
 `supabase/schema.sql` is pasted once into Supabase (SQL Editor) and makes the `profiles` table (name and
 plan, one row per account, created by a trigger). People can read their row and change their name only;
 the plan (`free` or `premium`) is changed by hand in the Supabase Table Editor until payments exist.
-`src/utils/access.ts` says what each tier may use (Woodpecker and Blindfold limits); it is not applied to
-the pages yet.
+
+#### What each plan may use
+
+`src/utils/access.ts` is the one table of rules, used by the pages and by the server.
+
+| | Guest | Signed in (free) | Premium |
+|---|---|---|---|
+| Woodpecker type | Classic | Classic | Classic and Endgame |
+| Difficulty | Easy, Medium | Easy, Medium, Hard | all, with Expert and Mixed |
+| Puzzles per cycle | 10, 50 | 10, 50, 100 | 10, 50, 100, 200 |
+| Cycles | 2, 3 | 2, 3, 4 | 2 to 7 |
+| Blindfold mate in 1 | closed | up to 6 or 7 pieces, 10 s | all levels, 5, 10 and 20 s |
+| Blindfold drills | closed | square colours | all |
+| Streak, Race, Coordinates, Board Editor, Tablebase, Statistics | yes | yes | yes |
+
+Choices a visitor may not use stay visible with a small lock; clicking one says to sign in or that it is
+Premium (`src/components/locks.tsx`). Guests who open Blindfold see a page asking them to create a free
+account. The server checks the rest: `/api/puzzles/sample` (type, difficulty, number of puzzles) and
+`/api/puzzles/blindfold` (pieces) read the sign-in token from the `Authorization` header, ask Supabase who it
+is and which plan the account has (`server/tier.ts`, answers kept for a minute) and answer `403` with
+`{ error, needs }` when the plan is too low, `401` when the token has expired. If Supabase cannot be
+reached a signed-in visitor counts as free. The number of cycles, the memorize time and the drills never
+reach the server, so those are locked in the browser only. `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`
+can override the project on the server too.
 
 ## Saved progress
 

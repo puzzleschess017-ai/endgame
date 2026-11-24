@@ -2,13 +2,12 @@
 import { useSyncExternalStore } from 'react';
 import { INTRO_COMPLETED_STORAGE_KEY, USERNAME_STORAGE_KEY } from '../utils/profile';
 import { createAuthClient } from './client';
+import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './project';
 import { AUTH_STORAGE_KEY, createAuthStore, type AuthState } from './store';
 
-// The project address and the public key are not secrets (they are in every Supabase web page);
-// the data is protected by row level security. Environment values override them for testing.
-const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() || 'https://nntspsmkanolnevjbzxf.supabase.co';
-const SUPABASE_KEY =
-  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined)?.trim() || 'sb_publishable_hxNtqhQDA1fQlXL2vzzpnQ_he5SfoSw';
+// Environment values override the project (used for testing against a fake server).
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() || DEFAULT_SUPABASE_URL;
+const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined)?.trim() || DEFAULT_SUPABASE_KEY;
 
 const noStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
 
@@ -47,4 +46,10 @@ if (typeof window !== 'undefined') {
 /** The current visitor: `tier` is "guest", "free" or "premium". */
 export function useAuth(): AuthState {
   return useSyncExternalStore(auth.subscribe, auth.getState, auth.getState);
+}
+
+/** Headers that tell the server who is asking (nothing for a guest). Used for the requests that depend on the plan. */
+export function authHeaders(): Record<string, string> {
+  const session = auth.getState().session;
+  return session ? { Authorization: `Bearer ${session.accessToken}` } : {};
 }

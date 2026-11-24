@@ -20,18 +20,13 @@ import {
   saveSessionToStorage,
 } from './utils/chessHelpers';
 import { useAppearance } from './hooks/useAppearance';
+import { authHeaders, useAuth } from './auth';
+import { checkWoodpecker, defaultWoodpecker } from './utils/access';
 import { playMoveSound } from './utils/sound';
 import { recordFinishedCycles } from './utils/woodpeckerHistory';
 import { INTRO_COMPLETED_STORAGE_KEY, USERNAME_STORAGE_KEY } from './utils/profile';
 
 const PREVIEW_FEN = '1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1';
-
-const DEFAULT_CONFIG: TrainingConfig = {
-  puzzleCount: 50,
-  totalCycles: 4,
-  puzzleMode: 'endgame',
-  difficulty: 'medium',
-};
 
 interface BoardState {
   fen: string;
@@ -65,7 +60,8 @@ export default function App() {
     () => !(readSavedUsername() && readIntroCompleted())
   );
 
-  const [config, setConfig] = useState<TrainingConfig>(DEFAULT_CONFIG);
+  const { tier } = useAuth();
+  const [config, setConfig] = useState<TrainingConfig>(() => defaultWoodpecker(tier));
   const [session, setSession] = useState<TrainingSession | null>(() => loadSessionFromStorage());
   const [appearance, setAppearance] = useAppearance();
   const [loading, setLoading] = useState(false);
@@ -109,6 +105,11 @@ export default function App() {
     timersRef.current.push(id);
     return id;
   }, []);
+
+  // Signing out (here or in another tab) closes the choices that need an account.
+  useEffect(() => {
+    if (!checkWoodpecker(tier, config).ok) setConfig(defaultWoodpecker(tier));
+  }, [tier, config]);
 
   // Persist the session whenever it changes and on beforeunload (the appearance saves itself).
   useEffect(() => {
@@ -537,6 +538,11 @@ export default function App() {
   }, [currentPuzzle, session]);
 
   const handleStartTraining = useCallback(async () => {
+    const allowed = checkWoodpecker(tier, config);
+    if (!allowed.ok) {
+      setLoadError(allowed.reason);
+      return;
+    }
     setLoading(true);
     setLoadError(null);
     try {
@@ -545,7 +551,7 @@ export default function App() {
         difficulty: config.difficulty,
         mode: config.puzzleMode ?? 'endgame',
       });
-      const res = await fetch(`/api/puzzles/sample?${params.toString()}`);
+      const res = await fetch(`/api/puzzles/sample?${params.toString()}`, { headers: authHeaders() });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to load puzzles');
@@ -579,7 +585,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [config]);
+  }, [config, tier]);
 
   const handleResetSession = useCallback(() => {
     clearScheduledTimeouts();
@@ -664,6 +670,7 @@ export default function App() {
               onStart={handleStartTraining}
               loading={loading}
               error={loadError}
+              tier={tier}
             />
           ) : (
             <TrainingSidebar
