@@ -208,15 +208,14 @@ window comes back after signing out.
 |---|---|---|---|
 | Woodpecker type | Classic | Classic | Classic and Endgame |
 | Difficulty | Easy, Medium | Easy, Medium, Hard | all, with Expert and Mixed |
-| Puzzles per cycle | 10, 50 | 10, 50, 100 | 10, 50, 100, 200 |
-| Cycles | 2, 3 | 2, 3, 4 | 2 to 7 |
-| Blindfold mate in 1 | closed | up to 6 or 7 pieces, 10 s | all levels, 5, 10 and 20 s |
-| Blindfold drills | closed | square colours | all |
+| Puzzles per cycle | 10, 50 | 10, 50, 100 | 10, 50, 100, 200, 300, 500 |
+| Cycles | 2, 3 | 2, 3, 4 | 2 to 9 |
+| Blindfold mate in 1 | page visible, every choice locked | up to 6 or 7 pieces, 10 s | all levels, 5, 10 and 20 s |
+| Blindfold drills | page visible, every choice locked | square colours | all |
 | Streak, Race, Coordinates, Board Editor, Tablebase, Statistics | yes | yes | yes |
 
 Choices a visitor may not use stay visible with a small lock; clicking one says to sign in or that it is
-Premium (`src/components/locks.tsx`). Guests who open Blindfold see a page asking them to create a free
-account. The server checks the rest: `/api/puzzles/sample` (type, difficulty, number of puzzles) and
+Premium (`src/components/locks.tsx`). A guest who opens Blindfold sees the same page as everybody, with every choice locked and "Create a free account to play" instead of Start. The server checks the rest: `/api/puzzles/sample` (type, difficulty, number of puzzles) and
 `/api/puzzles/blindfold` (pieces) read the sign-in token from the `Authorization` header, ask Supabase who it
 is and which plan the account has (`server/tier.ts`, answers kept for a minute) and answer `403` with
 `{ error, needs }` when the plan is too low, `401` when the token has expired. If Supabase cannot be

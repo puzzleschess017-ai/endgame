@@ -8,8 +8,8 @@ import type {
 import { tierFor, unlockHint, type Tier } from '../utils/access';
 import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from './locks';
 
-const PUZZLE_COUNTS: PuzzleCountOption[] = [10, 50, 100, 200];
-const CYCLE_COUNTS: CycleCountOption[] = [2, 3, 4, 5, 6, 7];
+const PUZZLE_COUNTS: PuzzleCountOption[] = [10, 50, 100, 200, 300, 500];
+const CYCLE_COUNTS: CycleCountOption[] = [2, 3, 4, 5, 6, 7, 8, 9];
 const DIFFICULTIES: Array<{ value: Difficulty; label: string; range: string }> = [
   { value: 'easy', label: 'Easy', range: '< 1200' },
   { value: 'medium', label: 'Medium', range: '1200–1599' },
@@ -66,7 +66,7 @@ export default function SettingsPanel({
             {config.puzzleCount} per cycle
           </span>
         </div>
-        <div className="grid grid-cols-4 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+        <div className="grid grid-cols-6 gap-1 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
           {PUZZLE_COUNTS.map((count) => {
             const active = config.puzzleCount === count;
             const needs = tierFor((a) => a.woodpecker.counts, count);
@@ -100,7 +100,7 @@ export default function SettingsPanel({
             {config.totalCycles} cycles
           </span>
         </div>
-        <div className="grid grid-cols-6 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+        <div className="grid grid-cols-8 gap-1 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
           {CYCLE_COUNTS.map((cycles) => {
             const active = config.totalCycles === cycles;
             const needs = tierFor((a) => a.woodpecker.cycles, cycles);

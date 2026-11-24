@@ -49,6 +49,7 @@ function signInHref(): string {
 export function UnlockNotice({ notice }: { notice: LockNotice | null }) {
   if (!notice) return null;
   const signIn = notice.hint === 'Sign in to unlock';
+  const what = notice.what.charAt(0).toUpperCase() + notice.what.slice(1);
   return (
     <div
       role="status"
@@ -58,14 +59,14 @@ export function UnlockNotice({ notice }: { notice: LockNotice | null }) {
       <Lock aria-hidden="true" className="h-4 w-4 mt-0.5 shrink-0 text-[#39ff88]" />
       {signIn ? (
         <span>
-          {notice.what} is free once you have an account.{' '}
+          {what} is free once you have an account.{' '}
           <a href={signInHref()} data-testid="unlock-sign-in" className="font-bold text-[#39ff88] underline underline-offset-2">
             Sign in or create an account
           </a>
           .
         </span>
       ) : (
-        <span>{notice.what} is part of Premium.</span>
+        <span>{what} is part of Premium.</span>
       )}
     </div>
   );

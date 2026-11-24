@@ -9,7 +9,7 @@ import {
 import TrainerLayout from '../../components/TrainerLayout';
 import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
 import { useAuth } from '../../auth';
-import { clampDrill, tierFor, unlockHint } from '../../utils/access';
+import { canOpenBlindfold, clampDrill, tierFor, unlockHint } from '../../utils/access';
 import { useAppearance } from '../../hooks/useAppearance';
 import {
   DRILL_DURATION_MS,
@@ -28,7 +28,7 @@ import {
 import { formatClock } from '../../utils/race';
 import { recordActivity } from '../../utils/activity';
 import { playMoveSound } from '../../utils/sound';
-import { ModeTabs, type BlindfoldModeProps } from './shared';
+import { GuestStart, ModeTabs, type BlindfoldModeProps } from './shared';
 
 type Phase = 'setup' | 'running' | 'finished';
 
@@ -120,6 +120,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
   }, [phase, finish]);
 
   const start = useCallback(() => {
+    if (!canOpenBlindfold(tier)) return;
     correctRef.current = 0;
     wrongRef.current = 0;
     setCorrect(0);
@@ -132,7 +133,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
     questionRef.current = first;
     setQuestion(first);
     go('running');
-  }, []);
+  }, [tier]);
 
   const answer = useCallback((value: string) => {
     const q = questionRef.current;
@@ -247,9 +248,13 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
                 {best > 0 ? `Your best (${drillLabel(kind)}): ${best}` : 'No record yet for this drill.'}
               </p>
 
-              <button type="button" onClick={start} className={PRIMARY_BUTTON_CLASS}>
-                Start
-              </button>
+              {canOpenBlindfold(tier) ? (
+                <button type="button" onClick={start} className={PRIMARY_BUTTON_CLASS}>
+                  Start
+                </button>
+              ) : (
+                <GuestStart />
+              )}
             </div>
           )}
 
