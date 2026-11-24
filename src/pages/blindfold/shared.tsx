@@ -79,8 +79,6 @@ export function ViewBoard({
 
 export interface BlindfoldModeProps {
   username?: string;
-  muted: boolean;
-  onToggleMute: () => void;
   mode: BlindfoldMode;
   onModeChange: (mode: BlindfoldMode) => void;
 }

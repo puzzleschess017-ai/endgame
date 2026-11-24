@@ -49,7 +49,6 @@ export default function RacePage() {
   const [settings, setSettings] = useState<RaceSettings>(() => loadRaceSettings());
   const [appearance, setAppearance] = useAppearance();
   const [username] = useState(() => readSavedUsername());
-  const [muted, setMuted] = useState(false);
 
   const [phase, setPhase] = useState<Phase>('setup');
   const [solved, setSolved] = useState(0);
@@ -73,8 +72,6 @@ export default function RacePage() {
   const runStartedAtRef = useRef(Date.now());
   const nextTimerRef = useRef<number | undefined>(undefined);
   const penaltyTimerRef = useRef<number | undefined>(undefined);
-  const mutedRef = useRef(muted);
-  mutedRef.current = muted;
 
   const setPhaseBoth = (next: Phase) => {
     phaseRef.current = next;
@@ -103,7 +100,6 @@ export default function RacePage() {
   useEffect(() => clearTimers, [clearTimers]);
 
   const solver = usePuzzleSolver({
-    muted,
     onSolved: () => handleSolvedRef.current(),
     onFailed: (p, info) => handleFailedRef.current(p, info),
   });
@@ -134,7 +130,7 @@ export default function RacePage() {
     setTimeLeftMs(0);
     setPenaltyVisible(false);
     setPhaseBoth('finished');
-    playMoveSound('success', mutedRef.current);
+    playMoveSound('success');
   }, [clearTimers, solver]);
 
   /** Loads the next puzzle of this run. Safe to call again after an error. */
@@ -274,8 +270,6 @@ export default function RacePage() {
   return (
     <TrainerLayout
       username={username}
-      muted={muted}
-      onToggleMute={() => setMuted((v) => !v)}
       appearance={appearance}
       onAppearanceChange={setAppearance}
       board={

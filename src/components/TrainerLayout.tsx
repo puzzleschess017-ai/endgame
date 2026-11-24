@@ -8,8 +8,6 @@ import AppearanceSettingsModal from './AppearanceSettingsModal';
 
 interface TrainerLayoutProps {
   username?: string;
-  muted: boolean;
-  onToggleMute: () => void;
   /** Board size, colours and piece set (from `useAppearance`). */
   appearance: AppearanceSettings;
   onAppearanceChange: (next: AppearanceSettings) => void;
@@ -32,8 +30,6 @@ const ROUND_BUTTON_CLASS =
  */
 export default function TrainerLayout({
   username,
-  muted,
-  onToggleMute,
   appearance,
   onAppearanceChange,
   board,
@@ -48,7 +44,7 @@ export default function TrainerLayout({
 
   return (
     <>
-      <AppShell username={username} muted={muted} onToggleMute={onToggleMute}>
+      <AppShell username={username}>
         <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 lg:gap-8 pt-1 xl:pt-0">
           <section
             className={`w-full ${boardSizeClassFor(appearance.boardSize)} transition-[max-width] duration-200 ease-out flex flex-col gap-3 shrink-0`}

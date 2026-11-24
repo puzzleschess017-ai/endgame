@@ -8,10 +8,9 @@ import {
   House,
   Repeat,
   Timer,
-  Volume2,
-  VolumeX,
   type LucideIcon,
 } from 'lucide-react';
+import SoundMenu from './SoundMenu';
 
 export interface NavItem {
   id: string;
@@ -160,15 +159,13 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
 
 interface SidebarProps {
   username?: string;
-  muted: boolean;
-  onToggleMute: () => void;
 }
 
 /**
  * The menu: a full-height panel on the left of big screens, with collapsible groups. On smaller
  * screens it is a bar on top of the page and the entries scroll sideways in one row.
  */
-export default function Sidebar({ username, muted, onToggleMute }: SidebarProps) {
+export default function Sidebar({ username }: SidebarProps) {
   const path = currentPath();
   const [collapsed, setCollapsed] = useState<string[]>(() => loadCollapsed());
 
@@ -205,15 +202,7 @@ export default function Sidebar({ username, muted, onToggleMute }: SidebarProps)
               Hello, {username}
             </span>
           )}
-          <button
-            type="button"
-            onClick={onToggleMute}
-            className="p-2 rounded-xl text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0"
-            aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}
-            title={muted ? 'Unmute sounds' : 'Mute sounds'}
-          >
-            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </button>
+          <SoundMenu />
         </div>
 
         <nav
@@ -261,15 +250,7 @@ export default function Sidebar({ username, muted, onToggleMute }: SidebarProps)
             'Hello!'
           )}
         </span>
-        <button
-          type="button"
-          onClick={onToggleMute}
-          className="p-2 rounded-xl text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0"
-          aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}
-          title={muted ? 'Unmute sounds' : 'Mute sounds'}
-        >
-          {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-        </button>
+        <SoundMenu />
       </div>
     </aside>
   );

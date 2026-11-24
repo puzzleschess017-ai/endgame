@@ -30,7 +30,6 @@ export default function HomePage() {
   const [overview] = useState(() => collectOverview());
   const [username] = useState(() => readSavedUsername());
   const [range, setRange] = useState<Range>(7);
-  const [muted, setMuted] = useState(false);
 
   useEffect(() => {
     document.title = 'Chess Tactics Guide | Chess training: endgames, puzzles and blindfold';
@@ -49,7 +48,7 @@ export default function HomePage() {
   const rangeLabel = `last ${range} days`;
 
   return (
-    <AppShell username={username} muted={muted} onToggleMute={() => setMuted((v) => !v)}>
+    <AppShell username={username}>
       <div className="max-w-[1100px] flex flex-col gap-8" data-testid="home">
         <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
           {username ? `Hello, ${username}!` : 'Hello!'}

@@ -29,7 +29,6 @@ const NEXT_PUZZLE_DELAY_MS = 450;
 export default function StreakPage() {
   const [appearance, setAppearance] = useAppearance();
   const [username] = useState(() => readSavedUsername());
-  const [muted, setMuted] = useState(false);
 
   const [phase, setPhase] = useState<Phase>('setup');
   const [streak, setStreak] = useState(0);
@@ -47,8 +46,6 @@ export default function StreakPage() {
   const skipsRef = useRef(STREAK_SKIPS_ALLOWED);
   const advanceTimerRef = useRef<number | undefined>(undefined);
   const advancingRef = useRef(false);
-  const mutedRef = useRef(muted);
-  mutedRef.current = muted;
 
   const setPhaseBoth = (next: Phase) => {
     phaseRef.current = next;
@@ -109,7 +106,7 @@ export default function StreakPage() {
     [finishRun],
   );
 
-  const solver = usePuzzleSolver({ muted, onSolved: handleSolved, onFailed: handleFailed });
+  const solver = usePuzzleSolver({ onSolved: handleSolved, onFailed: handleFailed });
 
   /** Loads the next puzzle of this run. Safe to call again after an error. */
   const showNextPuzzle = useCallback(async () => {
@@ -186,7 +183,7 @@ export default function StreakPage() {
     if (phaseRef.current !== 'running' || skipsRef.current <= 0 || advancingRef.current) return;
     skipsRef.current -= 1;
     setSkipsLeft(skipsRef.current);
-    playMoveSound('move', mutedRef.current);
+    playMoveSound('move');
     void showNextPuzzleRef.current();
   }, []);
 
@@ -203,8 +200,6 @@ export default function StreakPage() {
   return (
     <TrainerLayout
       username={username}
-      muted={muted}
-      onToggleMute={() => setMuted((v) => !v)}
       appearance={appearance}
       onAppearanceChange={setAppearance}
       board={

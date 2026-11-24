@@ -46,7 +46,7 @@ interface RoundResult {
 
 const TICK_MS = 100;
 
-export default function MateInOne({ username, muted, onToggleMute, mode, onModeChange }: BlindfoldModeProps) {
+export default function MateInOne({ username, mode, onModeChange }: BlindfoldModeProps) {
   const [settings, setSettings] = useState<BlindfoldSettings>(() => loadBlindfoldSettings());
   const [appearance, setAppearance] = useAppearance();
 
@@ -71,8 +71,6 @@ export default function MateInOne({ username, muted, onToggleMute, mode, onModeC
   const endAtRef = useRef(0);
   const roundStartedAtRef = useRef(Date.now());
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const mutedRef = useRef(muted);
-  mutedRef.current = muted;
 
   const go = (next: Phase) => {
     phaseRef.current = next;
@@ -163,7 +161,7 @@ export default function MateInOne({ username, muted, onToggleMute, mode, onModeC
     });
     setResult({ correct: correctRef.current, total, best, isNewBest });
     go('finished');
-    playMoveSound('success', mutedRef.current);
+    playMoveSound('success');
   }, []);
 
   const current = items[index];
@@ -172,9 +170,9 @@ export default function MateInOne({ username, muted, onToggleMute, mode, onModeC
     if (kind === 'correct') {
       correctRef.current += 1;
       setCorrect(correctRef.current);
-      playMoveSound('success', mutedRef.current);
+      playMoveSound('success');
     } else {
-      playMoveSound('error', mutedRef.current);
+      playMoveSound('error');
     }
     setFeedback({ kind, typedSan });
     go('feedback');
@@ -240,8 +238,6 @@ export default function MateInOne({ username, muted, onToggleMute, mode, onModeC
   return (
     <TrainerLayout
       username={username}
-      muted={muted}
-      onToggleMute={onToggleMute}
       appearance={appearance}
       onAppearanceChange={setAppearance}
       board={

@@ -71,7 +71,6 @@ export default function App() {
   const [appearance, setAppearance] = useAppearance();
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [muted, setMuted] = useState(false);
   const [syncToken, setSyncToken] = useState(0);
   const [hintArrow, setHintArrow] = useState<[Key, Key] | null>(null);
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion | null>(null);
@@ -226,11 +225,11 @@ export default function App() {
       });
 
       if (initialChess.inCheck()) {
-        playMoveSound('check', muted);
+        playMoveSound('check');
       } else if (moveResult.captured) {
-        playMoveSound('capture', muted);
+        playMoveSound('capture');
       } else {
-        playMoveSound('move', muted);
+        playMoveSound('move');
       }
     }, 200);
 
@@ -360,7 +359,7 @@ export default function App() {
         playedUci === expectedUci || (isLastMove && testChess.isCheckmate());
 
       if (!isCorrect) {
-        playMoveSound('error', muted);
+        playMoveSound('error');
         setFeedback({
           type: 'error',
           message: 'Incorrect move — try again',
@@ -397,7 +396,7 @@ export default function App() {
       setHintArrow(null);
 
       if (mIdx + 1 >= currentPuzzle.moves.length) {
-        playMoveSound('success', muted);
+        playMoveSound('success');
         const oppColor = testChess.turn() === 'w' ? 'white' : 'black';
         setBoardState((prev) => ({
           ...prev,
@@ -430,11 +429,11 @@ export default function App() {
       }
 
       if (testChess.inCheck()) {
-        playMoveSound('check', muted);
+        playMoveSound('check');
       } else if (moveResult.captured) {
-        playMoveSound('capture', muted);
+        playMoveSound('capture');
       } else {
-        playMoveSound('move', muted);
+        playMoveSound('move');
       }
 
       const oppTurn = testChess.turn() === 'w' ? 'white' : 'black';
@@ -458,11 +457,11 @@ export default function App() {
         const playerTurn = testChess.turn() === 'w' ? 'white' : 'black';
 
         if (testChess.inCheck()) {
-          playMoveSound('check', muted);
+          playMoveSound('check');
         } else if (oppResult.captured) {
-          playMoveSound('capture', muted);
+          playMoveSound('capture');
         } else {
-          playMoveSound('move', muted);
+          playMoveSound('move');
         }
 
         setBoardState((prev) => ({
@@ -480,7 +479,7 @@ export default function App() {
         });
       }, 280);
     },
-    [session, currentPuzzle, muted, scheduleTimeout, advanceToNextPuzzle]
+    [session, currentPuzzle, scheduleTimeout, advanceToNextPuzzle]
   );
 
   const handleUserMove = useCallback(
@@ -634,8 +633,6 @@ export default function App() {
   return (
     <TrainerLayout
       username={username}
-      muted={muted}
-      onToggleMute={() => setMuted((m) => !m)}
       appearance={appearance}
       onAppearanceChange={setAppearance}
       board={

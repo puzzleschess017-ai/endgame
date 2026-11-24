@@ -37,7 +37,6 @@ export interface FailedInfo {
 }
 
 interface Options {
-  muted: boolean;
   onSolved: (puzzle: Puzzle) => void;
   onFailed: (puzzle: Puzzle, info: FailedInfo) => void;
 }
@@ -55,7 +54,7 @@ const PREVIEW_BOARD: SolverBoard = {
 const colorOf = (chess: Chess): Color => (chess.turn() === 'w' ? 'white' : 'black');
 const asKey = (square: string) => square as Key;
 
-export function usePuzzleSolver({ muted, onSolved, onFailed }: Options) {
+export function usePuzzleSolver({ onSolved, onFailed }: Options) {
   const [board, setBoard] = useState<SolverBoard>(PREVIEW_BOARD);
   const [syncToken, setSyncToken] = useState(0);
   const [hintArrow, setHintArrow] = useState<[Key, Key] | null>(null);
@@ -66,8 +65,6 @@ export function usePuzzleSolver({ muted, onSolved, onFailed }: Options) {
   const moveIndexRef = useRef(1);
   const settledRef = useRef(true);
   const timersRef = useRef<number[]>([]);
-  const mutedRef = useRef(muted);
-  mutedRef.current = muted;
   const onSolvedRef = useRef(onSolved);
   onSolvedRef.current = onSolved;
   const onFailedRef = useRef(onFailed);
@@ -89,7 +86,7 @@ export function usePuzzleSolver({ muted, onSolved, onFailed }: Options) {
   useEffect(() => clearTimers, [clearTimers]);
 
   const playSoundFor = useCallback((chess: Chess, captured: boolean) => {
-    playMoveSound(chess.inCheck() ? 'check' : captured ? 'capture' : 'move', mutedRef.current);
+    playMoveSound(chess.inCheck() ? 'check' : captured ? 'capture' : 'move');
   }, []);
 
   const loadPuzzle = useCallback(
@@ -185,7 +182,7 @@ export function usePuzzleSolver({ muted, onSolved, onFailed }: Options) {
         clearTimers();
         const before = new Chess(chessRef.current.fen());
         const expectedMove = applyUciMove(before, expectedUci);
-        playMoveSound('error', mutedRef.current);
+        playMoveSound('error');
         setHintArrow([asKey(expectedUci.slice(0, 2)), asKey(expectedUci.slice(2, 4))]);
         setBoard((prev) => ({
           ...prev,
@@ -204,7 +201,7 @@ export function usePuzzleSolver({ muted, onSolved, onFailed }: Options) {
 
       if (index + 1 >= puzzle.moves.length) {
         settledRef.current = true;
-        playMoveSound('success', mutedRef.current);
+        playMoveSound('success');
         setBoard((prev) => ({
           ...prev,
           fen: test.fen(),
