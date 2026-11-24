@@ -607,8 +607,23 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distDir = path.resolve(process.cwd(), 'dist');
-    app.use(express.static(distDir));
+    // Files whose name has a content hash (Vite's /assets/name-AbCd1234.js) never change, so browsers can
+    // keep them for a year. Other static files (piece images, the logo) are kept for a day. The page
+    // itself is always re-checked, so a new deploy shows up on the next visit.
+    app.use(
+      express.static(distDir, {
+        index: false,
+        setHeaders(res, filePath) {
+          const hashed = /[\\/]assets[\\/][^\\/]+-[A-Za-z0-9_-]{8}\.(js|css)$/.test(filePath);
+          res.setHeader(
+            'Cache-Control',
+            hashed ? 'public, max-age=31536000, immutable' : 'public, max-age=86400',
+          );
+        },
+      }),
+    );
     app.get('*', (_req, res) => {
+      res.setHeader('Cache-Control', 'no-cache');
       res.sendFile(path.join(distDir, 'index.html'));
     });
   }
