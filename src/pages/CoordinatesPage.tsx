@@ -3,8 +3,6 @@ import CoordinateBoard, { type SquareMark } from '../components/CoordinateBoard'
 import SiteHeader from '../components/SiteHeader';
 import { BOARD_SIZE_CLASS_MAP, loadAppearanceSettings } from '../utils/appearance';
 import {
-  FILES,
-  RANKS,
   accuracyPercent,
   loadBestScore,
   loadCoordinateSettings,
@@ -12,7 +10,6 @@ import {
   saveBestScore,
   saveCoordinateSettings,
   type CoordinateDuration,
-  type CoordinateMode,
   type CoordinateOrientation,
   type CoordinateSettings,
 } from '../utils/coordinates';
@@ -30,8 +27,8 @@ interface RunResult {
 }
 
 interface Flash {
-  /** Square the player clicked (find mode only). */
-  clicked: string | null;
+  /** Square the player clicked. */
+  clicked: string;
   /** Square that was the right answer. */
   expected: string;
   kind: 'correct' | 'wrong';
@@ -41,11 +38,6 @@ const FLASH_MS = 350;
 
 const CARD_CLASS =
   'bg-[#16233b] border border-white/10 rounded-2xl p-6 flex flex-col gap-6 shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
-
-const MODES: Array<{ value: CoordinateMode; label: string; hint: string }> = [
-  { value: 'find', label: 'Find the square', hint: 'A square name is shown. Click that square on the board.' },
-  { value: 'name', label: 'Name the square', hint: 'A square is highlighted. Type or tap its name.' },
-];
 
 const DURATIONS: CoordinateDuration[] = [30, 60];
 
@@ -84,8 +76,6 @@ export default function CoordinatesPage() {
   const [misses, setMisses] = useState(0);
   const [timeLeftMs, setTimeLeftMs] = useState(0);
   const [flash, setFlash] = useState<Flash | null>(null);
-  const [pendingFile, setPendingFile] = useState<string | null>(null);
-  const [pendingRank, setPendingRank] = useState<string | null>(null);
   const [result, setResult] = useState<RunResult | null>(null);
 
   const phaseRef = useRef<Phase>('setup');
@@ -98,7 +88,6 @@ export default function CoordinatesPage() {
   const missesRef = useRef(0);
   const endAtRef = useRef(0);
   const flashTimerRef = useRef<number | undefined>(undefined);
-  const pendingRef = useRef<{ file: string | null; rank: string | null }>({ file: null, rank: null });
 
   useEffect(() => {
     document.title = 'Chess Coordinates Trainer | Chess Tactics Guide';
@@ -106,7 +95,7 @@ export default function CoordinatesPage() {
       .querySelector('meta[name="description"]')
       ?.setAttribute(
         'content',
-        'Practice chess board coordinates against the clock: find the named square or name the highlighted square.',
+        'Practice chess board coordinates against the clock: click the named square as fast as you can.',
       );
   }, []);
 
@@ -114,27 +103,20 @@ export default function CoordinatesPage() {
     saveCoordinateSettings(settings);
   }, [settings]);
 
-  const resetPending = useCallback(() => {
-    pendingRef.current = { file: null, rank: null };
-    setPendingFile(null);
-    setPendingRank(null);
-  }, []);
-
   const finishRun = useCallback(() => {
     if (phaseRef.current !== 'running') return;
     phaseRef.current = 'finished';
     window.clearTimeout(flashTimerRef.current);
     const c = correctRef.current;
     const m = missesRef.current;
-    const { mode, duration } = settingsRef.current;
-    const { best, isNewBest } = saveBestScore(mode, duration, c);
+    const { duration } = settingsRef.current;
+    const { best, isNewBest } = saveBestScore(duration, c);
     setResult({ correct: c, misses: m, accuracy: accuracyPercent(c, m), best, isNewBest });
     setTimeLeftMs(0);
     setFlash(null);
-    resetPending();
     setPhase('finished');
     playMoveSound('success', mutedRef.current);
-  }, [resetPending]);
+  }, []);
 
   const startRun = useCallback(() => {
     const s = settingsRef.current;
@@ -147,7 +129,6 @@ export default function CoordinatesPage() {
     missesRef.current = 0;
     endAtRef.current = performance.now() + s.duration * 1000;
     phaseRef.current = 'running';
-    resetPending();
     setOrientation(side);
     setTarget(first);
     setCorrect(0);
@@ -156,16 +137,15 @@ export default function CoordinatesPage() {
     setFlash(null);
     setResult(null);
     setPhase('running');
-  }, [resetPending]);
+  }, []);
 
   const quitRun = useCallback(() => {
     phaseRef.current = 'setup';
     window.clearTimeout(flashTimerRef.current);
-    resetPending();
     setFlash(null);
     setResult(null);
     setPhase('setup');
-  }, [resetPending]);
+  }, []);
 
   // Countdown. Uses the wall clock so a slow tab cannot stretch the run.
   useEffect(() => {
@@ -180,84 +160,45 @@ export default function CoordinatesPage() {
 
   useEffect(() => () => window.clearTimeout(flashTimerRef.current), []);
 
-  const handleAnswer = useCallback(
-    (answer: string, byClick: boolean) => {
-      if (phaseRef.current !== 'running') return;
-      const expected = targetRef.current;
-      const ok = answer === expected;
-      if (ok) {
-        correctRef.current += 1;
-        setCorrect(correctRef.current);
-        playMoveSound('move', mutedRef.current);
-      } else {
-        missesRef.current += 1;
-        setMisses(missesRef.current);
-        playMoveSound('error', mutedRef.current);
-      }
-      const next = randomSquare(expected);
-      targetRef.current = next;
-      setTarget(next);
-      resetPending();
-      window.clearTimeout(flashTimerRef.current);
-      setFlash({ clicked: byClick ? answer : null, expected, kind: ok ? 'correct' : 'wrong' });
-      flashTimerRef.current = window.setTimeout(() => setFlash(null), FLASH_MS);
-    },
-    [resetPending],
-  );
-
-  const choosePart = useCallback(
-    (kind: 'file' | 'rank', value: string) => {
-      if (phaseRef.current !== 'running') return;
-      const next = { ...pendingRef.current, [kind]: value };
-      if (next.file && next.rank) {
-        handleAnswer(`${next.file}${next.rank}`, false);
-        return;
-      }
-      pendingRef.current = next;
-      setPendingFile(next.file);
-      setPendingRank(next.rank);
-    },
-    [handleAnswer],
-  );
-
-  // Keyboard entry for "Name the square": any order, e.g. "e" then "4" or "4" then "e".
-  useEffect(() => {
-    if (phase !== 'running' || settings.mode !== 'name') return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.ctrlKey || event.metaKey || event.altKey) return;
-      const key = event.key.toLowerCase();
-      if (key.length === 1 && key >= 'a' && key <= 'h') choosePart('file', key);
-      else if (key.length === 1 && key >= '1' && key <= '8') choosePart('rank', key);
-      else if (key === 'backspace' || key === 'escape') resetPending();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [phase, settings.mode, choosePart, resetPending]);
+  const handleAnswer = useCallback((answer: string) => {
+    if (phaseRef.current !== 'running') return;
+    const expected = targetRef.current;
+    const ok = answer === expected;
+    if (ok) {
+      correctRef.current += 1;
+      setCorrect(correctRef.current);
+      playMoveSound('move', mutedRef.current);
+    } else {
+      missesRef.current += 1;
+      setMisses(missesRef.current);
+      playMoveSound('error', mutedRef.current);
+    }
+    const next = randomSquare(expected);
+    targetRef.current = next;
+    setTarget(next);
+    window.clearTimeout(flashTimerRef.current);
+    setFlash({ clicked: answer, expected, kind: ok ? 'correct' : 'wrong' });
+    flashTimerRef.current = window.setTimeout(() => setFlash(null), FLASH_MS);
+  }, []);
 
   const marks = useMemo(() => {
     const m: Partial<Record<string, SquareMark>> = {};
-    if (phase === 'running' && settings.mode === 'name') m[target] = 'target';
     if (flash) {
-      if (flash.clicked) {
-        if (flash.kind === 'correct') {
-          m[flash.clicked] = 'correct';
-        } else {
-          m[flash.clicked] = 'wrong';
-          m[flash.expected] = 'correct';
-        }
+      if (flash.kind === 'correct') {
+        m[flash.clicked] = 'correct';
       } else {
-        m[flash.expected] = flash.kind;
+        m[flash.clicked] = 'wrong';
+        m[flash.expected] = 'correct';
       }
     }
     return m;
-  }, [phase, settings.mode, target, flash]);
+  }, [flash]);
 
-  const best = loadBestScore(settings.mode, settings.duration);
+  const best = loadBestScore(settings.duration);
   const boardSizeClass = BOARD_SIZE_CLASS_MAP[appearance.boardSize] ?? 'max-w-[min(560px,100%)]';
   const totalMs = settings.duration * 1000;
   const secondsLeft = Math.max(0, Math.ceil(timeLeftMs / 1000));
   const barPercent = Math.max(0, Math.min(100, (timeLeftMs / totalMs) * 100));
-  const modeInfo = MODES.find((m) => m.value === settings.mode) ?? MODES[0];
 
   return (
     <div className="min-h-screen bg-[#101b2f] text-white flex flex-col">
@@ -268,11 +209,8 @@ export default function CoordinatesPage() {
           <CoordinateBoard
             orientation={phase === 'setup' ? (settings.orientation === 'black' ? 'black' : 'white') : orientation}
             theme={appearance.boardTheme}
-            showLabels={settings.showLabels}
             marks={marks}
-            onSquareClick={
-              phase === 'running' && settings.mode === 'find' ? (sq) => handleAnswer(sq, true) : undefined
-            }
+            onSquareClick={phase === 'running' ? handleAnswer : undefined}
           />
         </section>
 
@@ -284,33 +222,6 @@ export default function CoordinatesPage() {
                 <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
                   Know every square without thinking. Score as many points as you can before the clock runs out.
                 </p>
-              </div>
-
-              <div className="space-y-2">
-                <span className="text-sm font-semibold text-white">Mode</span>
-                <div className="grid grid-cols-1 gap-2.5">
-                  {MODES.map((m) => {
-                    const active = settings.mode === m.value;
-                    return (
-                      <button
-                        key={m.value}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => setSettings({ ...settings, mode: m.value })}
-                        className={`py-2.5 px-3.5 rounded-xl border text-left transition-all duration-150 cursor-pointer min-h-[46px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
-                          active
-                            ? 'bg-[#39ff88]/15 border-[#39ff88] text-white'
-                            : 'bg-[#101b2f] border-white/10 text-white/90 hover:border-white/40 hover:text-white'
-                        }`}
-                      >
-                        <div className="text-sm font-bold leading-tight">{m.label}</div>
-                        <div className={`text-xs font-semibold mt-0.5 ${active ? 'text-[#39ff88]' : 'text-white/65'}`}>
-                          {m.hint}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
 
               <div className="space-y-2">
@@ -347,28 +258,8 @@ export default function CoordinatesPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <span className="text-sm font-semibold text-white">Board labels</span>
-                <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
-                  {[
-                    { value: false, label: 'Hidden' },
-                    { value: true, label: 'Shown' },
-                  ].map((o) => (
-                    <button
-                      key={o.label}
-                      type="button"
-                      aria-pressed={settings.showLabels === o.value}
-                      onClick={() => setSettings({ ...settings, showLabels: o.value })}
-                      className={segmentClass(settings.showLabels === o.value)}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <p className="text-sm font-semibold text-white/75 tabular-nums">
-                {best > 0 ? `Your best (${modeInfo.label}, ${settings.duration} s): ${best}` : 'No record yet for these settings.'}
+                {best > 0 ? `Your best (${settings.duration} s): ${best}` : 'No record yet for this time.'}
               </p>
 
               <button
@@ -401,67 +292,12 @@ export default function CoordinatesPage() {
                 <StatTile label="Accuracy" value={`${accuracyPercent(correct, misses)}%`} />
               </div>
 
-              {settings.mode === 'find' ? (
-                <div className="text-center py-2">
-                  <div className="text-xs font-semibold text-white/65">Click this square</div>
-                  <div className="text-7xl font-bold tracking-tight text-[#39ff88] leading-none mt-2" data-testid="target">
-                    {target}
-                  </div>
+              <div className="text-center py-2">
+                <div className="text-xs font-semibold text-white/65">Click this square</div>
+                <div className="text-7xl font-bold tracking-tight text-[#39ff88] leading-none mt-2" data-testid="target">
+                  {target}
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="text-center">
-                    <div className="text-xs font-semibold text-white/65">Name the highlighted square</div>
-                    <div className="flex justify-center gap-3 mt-3" data-testid="typed" aria-label="Typed square">
-                      {[pendingFile, pendingRank].map((value, index) => (
-                        <span
-                          key={index}
-                          className="w-14 h-16 rounded-xl border-2 border-white/20 bg-[#101b2f] flex items-center justify-center text-4xl font-bold text-[#39ff88]"
-                        >
-                          {value ?? ''}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-8 gap-1.5" role="group" aria-label="File">
-                    {FILES.map((f) => (
-                      <button
-                        key={f}
-                        type="button"
-                        aria-pressed={pendingFile === f}
-                        onClick={() => choosePart('file', f)}
-                        className={`py-2.5 rounded-lg border text-sm font-bold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
-                          pendingFile === f
-                            ? 'bg-[#39ff88] text-[#101b2f] border-[#39ff88]'
-                            : 'bg-[#101b2f] border-white/15 text-white hover:border-white/50'
-                        }`}
-                      >
-                        {f}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-8 gap-1.5" role="group" aria-label="Rank">
-                    {RANKS.map((r) => (
-                      <button
-                        key={r}
-                        type="button"
-                        aria-pressed={pendingRank === r}
-                        onClick={() => choosePart('rank', r)}
-                        className={`py-2.5 rounded-lg border text-sm font-bold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
-                          pendingRank === r
-                            ? 'bg-[#39ff88] text-[#101b2f] border-[#39ff88]'
-                            : 'bg-[#101b2f] border-white/15 text-white hover:border-white/50'
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs font-medium text-white/60 text-center">
-                    You can also type it on the keyboard, e.g. “e” then “4”.
-                  </p>
-                </div>
-              )}
+              </div>
 
               <button
                 type="button"
