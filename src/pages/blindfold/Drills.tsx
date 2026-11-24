@@ -7,7 +7,7 @@ import {
   segmentClass,
 } from '../../components/panelUi';
 import TrainerLayout from '../../components/TrainerLayout';
-import { BOARD_SIZE_CLASS_MAP, loadAppearanceSettings } from '../../utils/appearance';
+import { useAppearance } from '../../hooks/useAppearance';
 import {
   DRILL_DURATION_MS,
   DRILL_KINDS,
@@ -40,7 +40,7 @@ const TICK_MS = 100;
 
 export default function Drills({ username, muted, onToggleMute, mode, onModeChange }: BlindfoldModeProps) {
   const [kind, setKind] = useState<DrillKind>(() => loadDrillKind());
-  const [appearance] = useState(() => loadAppearanceSettings());
+  const [appearance, setAppearance] = useAppearance();
   const [phase, setPhase] = useState<Phase>('setup');
   const [question, setQuestion] = useState<DrillQuestion | null>(null);
   const [correct, setCorrect] = useState(0);
@@ -162,7 +162,6 @@ export default function Drills({ username, muted, onToggleMute, mode, onModeChan
   }, []);
 
   const best = loadDrillBest(kind);
-  const boardSizeClass = BOARD_SIZE_CLASS_MAP[appearance.boardSize] ?? 'max-w-[min(560px,100%)]';
   const lowTime = msLeft > 0 && msLeft <= 10_000;
 
   return (
@@ -170,7 +169,8 @@ export default function Drills({ username, muted, onToggleMute, mode, onModeChan
       username={username}
       muted={muted}
       onToggleMute={onToggleMute}
-      boardSizeClass={boardSizeClass}
+      appearance={appearance}
+      onAppearanceChange={setAppearance}
       board={
         <div className="w-full aspect-square rounded-2xl bg-[#16233b] border border-white/10 flex flex-col items-center justify-center gap-3 p-6 text-center">
           {phase === 'running' && question ? (

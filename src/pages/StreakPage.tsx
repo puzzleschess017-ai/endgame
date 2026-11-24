@@ -4,7 +4,7 @@ import { CARD_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, StatTile } fr
 import TrainerLayout from '../components/TrainerLayout';
 import { usePuzzleSolver, type FailedInfo } from '../hooks/usePuzzleSolver';
 import type { Puzzle } from '../types';
-import { BOARD_SIZE_CLASS_MAP, loadAppearanceSettings } from '../utils/appearance';
+import { useAppearance } from '../hooks/useAppearance';
 import { LadderFeed } from '../utils/ladderFeed';
 import { readSavedUsername } from '../utils/profile';
 import { playMoveSound } from '../utils/sound';
@@ -26,7 +26,7 @@ interface RunResult {
 const NEXT_PUZZLE_DELAY_MS = 450;
 
 export default function StreakPage() {
-  const [appearance] = useState(() => loadAppearanceSettings());
+  const [appearance, setAppearance] = useAppearance();
   const [username] = useState(() => readSavedUsername());
   const [muted, setMuted] = useState(false);
 
@@ -188,7 +188,6 @@ export default function StreakPage() {
   useEffect(() => () => window.clearTimeout(advanceTimerRef.current), []);
 
   const best = loadBestStreak();
-  const boardSizeClass = BOARD_SIZE_CLASS_MAP[appearance.boardSize] ?? 'max-w-[min(560px,100%)]';
   const sideName = solver.playerColor === 'white' ? 'White' : 'Black';
 
   return (
@@ -196,7 +195,8 @@ export default function StreakPage() {
       username={username}
       muted={muted}
       onToggleMute={() => setMuted((v) => !v)}
-      boardSizeClass={boardSizeClass}
+      appearance={appearance}
+      onAppearanceChange={setAppearance}
       board={
         <ChessboardPanel
           {...solver.boardProps}

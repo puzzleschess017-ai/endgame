@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CoordinateBoard, { type SquareMark } from '../components/CoordinateBoard';
 import { CARD_CLASS, StatTile, segmentClass } from '../components/panelUi';
 import TrainerLayout from '../components/TrainerLayout';
-import { BOARD_SIZE_CLASS_MAP, loadAppearanceSettings } from '../utils/appearance';
+import { useAppearance } from '../hooks/useAppearance';
 import {
   accuracyPercent,
   loadBestScore,
@@ -47,7 +47,7 @@ const ORIENTATIONS: Array<{ value: CoordinateOrientation; label: string }> = [
 
 export default function CoordinatesPage() {
   const [settings, setSettings] = useState<CoordinateSettings>(() => loadCoordinateSettings());
-  const [appearance] = useState(() => loadAppearanceSettings());
+  const [appearance, setAppearance] = useAppearance();
   const [username] = useState(() => readSavedUsername());
   const [muted, setMuted] = useState(false);
 
@@ -177,7 +177,6 @@ export default function CoordinatesPage() {
   }, [flash]);
 
   const best = loadBestScore(settings.duration);
-  const boardSizeClass = BOARD_SIZE_CLASS_MAP[appearance.boardSize] ?? 'max-w-[min(560px,100%)]';
   const totalMs = settings.duration * 1000;
   const secondsLeft = Math.max(0, Math.ceil(timeLeftMs / 1000));
   const barPercent = Math.max(0, Math.min(100, (timeLeftMs / totalMs) * 100));
@@ -187,7 +186,8 @@ export default function CoordinatesPage() {
       username={username}
       muted={muted}
       onToggleMute={() => setMuted((v) => !v)}
-      boardSizeClass={boardSizeClass}
+      appearance={appearance}
+      onAppearanceChange={setAppearance}
       board={
         <CoordinateBoard
           orientation={phase === 'setup' ? (settings.orientation === 'black' ? 'black' : 'white') : orientation}

@@ -10,7 +10,7 @@ import {
 import TrainerLayout from '../components/TrainerLayout';
 import { usePuzzleSolver, type FailedInfo } from '../hooks/usePuzzleSolver';
 import type { Puzzle } from '../types';
-import { BOARD_SIZE_CLASS_MAP, loadAppearanceSettings } from '../utils/appearance';
+import { useAppearance } from '../hooks/useAppearance';
 import { LadderFeed } from '../utils/ladderFeed';
 import { readSavedUsername } from '../utils/profile';
 import { playMoveSound } from '../utils/sound';
@@ -46,7 +46,7 @@ const TICK_MS = 100;
 
 export default function RacePage() {
   const [settings, setSettings] = useState<RaceSettings>(() => loadRaceSettings());
-  const [appearance] = useState(() => loadAppearanceSettings());
+  const [appearance, setAppearance] = useAppearance();
   const [username] = useState(() => readSavedUsername());
   const [muted, setMuted] = useState(false);
 
@@ -252,7 +252,6 @@ export default function RacePage() {
   const totalMs = settings.duration * 1000;
   const barPercent = Math.max(0, Math.min(100, (timeLeftMs / totalMs) * 100));
   const lowTime = timeLeftMs > 0 && timeLeftMs <= 10_000;
-  const boardSizeClass = BOARD_SIZE_CLASS_MAP[appearance.boardSize] ?? 'max-w-[min(560px,100%)]';
   const sideName = solver.playerColor === 'white' ? 'White' : 'Black';
   const status = error
     ? ''
@@ -267,7 +266,8 @@ export default function RacePage() {
       username={username}
       muted={muted}
       onToggleMute={() => setMuted((v) => !v)}
-      boardSizeClass={boardSizeClass}
+      appearance={appearance}
+      onAppearanceChange={setAppearance}
       board={
         <ChessboardPanel
           {...solver.boardProps}

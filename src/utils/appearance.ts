@@ -86,6 +86,22 @@ export function clampBoardSize(size: number): number {
   return closest;
 }
 
+/** Width class for the board column of a given board size (falls back to the default size). */
+export function boardSizeClassFor(size: number): string {
+  return BOARD_SIZE_CLASS_MAP[size] ?? BOARD_SIZE_CLASS_MAP[DEFAULT_BOARD_SIZE];
+}
+
+/**
+ * The next smaller (-1) or larger (+1) entry of BOARD_SIZES. Returns `size` itself at either end,
+ * and moves a size that is not in the list to its nearest entry first.
+ */
+export function stepBoardSize(size: number, direction: -1 | 1): number {
+  const current = clampBoardSize(size);
+  const index = BOARD_SIZES.indexOf(current as (typeof BOARD_SIZES)[number]);
+  const next = Math.min(BOARD_SIZES.length - 1, Math.max(0, index + direction));
+  return BOARD_SIZES[next];
+}
+
 export function loadAppearanceSettings(): AppearanceSettings {
   let boardTheme: BoardTheme = DEFAULT_APPEARANCE.boardTheme;
   let pieceSet: PieceSet = DEFAULT_APPEARANCE.pieceSet;
