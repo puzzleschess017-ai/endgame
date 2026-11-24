@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { readSavedUsername } from '../utils/profile';
 import Drills from './blindfold/Drills';
-import MateInOne from './blindfold/MateInOne';
+import Mate from './blindfold/Mate';
 import type { BlindfoldMode } from './blindfold/shared';
 
 /**
- * Blindfold: puzzles without seeing the pieces ("Mate in 1") and visualization drills. A guest sees the
+ * Blindfold: puzzles without seeing the pieces (mate in 1, 2 or 3) and visualization drills. A guest sees the
  * same page with every choice locked (a free account opens it), so the page is never empty.
  */
 export default function BlindfoldPage() {
@@ -16,5 +16,5 @@ export default function BlindfoldPage() {
     mode,
     onModeChange: setMode,
   };
-  return mode === 'mate' ? <MateInOne {...props} /> : <Drills {...props} />;
+  return mode === 'mate' ? <Mate {...props} /> : <Drills {...props} />;
 }

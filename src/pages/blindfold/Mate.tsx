@@ -16,9 +16,10 @@ import { useAppearance } from '../../hooks/useAppearance';
 import {
   BLINDFOLD_LEVELS,
   EMPTY_FEN,
+  MATE_IN_OPTIONS,
   MEMORIZE_OPTIONS,
   ROUND_SIZE,
-  checkAnswer,
+  checkStep,
   fetchBlindfoldRound,
   levelDescription,
   levelLabel,
@@ -26,6 +27,8 @@ import {
   loadBlindfoldSettings,
   saveBlindfoldBest,
   saveBlindfoldSettings,
+  solutionLine,
+  stepView,
   type BlindfoldItem,
   type BlindfoldSettings,
 } from '../../utils/blindfold';
@@ -49,7 +52,7 @@ interface RoundResult {
 
 const TICK_MS = 100;
 
-export default function MateInOne({ username, mode, onModeChange }: BlindfoldModeProps) {
+export default function Mate({ username, mode, onModeChange }: BlindfoldModeProps) {
   const { tier } = useAuth();
   const locks = useLocks(tier);
   const [settings, setSettings] = useState<BlindfoldSettings>(() => ({
@@ -61,6 +64,9 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
   const [phase, setPhase] = useState<Phase>('setup');
   const [items, setItems] = useState<BlindfoldItem[]>([]);
   const [index, setIndex] = useState(0);
+  // Longer mates: which of the player's moves is asked now (0 is the first), and the moves played so far.
+  const [step, setStep] = useState(0);
+  const [played, setPlayed] = useState<string[]>([]);
   const [correct, setCorrect] = useState(0);
   const [msLeft, setMsLeft] = useState(0);
   const [text, setText] = useState('');
@@ -92,14 +98,14 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
       .querySelector('meta[name="description"]')
       ?.setAttribute(
         'content',
-        'Blindfold chess training: memorize the position, then find the checkmate in one move without seeing the pieces.',
+        'Blindfold chess training: memorize the position, then find the checkmate in one, two or three moves without seeing the pieces.',
       );
   }, []);
 
   // Settings saved earlier (or left open by signing out) may not be allowed now.
   useEffect(() => {
     const allowed = clampBlindfold(tier, settings);
-    if (allowed.level !== settings.level || allowed.memorize !== settings.memorize) {
+    if (allowed.level !== settings.level || allowed.memorize !== settings.memorize || allowed.mateIn !== settings.mateIn) {
       setSettings({ ...settings, ...allowed });
     }
   }, [tier, settings]);
@@ -117,6 +123,8 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
 
   const beginMemorize = useCallback((nextIndex: number) => {
     setIndex(nextIndex);
+    setStep(0);
+    setPlayed([]);
     setText('');
     setHint(null);
     setFeedback(null);
@@ -154,7 +162,13 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
     correctRef.current = 0;
     go('loading');
     try {
-      const round = await fetchBlindfoldRound(settingsRef.current.level, ROUND_SIZE, fetch, authHeaders());
+      const round = await fetchBlindfoldRound(
+        settingsRef.current.level,
+        ROUND_SIZE,
+        fetch,
+        authHeaders(),
+        settingsRef.current.mateIn,
+      );
       if (runId !== runIdRef.current) return;
       itemsRef.current = round;
       roundStartedAtRef.current = Date.now();
@@ -169,7 +183,11 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
 
   const finishRound = useCallback(() => {
     const total = itemsRef.current.length;
-    const { best, isNewBest } = saveBlindfoldBest(settingsRef.current.level, correctRef.current);
+    const { best, isNewBest } = saveBlindfoldBest(
+      settingsRef.current.level,
+      correctRef.current,
+      settingsRef.current.mateIn,
+    );
     recordActivity({
       mode: 'blindfold',
       ms: Date.now() - roundStartedAtRef.current,
@@ -198,14 +216,26 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
 
   const submit = () => {
     if (phaseRef.current !== 'answer' || !current) return;
-    const answer = checkAnswer(current.position.fen, text);
+    const view = stepView(current.position, step);
+    const answer = checkStep(view.fen, text, view.expectedUci);
     if (answer.kind === 'empty') return;
     if (answer.kind === 'illegal') {
       setHint('That is not a legal move here. Check the notation (for example Qh7# or Rxe8) and try again.');
       return;
     }
     setHint(null);
-    settle(answer.kind, answer.san);
+    if (answer.kind === 'mate') {
+      settle('correct', answer.san);
+    } else if (answer.kind === 'wrong') {
+      settle('wrong', answer.san);
+    } else {
+      // The right move, but the game goes on: the opponent answers (shown as text) and the next move is asked.
+      const reply = current.position.solution[step * 2 + 1];
+      setPlayed((list) => [...list, answer.san, reply.san]);
+      setStep(step + 1);
+      setText('');
+      playMoveSound('move');
+    }
   };
 
   const giveUp = () => {
@@ -226,10 +256,13 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
     setResult(null);
     setError(null);
     setFeedback(null);
+    setStep(0);
+    setPlayed([]);
     go('setup');
   }, []);
 
-  const best = loadBlindfoldBest(settings.level);
+  const best = loadBlindfoldBest(settings.level, settings.mateIn);
+  const longMate = settings.mateIn > 1;
   const sideName = current ? (current.position.playerColor === 'white' ? 'White' : 'Black') : '';
   const running = phase === 'memorize' || phase === 'answer' || phase === 'feedback';
 
@@ -242,13 +275,12 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
     if (phase === 'answer') {
       boardFen = EMPTY_FEN;
     } else {
-      boardFen = current.position.fen;
-      lastMove = current.position.lastMove;
+      // While memorizing (step 0) and at the end: the position the player faced, with the wanted move.
+      const view = stepView(current.position, step);
+      boardFen = view.fen;
+      lastMove = view.lastMove;
       if (phase === 'feedback') {
-        arrow = [
-          current.position.mateUci.slice(0, 2) as Key,
-          current.position.mateUci.slice(2, 4) as Key,
-        ];
+        arrow = [view.expectedUci.slice(0, 2) as Key, view.expectedUci.slice(2, 4) as Key];
       }
     }
   }
@@ -275,11 +307,47 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
             <div className={CARD_CLASS}>
               <ModeTabs mode={mode} onChange={onModeChange} />
               <div>
-                <h2 className="text-xl font-bold text-white tracking-tight">Blindfold: mate in 1</h2>
+                <h2 className="text-xl font-bold text-white tracking-tight">Blindfold: mate in {settings.mateIn}</h2>
                 <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
-                  Memorize the position. Then the pieces vanish and you type the checkmating move, for
-                  example <span className="font-bold text-white">Qh7#</span>. The + and # are optional.
+                  {longMate ? (
+                    <>
+                      Memorize the position. Then the pieces vanish and you type your moves one at a time, for
+                      example <span className="font-bold text-white">Qh7+</span>. After each right move the
+                      reply is shown as text, and you keep the position in your head until the checkmate.
+                    </>
+                  ) : (
+                    <>
+                      Memorize the position. Then the pieces vanish and you type the checkmating move, for
+                      example <span className="font-bold text-white">Qh7#</span>. The + and # are optional.
+                    </>
+                  )}
                 </p>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-sm font-semibold text-white">Mate in</span>
+                <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+                  {MATE_IN_OPTIONS.map((moves) => {
+                    const needs = tierFor((a) => a.blindfold.mateIn, moves);
+                    const locked = locks.isLocked(needs);
+                    return (
+                      <button
+                        key={moves}
+                        type="button"
+                        data-testid={`mate-in-${moves}`}
+                        aria-pressed={settings.mateIn === moves}
+                        aria-disabled={locked || undefined}
+                        title={locked ? unlockHint(tier, needs) : undefined}
+                        disabled={phase === 'loading'}
+                        onClick={locks.choose(`Mate in ${moves}`, needs, () => setSettings({ ...settings, mateIn: moves }))}
+                        className={`${segmentClass(settings.mateIn === moves)} ${locked ? LOCKED_CLASS : ''}`}
+                      >
+                        {moves}
+                        {locked && <LockMark />}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -348,7 +416,7 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
 
               <p className="text-sm font-semibold text-white/75 tabular-nums">
                 {best > 0
-                  ? `Your best (${levelDescription(settings.level)}): ${best}/${ROUND_SIZE}`
+                  ? `Your best (${longMate ? `mate in ${settings.mateIn}, ` : ''}${levelDescription(settings.level)}): ${best}/${ROUND_SIZE}`
                   : `A round is ${ROUND_SIZE} puzzles. No record yet for this level.`}
               </p>
 
@@ -392,7 +460,7 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
                     </div>
                   </div>
                   <p className="text-sm font-semibold text-white/80" data-testid="status">
-                    {sideName} to move and mate in 1.
+                    {sideName} to move and mate in {current.position.mateIn}.
                   </p>
                   <button type="button" onClick={hidePieces} className={SECONDARY_BUTTON_CLASS}>
                     I’m ready, hide the pieces
@@ -409,8 +477,16 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
                   }}
                 >
                   <p className="text-sm font-semibold text-white/80" data-testid="status">
-                    {sideName} to move. Type the checkmate.
+                    {longMate
+                      ? `${sideName} to move. Move ${step + 1} of ${current.position.mateIn}: type your move.`
+                      : `${sideName} to move. Type the checkmate.`}
                   </p>
+                  {played.length > 0 && (
+                    <p className="text-sm font-medium text-white/75" data-testid="played">
+                      Moves so far: <span className="font-bold text-white">{played.join(' ')}</span>. The opponent
+                      replied <span className="font-bold text-white">{played[played.length - 1]}</span>.
+                    </p>
+                  )}
                   <label className="sr-only" htmlFor="blindfold-answer">
                     Your move
                   </label>
@@ -428,7 +504,7 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
                     autoCorrect="off"
                     autoComplete="off"
                     spellCheck={false}
-                    placeholder="Your move, e.g. Qh7#"
+                    placeholder={longMate && step < current.position.mateIn - 1 ? 'Your move, e.g. Qh7+' : 'Your move, e.g. Qh7#'}
                     className="w-full px-4 py-3 rounded-xl bg-[#101b2f] border border-white/20 focus:border-[#39ff88] outline-none text-white text-lg font-semibold tracking-tight placeholder:text-white/40 placeholder:text-base placeholder:font-medium min-h-[48px]"
                   />
                   {hint && (
@@ -454,12 +530,23 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
                     {feedback.kind === 'correct'
                       ? `Correct! ${feedback.typedSan}`
                       : feedback.kind === 'wrong'
-                        ? `Not mate (${feedback.typedSan}).`
+                        ? longMate
+                          ? `Not the right move (${feedback.typedSan}).`
+                          : `Not mate (${feedback.typedSan}).`
                         : 'The answer was:'}
                   </p>
                   {feedback.kind !== 'correct' && (
                     <p className="text-sm font-semibold text-white/85">
-                      The mate was <span className="font-bold text-white" data-testid="mate-move">{current.position.mateSan}</span>
+                      {longMate ? 'The solution was ' : 'The mate was '}
+                      <span className="font-bold text-white" data-testid="mate-move">
+                        {longMate ? solutionLine(current.position) : current.position.mateSan}
+                      </span>
+                    </p>
+                  )}
+                  {longMate && feedback.kind === 'wrong' && (
+                    <p className="text-xs font-medium text-white/60">
+                      Another winning line may exist, but this trainer follows the puzzle’s own solution (any
+                      checkmate is always accepted).
                     </p>
                   )}
                   <button type="button" onClick={next} autoFocus className={PRIMARY_BUTTON_CLASS}>
@@ -485,7 +572,7 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
                   {result.correct}/{result.total}
                 </div>
                 <div className="text-sm font-semibold text-white/70 mt-2">
-                  checkmates found ({levelDescription(settings.level)})
+                  {longMate ? `mates in ${settings.mateIn} found` : 'checkmates found'} ({levelDescription(settings.level)})
                 </div>
                 {result.isNewBest && (
                   <div className="inline-block mt-3 px-3 py-1 rounded-full bg-[#39ff88]/15 border border-[#39ff88] text-[#39ff88] text-xs font-bold">

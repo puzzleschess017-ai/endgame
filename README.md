@@ -96,7 +96,7 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
 | `/race` | Puzzle Race: solve as many puzzles as possible in 1, 3 or 5 minutes, easy to hard from the whole database. A wrong move costs 10 seconds and moves on to the next puzzle. Best score per time saved in the browser (a run ended early is not saved) |
 | `/login` | Sign in, create an account or play as a guest; the account page (name, email, plan, Sign out) for someone signed in |
-| `/blindfold` | Blindfold: *Mate in 1* (memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; levels by number of pieces: up to 6, 7, 8, 10 or any; a round is 10 puzzles) and *Drills* (60 s without a board: square color, same diagonal, knight route). Best scores saved in the browser |
+| `/blindfold` | Blindfold: *Checkmate* (mate in 1, 2 or 3: memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; in a mate in 2 or 3 you type your moves one at a time, the opponent's reply is shown as text after each right one and the board stays empty; checkmate always counts, other moves must be the puzzle's own; levels by number of pieces: up to 6, 7, 8, 10 or any; a round is 10 puzzles; a best score for each length and level) and *Drills* (60 s without a board: square color, same diagonal, knight route). Best scores saved in the browser |
 | `/editor` | Board Editor: set up any position by dragging pieces in from the palette (or choosing a piece and tapping squares), moving them, or dragging them off the board; side to move, castling rights and en passant; load or copy a FEN; "Check in the Tablebase" opens it on the Tablebase page. The button is only on when the position is legal (both kings, no pawns on the first or last rank, the side not to move is not in check) |
 | `/tablebase` | Endgame Tablebase: perfect play for any position with 7 pieces or fewer (Syzygy tables, through the public Lichess tablebase). Shows who wins (with the mate distance when known), draws by the 50-move rule, and every legal move marked Wins / Draws / Loses, best first; click a move to play it, hover to see it as an arrow. Play on the board, step through the game (buttons, arrow keys, Home/End), try the example positions (K+Q vs K, K+R vs K, K+P vs K, Lucena), load a FEN, import and copy a PGN. `?fen=...` starts from a position. Positions with more than 7 pieces or with castling rights cannot be looked up and say so |
 
@@ -104,7 +104,7 @@ Every path is served by the same app (`main.tsx` picks the page from the URL). L
 tested without a browser lives in `src/utils/`; run all its tests with
 `npx tsx --test src/utils/*.test.ts`.
 
-Blindfold gets random mate-in-1 puzzles from `GET /api/puzzles/blindfold?maxPieces=8&count=10` (`maxPieces` is 6, 7, 8, 10 or 32 = any; pieces are counted after the opponent's first move; the list of eligible ids is built once in memory by `server/blindfold.ts`). Run its tests with `npx tsx --test server/*.test.ts`.
+Blindfold gets random mate puzzles from `GET /api/puzzles/blindfold?maxPieces=8&count=10&mateIn=2` (`mateIn` is 1, 2 or 3 and 1 when missing: a mate in N is a puzzle with 2N moves, and for 2 and 3 also with Lichess's `mateInN` tag, about 9,200 and 3,300 puzzles, no new data; `maxPieces` is 6, 7, 8, 10 or 32 = any; pieces are counted after the opponent's first move; the list of eligible ids is built once in memory by `server/blindfold.ts`). Run its tests with `npx tsx --test server/*.test.ts`.
 
 Streak and Race get their puzzles from `GET /api/puzzles/ladder?start=500&step=40&count=30` (Race asks for `step=25`): one
 random puzzle per rating step (start, start + step, ...), easy first, from every puzzle in the
@@ -215,12 +215,13 @@ window comes back after signing out.
 | Puzzles per cycle | 10, 50 | 10, 50, 100 | 10, 50, 100, 200, 300, 500 |
 | Cycles | 2, 3 | 2, 3, 4 | 2 to 9 |
 | Blindfold mate in 1 | page visible, every choice locked | up to 6 or 7 pieces, 10 s | all levels, 5, 10 and 20 s |
+| Blindfold mate in 2 and 3 | locked | locked | yes |
 | Blindfold drills | page visible, every choice locked | square colours | all |
 | Streak, Race, Coordinates, Board Editor, Tablebase, Statistics | yes | yes | yes |
 
 Choices a visitor may not use stay visible with a small lock; clicking one says to sign in or that it is
 Premium (`src/components/locks.tsx`). A guest who opens Blindfold sees the same page as everybody, with every choice locked and "Create a free account to play" instead of Start. The server checks the rest: `/api/puzzles/sample` (type, difficulty, number of puzzles) and
-`/api/puzzles/blindfold` (pieces) read the sign-in token from the `Authorization` header, ask Supabase who it
+`/api/puzzles/blindfold` (pieces, and mate in 2 or 3) read the sign-in token from the `Authorization` header, ask Supabase who it
 is and which plan the account has (`server/tier.ts`, answers kept for a minute) and answer `403` with
 `{ error, needs }` when the plan is too low, `401` when the token has expired. If Supabase cannot be
 reached a signed-in visitor counts as free. The number of cycles, the memorize time and the drills never

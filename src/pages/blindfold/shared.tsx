@@ -6,7 +6,7 @@ import type { BoardTheme, PieceSet } from '../../types';
 
 export type BlindfoldMode = 'mate' | 'drills';
 
-/** Mate in 1 / Drills switch at the top of the panel. */
+/** Checkmate / Drills switch at the top of the panel. */
 export function ModeTabs({
   mode,
   onChange,
@@ -15,7 +15,7 @@ export function ModeTabs({
   onChange: (mode: BlindfoldMode) => void;
 }) {
   const items: Array<{ id: BlindfoldMode; label: string }> = [
-    { id: 'mate', label: 'Mate in 1' },
+    { id: 'mate', label: 'Checkmate' },
     { id: 'drills', label: 'Drills' },
   ];
   return (

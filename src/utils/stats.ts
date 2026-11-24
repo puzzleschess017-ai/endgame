@@ -1,6 +1,6 @@
 // Everything Home shows: the results of every mode, read from localStorage.
 import type { TrainingSession } from '../types';
-import { BLINDFOLD_LEVELS, ROUND_SIZE, levelDescription, loadBlindfoldBest } from './blindfold';
+import { BLINDFOLD_LEVELS, MATE_IN_OPTIONS, ROUND_SIZE, levelDescription, loadBlindfoldBest } from './blindfold';
 import { dayStreaks, formatTotalTime, loadActivity, totalActivity, type ActivityLog } from './activity';
 import { formatDuration, loadSessionFromStorage } from './chessHelpers';
 import { loadBestScore } from './coordinates';
@@ -71,12 +71,14 @@ export function collectHomeStats(): HomeStats {
     .filter((r) => r.best > 0)
     .map((r) => ({ label: `${durationLabel(r.d)} race`, value: `${r.best} solved` }));
 
-  const blindfoldBests = BLINDFOLD_LEVELS.map((level) => ({ level, best: loadBlindfoldBest(level) }));
+  const blindfoldBests = MATE_IN_OPTIONS.flatMap((mateIn) =>
+    BLINDFOLD_LEVELS.map((level) => ({ mateIn, level, best: loadBlindfoldBest(level, mateIn) })),
+  );
   const drillBests = DRILL_KINDS.map((kind) => ({ kind, best: loadDrillBest(kind) }));
   const blindfoldLines: StatLine[] = [
     ...blindfoldBests
       .filter((b) => b.best > 0)
-      .map((b) => ({ label: `Mate in 1, ${levelDescription(b.level)}`, value: `${b.best}/${ROUND_SIZE}` })),
+      .map((b) => ({ label: `Mate in ${b.mateIn}, ${levelDescription(b.level)}`, value: `${b.best}/${ROUND_SIZE}` })),
     ...drillBests.filter((b) => b.best > 0).map((b) => ({ label: drillLabel(b.kind), value: String(b.best) })),
   ];
 
