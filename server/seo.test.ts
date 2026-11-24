@@ -67,6 +67,11 @@ describe('renderPage', () => {
     assert.ok(html.includes('<div id="root"></div>'));
     assert.ok(html.includes('googletagmanager'));
   });
+  it('keeps the Google Search Console verification tag on every page', () => {
+    for (const page of [...PAGES, undefined]) {
+      assert.ok(renderPage(TEMPLATE, page, SITE).includes('name="google-site-verification"'));
+    }
+  });
   it('the home canonical is the bare site address with a slash', () => {
     assert.ok(renderPage(TEMPLATE, pageFor('/')!, SITE).includes('<link rel="canonical" href="https://example.org/" />'));
   });
