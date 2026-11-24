@@ -1,7 +1,7 @@
 // Facts about the site that the legal pages show. Edit them here.
 
 /** Where visitors can write to. While it is empty the Contact page says the address is coming. */
-export const CONTACT_EMAIL = '';
+export const CONTACT_EMAIL = 'puzzleschess017@gmail.com';
 
 /** Shown on the Privacy page; change it whenever the text changes. */
 export const PRIVACY_UPDATED = '25 November 2026';
