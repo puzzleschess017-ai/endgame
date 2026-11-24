@@ -6,7 +6,7 @@
 // everybody. The limits below are for Woodpecker and Blindfold. The same rules are used in the browser (to
 // grey out choices) and on the server (to refuse a request that asks for more than the visitor may have).
 import type { CycleCountOption, Difficulty, PuzzleCountOption, PuzzleMode, TrainingConfig } from '../types';
-import type { BlindfoldLevel, MemorizeSeconds } from './blindfold';
+import type { BlindfoldLevel, MateIn, MemorizeSeconds } from './blindfold';
 import { DRILL_KINDS, type DrillKind } from './drills.ts';
 
 export type Tier = 'guest' | 'free' | 'premium';
@@ -18,6 +18,7 @@ export const ALL_DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard', 'expert
 export const ALL_TYPES: PuzzleMode[] = ['classic', 'endgame'];
 export const ALL_LEVELS: BlindfoldLevel[] = [6, 7, 8, 10, 32];
 export const ALL_MEMORIZE: MemorizeSeconds[] = [5, 10, 20];
+export const ALL_MATE_IN: MateIn[] = [1, 2, 3];
 
 export interface WoodpeckerAccess {
   cycles: CycleCountOption[];
@@ -27,9 +28,11 @@ export interface WoodpeckerAccess {
 }
 
 export interface BlindfoldAccess {
-  /** Mate in 1: the piece limits and memorize times allowed. Empty: the mode is closed. */
+  /** Mates: the piece limits and memorize times allowed. Empty: the mode is closed. */
   levels: BlindfoldLevel[];
   memorize: MemorizeSeconds[];
+  /** How long the mate may be: in 1, 2 or 3 moves. */
+  mateIn: MateIn[];
   /** Which drills (square colours, diagonals, knight routes) may be played. */
   drills: DrillKind[];
 }
@@ -42,15 +45,15 @@ export interface Access {
 export const ACCESS: Record<Tier, Access> = {
   guest: {
     woodpecker: { cycles: [2, 3], counts: [10, 50], difficulties: ['easy', 'medium'], types: ['classic'] },
-    blindfold: { levels: [], memorize: [], drills: [] },
+    blindfold: { levels: [], memorize: [], mateIn: [], drills: [] },
   },
   free: {
     woodpecker: { cycles: [2, 3, 4], counts: [10, 50, 100], difficulties: ['easy', 'medium', 'hard'], types: ['classic'] },
-    blindfold: { levels: [6, 7], memorize: [10], drills: ['color'] },
+    blindfold: { levels: [6, 7], memorize: [10], mateIn: [1], drills: ['color'] },
   },
   premium: {
     woodpecker: { cycles: ALL_CYCLES, counts: ALL_COUNTS, difficulties: ALL_DIFFICULTIES, types: ALL_TYPES },
-    blindfold: { levels: ALL_LEVELS, memorize: ALL_MEMORIZE, drills: DRILL_KINDS },
+    blindfold: { levels: ALL_LEVELS, memorize: ALL_MEMORIZE, mateIn: ALL_MATE_IN, drills: DRILL_KINDS },
   },
 };
 
@@ -100,15 +103,27 @@ export function checkWoodpecker(
   return { ok: true };
 }
 
-/** Checks how many pieces a Blindfold "mate in 1" round may have (the server can check this one). */
+/** Checks how many pieces a Blindfold mate round may have (the server can check this one). */
 export function checkBlindfoldLevel(tier: Tier, level: BlindfoldLevel): Check {
   return ACCESS[tier].blindfold.levels.includes(level)
     ? { ok: true }
     : refuse(level === 32 ? 'Any number of pieces' : `Up to ${level} pieces`, tierFor((a) => a.blindfold.levels, level));
 }
 
-/** Checks a Blindfold "mate in 1" round: how many pieces at most, and how long the position is shown. */
-export function checkBlindfoldMate(tier: Tier, settings: { level: BlindfoldLevel; memorize: MemorizeSeconds }): Check {
+/** Checks how long a Blindfold mate may be (the server can check this one too). */
+export function checkBlindfoldMateIn(tier: Tier, mateIn: MateIn): Check {
+  return ACCESS[tier].blindfold.mateIn.includes(mateIn)
+    ? { ok: true }
+    : refuse(`Mate in ${mateIn}`, tierFor((a) => a.blindfold.mateIn, mateIn));
+}
+
+/** Checks a Blindfold mate round: how long the mate is, how many pieces at most, and how long the position is shown. */
+export function checkBlindfoldMate(
+  tier: Tier,
+  settings: { level: BlindfoldLevel; memorize: MemorizeSeconds; mateIn?: MateIn },
+): Check {
+  const length = checkBlindfoldMateIn(tier, settings.mateIn ?? 1);
+  if (!length.ok) return length;
   const level = checkBlindfoldLevel(tier, settings.level);
   if (!level.ok) return level;
   if (!ACCESS[tier].blindfold.memorize.includes(settings.memorize)) {
@@ -118,8 +133,8 @@ export function checkBlindfoldMate(tier: Tier, settings: { level: BlindfoldLevel
 }
 
 /** The nearest settings the tier may use: the largest allowed level not above the wanted one, the closest memorize time. */
-export function clampBlindfold(tier: Tier, settings: { level: BlindfoldLevel; memorize: MemorizeSeconds }): { level: BlindfoldLevel; memorize: MemorizeSeconds } {
-  const { levels, memorize } = ACCESS[tier].blindfold;
+export function clampBlindfold<S extends { level: BlindfoldLevel; memorize: MemorizeSeconds; mateIn?: MateIn }>(tier: Tier, settings: S): S {
+  const { levels, memorize, mateIn } = ACCESS[tier].blindfold;
   if (levels.length === 0 || memorize.length === 0) return settings;
   const level = levels.includes(settings.level)
     ? settings.level
@@ -127,7 +142,10 @@ export function clampBlindfold(tier: Tier, settings: { level: BlindfoldLevel; me
   const time = memorize.includes(settings.memorize)
     ? settings.memorize
     : [...memorize].sort((a, b) => Math.abs(a - settings.memorize) - Math.abs(b - settings.memorize))[0];
-  return { level, memorize: time };
+  const length = settings.mateIn === undefined || mateIn.includes(settings.mateIn)
+    ? settings.mateIn
+    : [...mateIn].sort((a, b) => a - b).filter((m) => m <= settings.mateIn!).pop() ?? mateIn[0];
+  return { ...settings, level, memorize: time, ...(length === undefined ? {} : { mateIn: length }) };
 }
 
 /** The drill to show: the wanted one when allowed, else the first allowed one (or the wanted one when none is). */

@@ -6,10 +6,12 @@ import {
   ALL_CYCLES,
   ALL_DIFFICULTIES,
   ALL_LEVELS,
+  ALL_MATE_IN,
   ALL_MEMORIZE,
   canOpenBlindfold,
   checkBlindfoldDrill,
   checkBlindfoldLevel,
+  checkBlindfoldMateIn,
   clampBlindfold,
   clampDrill,
   checkBlindfoldMate,
@@ -64,6 +66,7 @@ describe('the three tiers', () => {
     assert.deepEqual(ACCESS.premium.woodpecker.types, ['classic', 'endgame']);
     assert.deepEqual(ACCESS.premium.blindfold.levels, ALL_LEVELS);
     assert.deepEqual(ACCESS.premium.blindfold.memorize, ALL_MEMORIZE);
+    assert.deepEqual(ACCESS.premium.blindfold.mateIn, ALL_MATE_IN);
     for (const kind of ['color', 'diagonal', 'knight'] as const) assert.ok(ok(checkBlindfoldDrill('premium', kind)));
   });
   it('every tier has at least what the lower tier has', () => {
@@ -74,6 +77,7 @@ describe('the three tiers', () => {
       }
       for (const v of ACCESS[low].blindfold.levels) assert.ok(ACCESS[high].blindfold.levels.includes(v));
       for (const v of ACCESS[low].blindfold.memorize) assert.ok(ACCESS[high].blindfold.memorize.includes(v));
+      for (const v of ACCESS[low].blindfold.mateIn) assert.ok(ACCESS[high].blindfold.mateIn.includes(v));
       for (const v of ACCESS[low].blindfold.drills) assert.ok(ACCESS[high].blindfold.drills.includes(v));
     }
   });
@@ -175,6 +179,30 @@ describe('checks the server can make and the clamps', () => {
     assert.ok(ok(checkBlindfoldLevel('free', 6)) && ok(checkBlindfoldLevel('free', 7)));
     assert.ok(!ok(checkBlindfoldLevel('free', 8)) && !ok(checkBlindfoldLevel('free', 32)));
     for (const level of ALL_LEVELS) assert.ok(ok(checkBlindfoldLevel('premium', level)));
+  });
+  it('checkBlindfoldMateIn: mate in 1 for signed-in accounts, mate in 2 and 3 only for Premium', () => {
+    assert.ok(!ok(checkBlindfoldMateIn('guest', 1)));
+    assert.ok(ok(checkBlindfoldMateIn('free', 1)));
+    for (const n of [2, 3] as const) {
+      const free = checkBlindfoldMateIn('free', n);
+      assert.deepEqual([free.ok, !free.ok && free.needs], [false, 'premium']);
+      assert.ok(ok(checkBlindfoldMateIn('premium', n)));
+    }
+    assert.equal(tierFor((a) => a.blindfold.mateIn, 1), 'free');
+    assert.equal(tierFor((a) => a.blindfold.mateIn, 3), 'premium');
+  });
+  it('checkBlindfoldMate looks at the length of the mate too', () => {
+    const settings = { level: 7, memorize: 10 } as const;
+    assert.ok(ok(checkBlindfoldMate('free', settings)));
+    assert.ok(ok(checkBlindfoldMate('free', { ...settings, mateIn: 1 })));
+    assert.ok(!ok(checkBlindfoldMate('free', { ...settings, mateIn: 2 })));
+    assert.ok(ok(checkBlindfoldMate('premium', { level: 32, memorize: 5, mateIn: 3 })));
+  });
+  it('clampBlindfold takes a mate length the tier does not have back to one it has', () => {
+    assert.equal(clampBlindfold('free', { level: 7, memorize: 10, mateIn: 3 }).mateIn, 1);
+    assert.equal(clampBlindfold('free', { level: 7, memorize: 10, mateIn: 2 }).mateIn, 1);
+    assert.equal(clampBlindfold('premium', { level: 7, memorize: 10, mateIn: 3 }).mateIn, 3);
+    assert.deepEqual(clampBlindfold('free', { level: 7, memorize: 10, mateIn: 2 }), { level: 7, memorize: 10, mateIn: 1 });
   });
   it('clampBlindfold keeps allowed settings and moves the others to the nearest allowed ones', () => {
     assert.deepEqual(clampBlindfold('free', { level: 7, memorize: 10 }), { level: 7, memorize: 10 });

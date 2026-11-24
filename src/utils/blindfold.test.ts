@@ -12,6 +12,9 @@ import {
   preparePosition,
   saveBlindfoldBest,
   saveBlindfoldSettings,
+  solutionLine,
+  stepView,
+  checkStep,
 } from './blindfold.ts';
 
 const store = new Map<string, string>();
@@ -85,13 +88,16 @@ test('preparePosition plays the opponent move and finds the mate', () => {
 });
 
 test('settings: defaults, saving, junk in storage', () => {
-  assert.deepEqual(loadBlindfoldSettings(), { level: 8, memorize: 10 });
-  saveBlindfoldSettings({ level: 6, memorize: 20 });
-  assert.deepEqual(loadBlindfoldSettings(), { level: 6, memorize: 20 });
-  store.set(BLINDFOLD_SETTINGS_STORAGE_KEY, JSON.stringify({ level: 9, memorize: 3 }));
-  assert.deepEqual(loadBlindfoldSettings(), { level: 8, memorize: 10 });
+  assert.deepEqual(loadBlindfoldSettings(), { level: 8, memorize: 10, mateIn: 1 });
+  saveBlindfoldSettings({ level: 6, memorize: 20, mateIn: 3 });
+  assert.deepEqual(loadBlindfoldSettings(), { level: 6, memorize: 20, mateIn: 3 });
+  store.set(BLINDFOLD_SETTINGS_STORAGE_KEY, JSON.stringify({ level: 9, memorize: 3, mateIn: 4 }));
+  assert.deepEqual(loadBlindfoldSettings(), { level: 8, memorize: 10, mateIn: 1 });
+  // saved before mate in 2 and 3 existed
+  store.set(BLINDFOLD_SETTINGS_STORAGE_KEY, JSON.stringify({ level: 7, memorize: 5 }));
+  assert.deepEqual(loadBlindfoldSettings(), { level: 7, memorize: 5, mateIn: 1 });
   store.set(BLINDFOLD_SETTINGS_STORAGE_KEY, 'not json');
-  assert.deepEqual(loadBlindfoldSettings(), { level: 8, memorize: 10 });
+  assert.deepEqual(loadBlindfoldSettings(), { level: 8, memorize: 10, mateIn: 1 });
 });
 
 test('best score is kept per level and only improves', () => {
@@ -103,6 +109,87 @@ test('best score is kept per level and only improves', () => {
   assert.deepEqual(saveBlindfoldBest(6, 2), { best: 2, isNewBest: true });
   assert.equal(loadBlindfoldBest(8), 4);
   assert.equal(store.get(BLINDFOLD_BEST_STORAGE_KEY), '{"6":2,"8":4}');
+});
+
+test('best scores of mate in 2 and 3 are kept apart from mate in 1 (which keeps its old keys)', () => {
+  assert.deepEqual(saveBlindfoldBest(8, 5), { best: 5, isNewBest: true });
+  assert.deepEqual(saveBlindfoldBest(8, 2, 2), { best: 2, isNewBest: true });
+  assert.deepEqual(saveBlindfoldBest(8, 1, 3), { best: 1, isNewBest: true });
+  assert.deepEqual(saveBlindfoldBest(8, 2, 2), { best: 2, isNewBest: false });
+  assert.equal(loadBlindfoldBest(8), 5);
+  assert.equal(loadBlindfoldBest(8, 2), 2);
+  assert.equal(loadBlindfoldBest(8, 3), 1);
+  assert.equal(loadBlindfoldBest(6, 2), 0);
+  assert.deepEqual(JSON.parse(store.get(BLINDFOLD_BEST_STORAGE_KEY)!), { '8': 5, '2:8': 2, '3:8': 1 });
+});
+
+// A real mate in 2 (Lichess puzzle ITJ7Z): White's king steps to b8, then Black plays Rg8+ Rf8 Rxf8#.
+const MATE2 = { fen: 'K7/P4R2/2k5/8/8/6r1/8/8 w - - 0 49', moves: ['a8b8', 'g3g8', 'f7f8', 'g8f8'] };
+
+test('preparePosition understands mate in 2: the whole line, who plays what, where it ends', () => {
+  const pos = preparePosition(MATE2);
+  assert.ok(pos, 'a legal line that ends in mate');
+  assert.equal(pos.mateIn, 2);
+  assert.equal(pos.playerColor, 'black');
+  assert.deepEqual(pos.lastMove, ['a8', 'b8']);
+  assert.deepEqual(pos.solution.map((p) => p.byPlayer), [true, false, true]);
+  assert.deepEqual(pos.solution.map((p) => p.san), ['Rg8+', 'Rf8', 'Rxf8#']);
+  assert.equal(pos.mateSan, 'Rxf8#');
+  assert.equal(pos.mateUci, 'g8f8');
+  assert.equal(solutionLine(pos), 'Rg8+ Rf8 Rxf8#');
+  assert.equal(pos.solution[0].fenBefore, pos.fen);
+});
+
+test('preparePosition rejects lines that are not legal, do not end in mate, or have a strange length', () => {
+  const { fen } = MATE2;
+  assert.equal(preparePosition({ fen, moves: ['a8b8', 'g3g8', 'f7f8', 'g8g1'] }), null); // ends without mate
+  assert.equal(preparePosition({ fen, moves: ['a8b8', 'g3g8', 'f7f8', 'a1a2'] }), null); // illegal move
+  assert.equal(preparePosition({ fen, moves: ['a8b8', 'g3g8', 'f7f8'] }), null); // three plies
+  assert.equal(preparePosition({ fen, moves: [] }), null);
+});
+
+test('stepView: the position, the last move and the wanted move at each step', () => {
+  const pos = preparePosition(MATE2)!;
+  const first = stepView(pos, 0);
+  assert.equal(first.fen, pos.fen);
+  assert.deepEqual(first.lastMove, ['a8', 'b8']);
+  assert.equal(first.expectedUci, 'g3g8');
+  assert.equal(first.isLast, false);
+  const second = stepView(pos, 1);
+  assert.deepEqual(second.lastMove, ['f7', 'f8']);
+  assert.equal(second.expectedUci, 'g8f8');
+  assert.equal(second.isLast, true);
+  // after Kb8 Rg8+ Rf8: the white rook is on f8, the black rook on g8
+  assert.ok(second.fen.split(' ')[0].startsWith('1K3Rr1/'), second.fen);
+});
+
+test('checkStep: the puzzle move goes on, any mate solves, other moves are wrong, junk is illegal', () => {
+  const pos = preparePosition(MATE2)!;
+  const first = stepView(pos, 0);
+  assert.deepEqual(checkStep(first.fen, 'Rg8+', first.expectedUci), { kind: 'continue', san: 'Rg8+' });
+  assert.deepEqual(checkStep(first.fen, 'rg8', first.expectedUci), { kind: 'continue', san: 'Rg8+' });
+  assert.equal(checkStep(first.fen, 'Rg7', first.expectedUci).kind, 'wrong');
+  assert.equal(checkStep(first.fen, 'Qa9', first.expectedUci).kind, 'illegal');
+  assert.equal(checkStep(first.fen, '  ', first.expectedUci).kind, 'empty');
+  const second = stepView(pos, 1);
+  assert.deepEqual(checkStep(second.fen, 'Rxf8#', second.expectedUci), { kind: 'mate', san: 'Rxf8#' });
+  assert.equal(checkStep(second.fen, 'Rg7', second.expectedUci).kind, 'wrong');
+  // mate in 1 position through checkStep too: the mating move solves it even when it is not "the" move
+  const rooks = checkStep('6k1/5ppp/8/8/8/8/5PPP/R3R1K1 w - - 0 1', 'Ra8', 'e1e8');
+  assert.deepEqual(rooks, { kind: 'mate', san: 'Ra8#' });
+});
+
+test('fetchBlindfoldRound asks for mate in 2 and 3 and keeps only puzzles of that length', async () => {
+  const urls: string[] = [];
+  const mate2 = { ...GOOD_PUZZLE, puzzleId: 'm2', ...MATE2, themes: ['mateIn2'] };
+  const spy = (async (u: string) => {
+    urls.push(u);
+    return { ok: true, status: 200, json: async () => ({ puzzles: [mate2, GOOD_PUZZLE] }) };
+  }) as unknown as typeof fetch;
+  const items = await fetchBlindfoldRound(8, 10, spy, {}, 2);
+  assert.equal(urls[0], '/api/puzzles/blindfold?maxPieces=8&count=10&mateIn=2');
+  assert.deepEqual(items.map((i) => i.puzzle.puzzleId), ['m2']);
+  await assert.rejects(fetchBlindfoldRound(8, 10, spy, {}, 3), /No usable puzzles/);
 });
 
 test('level labels', () => {

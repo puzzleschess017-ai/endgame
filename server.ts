@@ -7,8 +7,8 @@ import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
 import { createTablebase } from './server/tablebase.ts';
 import { createTierLookup } from './server/tier.ts';
 import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './src/auth/project.ts';
-import { checkBlindfoldLevel, checkWoodpecker } from './src/utils/access.ts';
-import type { BlindfoldLevel } from './src/utils/blindfold.ts';
+import { checkBlindfoldLevel, checkBlindfoldMateIn, checkWoodpecker } from './src/utils/access.ts';
+import type { BlindfoldLevel, MateIn } from './src/utils/blindfold.ts';
 import type { PuzzleCountOption } from './src/types.ts';
 import { cleanSiteUrl, pageFor, renderPage, robotsTxt, sitemapXml } from './server/seo.ts';
 import {
@@ -527,12 +527,12 @@ async function startServer() {
     }
   });
 
-  // Puzzles for Blindfold: random mate-in-1 puzzles, limited by the number of pieces on the board.
+  // Puzzles for Blindfold: random mate in 1, 2 or 3 puzzles, limited by the number of pieces on the board.
   app.get('/api/puzzles/blindfold', async (req, res) => {
     const params = parseBlindfoldParams(req.query);
     if (!params) {
       res.status(400).json({
-        error: 'Invalid blindfold request. maxPieces must be 6, 7, 8, 10 or 32 and count 1-20.',
+        error: 'Invalid blindfold request. maxPieces must be 6, 7, 8, 10 or 32, count 1-20 and mateIn 1, 2 or 3.',
       });
       return;
     }
@@ -544,6 +544,11 @@ async function startServer() {
     const allowed = checkBlindfoldLevel(visitor.tier, params.maxPieces as BlindfoldLevel);
     if (!allowed.ok) {
       res.status(403).json({ error: allowed.reason, needs: allowed.needs });
+      return;
+    }
+    const longMate = checkBlindfoldMateIn(visitor.tier, (params.mateIn ?? 1) as MateIn);
+    if (!longMate.ok) {
+      res.status(403).json({ error: longMate.reason, needs: longMate.needs });
       return;
     }
     try {
