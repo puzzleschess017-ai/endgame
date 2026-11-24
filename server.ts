@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
+import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
 import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -463,6 +464,30 @@ async function startServer() {
       console.error('Failed to build puzzle ladder:', err);
       res.status(500).json({
         error: err instanceof Error ? err.message : 'Failed to build puzzle ladder',
+      });
+    }
+  });
+
+  // Puzzles for Blindfold: random mate-in-1 puzzles, limited by the number of pieces on the board.
+  app.get('/api/puzzles/blindfold', (req, res) => {
+    const params = parseBlindfoldParams(req.query);
+    if (!params) {
+      res.status(400).json({
+        error: 'Invalid blindfold request. maxPieces must be 6, 8, 10 or 32 and count 1-20.',
+      });
+      return;
+    }
+    try {
+      const puzzles = pickBlindfoldPuzzles(getDb(), params).map(formatPuzzle);
+      if (puzzles.length === 0) {
+        res.status(500).json({ error: 'No puzzles available for this level.' });
+        return;
+      }
+      res.json({ ...params, puzzles });
+    } catch (err) {
+      console.error('Failed to pick blindfold puzzles:', err);
+      res.status(500).json({
+        error: err instanceof Error ? err.message : 'Failed to pick blindfold puzzles',
       });
     }
   });

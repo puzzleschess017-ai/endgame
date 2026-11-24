@@ -86,10 +86,13 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | `/coordinates` | Coordinates trainer: click the named square against the clock (30 or 60 s, white, black or random side). The board has no labels, on purpose |
 | `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
 | `/race` | Puzzle Race: solve as many puzzles as possible in 1, 3 or 5 minutes, easy to hard from the whole database. A wrong move costs 10 seconds and moves on to the next puzzle. Best score per time saved in the browser (a run ended early is not saved) |
+| `/blindfold` | Blindfold: *Mate in 1* (memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; levels by number of pieces: up to 6, 8, 10 or any; a round is 10 puzzles) and *Drills* (60 s without a board: square color, same diagonal, knight route). Best scores saved in the browser |
 
 Every path is served by the same app (`main.tsx` picks the page from the URL). Logic that can be
 tested without a browser lives in `src/utils/`; run all its tests with
 `npx tsx --test src/utils/*.test.ts`.
+
+Blindfold gets random mate-in-1 puzzles from `GET /api/puzzles/blindfold?maxPieces=8&count=10` (`maxPieces` is 6, 8, 10 or 32 = any; pieces are counted after the opponent's first move; the list of eligible ids is built once in memory by `server/blindfold.ts`). Run its tests with `npx tsx --test server/*.test.ts`.
 
 Streak and Race get their puzzles from `GET /api/puzzles/ladder?start=500&step=40&count=30` (Race asks for `step=25`): one
 random puzzle per rating step (start, start + step, ...), easy first, from every puzzle in the
