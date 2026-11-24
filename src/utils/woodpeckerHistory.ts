@@ -33,13 +33,31 @@ export function loadWoodpeckerHistory(): WoodpeckerCycleRecord[] {
   }
 }
 
+/**
+ * Keys of the cycles this browser has already counted, kept apart from the history on purpose: signing out
+ * removes the account's history from the browser, but the saved Woodpecker session stays. Without this list
+ * its finished cycles would be counted again (and added to the account a second time on the next sign-in).
+ */
+export const WOODPECKER_COUNTED_STORAGE_KEY = 'ctg_woodpecker_counted_v1';
+const COUNTED_LIMIT = 1000;
+
+function loadCounted(): string[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(WOODPECKER_COUNTED_STORAGE_KEY) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
 /** Adds the cycles of `session` that are not in the history yet. Returns how many were new. */
 export function recordFinishedCycles(
   session: Pick<TrainingSession, 'id' | 'config' | 'cycleResults'> | null,
 ): number {
   if (!session || session.cycleResults.length === 0) return 0;
   const history = loadWoodpeckerHistory();
-  const known = new Set(history.map((r) => r.key));
+  const counted = loadCounted();
+  const known = new Set([...history.map((r) => r.key), ...counted]);
   const added: WoodpeckerCycleRecord[] = [];
   for (const result of session.cycleResults as CycleResult[]) {
     const key = `${session.id}:${result.cycleNumber}`;
@@ -56,6 +74,14 @@ export function recordFinishedCycles(
     });
   }
   if (added.length === 0) return 0;
+  try {
+    localStorage.setItem(
+      WOODPECKER_COUNTED_STORAGE_KEY,
+      JSON.stringify([...counted, ...added.map((r) => r.key)].slice(-COUNTED_LIMIT)),
+    );
+  } catch {
+    // ignore storage errors
+  }
   for (const r of added) {
     recordActivity({
       mode: 'woodpecker',
