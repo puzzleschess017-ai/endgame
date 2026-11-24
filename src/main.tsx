@@ -1,5 +1,4 @@
 import {createRoot} from 'react-dom/client';
-import AnalysisPage from './pages/AnalysisPage.tsx';
 import App from './App.tsx';
 import CoordinatesPage from './pages/CoordinatesPage.tsx';
 import EditorPage from './pages/EditorPage.tsx';
@@ -8,6 +7,7 @@ import HomePage from './pages/HomePage.tsx';
 import RacePage from './pages/RacePage.tsx';
 import StatisticsPage from './pages/StatisticsPage.tsx';
 import StreakPage from './pages/StreakPage.tsx';
+import TablebasePage from './pages/TablebasePage.tsx';
 import './index.css';
 
 // One bundle, one page per path. Home (statistics) is the landing page and the fallback for unknown paths.
@@ -19,7 +19,7 @@ const PAGES: Record<string, () => React.JSX.Element> = {
   '/blindfold': BlindfoldPage,
   '/statistics': StatisticsPage,
   '/editor': EditorPage,
-  '/analysis': AnalysisPage,
+  '/tablebase': TablebasePage,
 };
 
 const path = window.location.pathname.replace(/\/+$/, '') || '/';

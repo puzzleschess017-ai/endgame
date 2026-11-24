@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronRight, Microscope, PencilLine, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Database, PencilLine, type LucideIcon } from 'lucide-react';
 import AppShell from '../components/AppShell';
 import BarChart, { type BarDatum } from '../components/BarChart';
 import { segmentClass } from '../components/panelUi';
@@ -36,11 +36,11 @@ const TOOLS: Tool[] = [
     iconBg: 'bg-amber-300/15',
   },
   {
-    id: 'analysis',
-    href: '/analysis',
-    title: 'Analysis Board',
-    description: 'Play moves for both sides, step through a game, load a position or a PGN.',
-    icon: Microscope,
+    id: 'tablebase',
+    href: '/tablebase',
+    title: 'Endgame Tablebase',
+    description: 'Perfect play for any position with 7 pieces or fewer: who wins and the best move.',
+    icon: Database,
     iconClass: 'text-sky-400',
     iconBg: 'bg-sky-400/15',
   },
