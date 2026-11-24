@@ -3,9 +3,11 @@ import {
   ChartColumn,
   ChevronDown,
   Crosshair,
+  Database,
   EyeOff,
   Flame,
   House,
+  PencilLine,
   Repeat,
   Timer,
   type LucideIcon,
@@ -93,6 +95,28 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    id: 'tools',
+    label: 'Tools',
+    items: [
+      {
+        id: 'editor',
+        href: '/editor',
+        label: 'Board Editor',
+        icon: PencilLine,
+        iconClass: 'text-lime-300',
+        chipClass: 'bg-lime-400/15',
+      },
+      {
+        id: 'tablebase',
+        href: '/tablebase',
+        label: 'Endgame Tablebase',
+        icon: Database,
+        iconClass: 'text-cyan-300',
+        chipClass: 'bg-cyan-400/15',
+      },
+    ],
+  },
+  {
     id: 'progress',
     label: 'Progress',
     items: [
@@ -108,8 +132,8 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-/** The training modes (everything except Home and Statistics), in menu order. */
-export const MODE_ITEMS: NavItem[] = NAV_GROUPS.filter((g) => g.id !== 'progress').flatMap((g) => g.items);
+/** The training modes (puzzles and training, not Tools, Home or Statistics), in menu order. */
+export const MODE_ITEMS: NavItem[] = NAV_GROUPS.filter((g) => g.id === 'puzzles' || g.id === 'training').flatMap((g) => g.items);
 
 export const NAV_ITEMS: NavItem[] = [HOME_ITEM, ...NAV_GROUPS.flatMap((g) => g.items)];
 
@@ -143,7 +167,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
     <a
       href={item.href}
       aria-current={active ? 'page' : undefined}
-      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold whitespace-nowrap border transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+      className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap border transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
         active
           ? 'bg-[#39ff88]/12 border-[#39ff88]/40 text-white'
           : 'border-transparent text-white/80 hover:text-white hover:bg-white/5'
