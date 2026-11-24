@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ChevronRight, Microscope, PencilLine, type LucideIcon } from 'lucide-react';
 import AppShell from '../components/AppShell';
 import BarChart, { type BarDatum } from '../components/BarChart';
 import { segmentClass } from '../components/panelUi';
@@ -11,6 +12,39 @@ type Range = (typeof RANGES)[number];
 
 const CARD_BASE =
   'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
+
+interface Tool {
+  id: string;
+  href: string;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  /** Colour of the icon, like the entries in the menu. */
+  iconClass: string;
+  /** Soft background behind the icon. */
+  iconBg: string;
+}
+
+const TOOLS: Tool[] = [
+  {
+    id: 'editor',
+    href: '/editor',
+    title: 'Board Editor',
+    description: 'Set up any position piece by piece, then copy the FEN or analyze it.',
+    icon: PencilLine,
+    iconClass: 'text-amber-300',
+    iconBg: 'bg-amber-300/15',
+  },
+  {
+    id: 'analysis',
+    href: '/analysis',
+    title: 'Analysis Board',
+    description: 'Play moves for both sides, step through a game, load a position or a PGN.',
+    icon: Microscope,
+    iconClass: 'text-sky-400',
+    iconBg: 'bg-sky-400/15',
+  },
+];
 
 /** "2026-11-24" -> a local Date at noon. */
 function parseDay(day: string): Date {
@@ -53,6 +87,32 @@ export default function HomePage() {
         <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
           {username ? `Hello, ${username}!` : 'Hello!'}
         </h2>
+
+        <section className="flex flex-col gap-4" aria-label="Tools" data-testid="tools">
+          <h3 className="text-xl font-bold text-white tracking-tight">Tools</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {TOOLS.map((tool) => {
+              const Icon = tool.icon;
+              return (
+                <a
+                  key={tool.id}
+                  href={tool.href}
+                  data-testid={`tool-${tool.id}`}
+                  className={`${CARD_BASE} group px-5 py-4 flex items-center gap-4 no-underline hover:border-[#39ff88]/60 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#39ff88]`}
+                >
+                  <span className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${tool.iconBg}`}>
+                    <Icon className={`w-6 h-6 ${tool.iconClass}`} aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1 flex flex-col gap-0.5">
+                    <span className="text-base font-bold text-white leading-snug">{tool.title}</span>
+                    <span className="text-sm font-medium text-white/65 leading-snug">{tool.description}</span>
+                  </span>
+                  <ChevronRight className="shrink-0 w-5 h-5 text-white/40 group-hover:text-[#39ff88] transition-colors" aria-hidden="true" />
+                </a>
+              );
+            })}
+          </div>
+        </section>
 
         <section className="flex flex-col gap-4" aria-label="Training overview">
           <h3 className="text-xl font-bold text-white tracking-tight">Training Overview</h3>

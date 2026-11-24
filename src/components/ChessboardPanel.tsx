@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { MutableRefObject } from 'react';
 import { Chessground } from 'chessground';
 import type { Api } from 'chessground/api';
+import type { Config } from 'chessground/config';
 import type { Key } from 'chessground/types';
 
 import type { BoardTheme, PieceSet } from '../types';
@@ -10,6 +12,21 @@ export interface PendingPromotion {
   from: Key;
   to: Key;
   color: 'white' | 'black';
+}
+
+/**
+ * Board editor mode: every piece can be moved anywhere, a piece dragged off the board is deleted and
+ * new pieces can be dragged in from outside (through `apiRef`). The board then ignores `dests`.
+ */
+export interface BoardEditOptions {
+  /** Called with the piece placement (first FEN field) after every change made on the board. */
+  onChange: (placement: string) => void;
+  /** Gives the editor the chessground API (dragNewPiece, setPieces). */
+  apiRef: MutableRefObject<Api | null>;
+  /** Called when a square is pressed, for placing the piece of the selected tool. */
+  onSquare?: (key: Key) => void;
+  /** Pieces can be picked up and moved (off while a placing tool is selected). */
+  dragEnabled: boolean;
 }
 
 interface ChessboardPanelProps {
@@ -28,6 +45,8 @@ interface ChessboardPanelProps {
   pendingPromotion: PendingPromotion | null;
   onSelectPromotion: (piece: 'q' | 'r' | 'b' | 'n') => void;
   onCancelPromotion: () => void;
+  /** Turns the board into a board editor. */
+  edit?: BoardEditOptions;
 }
 
 const PROMO_PIECES: Array<{ role: 'q' | 'r' | 'b' | 'n'; name: string; svgCode: 'Q' | 'R' | 'B' | 'N' }> = [
@@ -385,6 +404,32 @@ function PromotionPieceCanvas({
   );
 }
 
+/** chessground settings of the board editor mode (see BoardEditOptions). */
+function editorConfig(editRef: MutableRefObject<BoardEditOptions | undefined>): Partial<Config> {
+  const edit = editRef.current;
+  const dragEnabled = edit?.dragEnabled ?? true;
+  return {
+    viewOnly: false,
+    // Without this a touch on an empty square would only scroll the page, so tapping to place a piece would not work.
+    blockTouchScroll: true,
+    lastMove: undefined,
+    check: false,
+    selected: undefined,
+    movable: { free: true, color: dragEnabled ? 'both' : undefined, showDests: false, events: {} },
+    draggable: { enabled: dragEnabled, distance: 3, autoDistance: true, showGhost: false, deleteOnDropOff: true },
+    selectable: { enabled: false },
+    highlight: { lastMove: false, check: false },
+    drawable: { enabled: false, visible: false },
+    events: {
+      change: () => {
+        const api = edit?.apiRef.current;
+        if (api) edit?.onChange(api.getFen());
+      },
+      select: (key: Key) => editRef.current?.onSquare?.(key),
+    },
+  };
+}
+
 export default function ChessboardPanel({
   fen,
   orientation,
@@ -401,6 +446,7 @@ export default function ChessboardPanel({
   pendingPromotion,
   onSelectPromotion,
   onCancelPromotion,
+  edit,
 }: ChessboardPanelProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -409,6 +455,8 @@ export default function ChessboardPanel({
   const cgApiRef = useRef<Api | null>(null);
   const onUserMoveRef = useRef(onUserMove);
   onUserMoveRef.current = onUserMove;
+  const editRef = useRef(edit);
+  editRef.current = edit;
   const drawPiecesRef = useRef<() => void>(() => {});
   const useCanvasPiecesRef = useRef(false);
   const prevFenRef = useRef<string>(fen);
@@ -747,6 +795,10 @@ export default function ChessboardPanel({
     });
 
     cgApiRef.current = api;
+    if (editRef.current) {
+      editRef.current.apiRef.current = api;
+      api.set(editorConfig(editRef));
+    }
 
     let lastDrawAt = 0;
     let pendingRaf: number | null = null;
@@ -782,6 +834,7 @@ export default function ChessboardPanel({
       observer?.disconnect();
       api.destroy();
       cgApiRef.current = null;
+      if (editRef.current) editRef.current.apiRef.current = null;
     };
   }, []);
 
@@ -836,13 +889,15 @@ export default function ChessboardPanel({
       },
     });
 
+    if (editRef.current) api.set(editorConfig(editRef));
+
     if (useCanvasPiecesRef.current) {
       const rafId = window.requestAnimationFrame(() => {
         drawPiecesRef.current();
       });
       return () => window.cancelAnimationFrame(rafId);
     }
-  }, [fen, orientation, turnColor, dests, lastMove, check, hintArrow, viewOnly, syncToken, drawPiecesCanvas]);
+  }, [fen, orientation, turnColor, dests, lastMove, check, hintArrow, viewOnly, syncToken, drawPiecesCanvas, edit?.dragEnabled]);
 
   useEffect(() => {
     if (useCanvasPieces) {
