@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CoordinateBoard, { type SquareMark } from '../components/CoordinateBoard';
-import SiteHeader from '../components/SiteHeader';
+import TrainerLayout from '../components/TrainerLayout';
 import { BOARD_SIZE_CLASS_MAP, loadAppearanceSettings } from '../utils/appearance';
 import {
   accuracyPercent,
@@ -201,157 +201,158 @@ export default function CoordinatesPage() {
   const barPercent = Math.max(0, Math.min(100, (timeLeftMs / totalMs) * 100));
 
   return (
-    <div className="min-h-screen bg-[#101b2f] text-white flex flex-col">
-      <SiteHeader username={username} muted={muted} onToggleMute={() => setMuted((v) => !v)} />
+    <TrainerLayout
+      username={username}
+      muted={muted}
+      onToggleMute={() => setMuted((v) => !v)}
+      boardSizeClass={boardSizeClass}
+      board={
+        <CoordinateBoard
+          orientation={phase === 'setup' ? (settings.orientation === 'black' ? 'black' : 'white') : orientation}
+          theme={appearance.boardTheme}
+          marks={marks}
+          onSquareClick={phase === 'running' ? handleAnswer : undefined}
+        />
+      }
+      panel={
+        <>
+      {phase === 'setup' && (
+        <div className={CARD_CLASS}>
+          <div>
+            <h2 className="text-xl font-bold text-white tracking-tight">Coordinates Trainer</h2>
+            <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
+              Know every square without thinking. Score as many points as you can before the clock runs out.
+            </p>
+          </div>
 
-      <main className="flex-1 w-full max-w-[1220px] mx-auto px-4 sm:px-6 py-5 sm:py-7 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 lg:gap-8">
-        <section className={`w-full ${boardSizeClass} flex flex-col gap-3 shrink-0`}>
-          <CoordinateBoard
-            orientation={phase === 'setup' ? (settings.orientation === 'black' ? 'black' : 'white') : orientation}
-            theme={appearance.boardTheme}
-            marks={marks}
-            onSquareClick={phase === 'running' ? handleAnswer : undefined}
-          />
-        </section>
-
-        <aside className="w-full max-w-[560px] lg:w-[370px] shrink-0">
-          {phase === 'setup' && (
-            <div className={CARD_CLASS}>
-              <div>
-                <h2 className="text-xl font-bold text-white tracking-tight">Coordinates Trainer</h2>
-                <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
-                  Know every square without thinking. Score as many points as you can before the clock runs out.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <span className="text-sm font-semibold text-white">Time</span>
-                <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
-                  {DURATIONS.map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      aria-pressed={settings.duration === d}
-                      onClick={() => setSettings({ ...settings, duration: d })}
-                      className={segmentClass(settings.duration === d)}
-                    >
-                      {d} s
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <span className="text-sm font-semibold text-white">Playing as</span>
-                <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
-                  {ORIENTATIONS.map((o) => (
-                    <button
-                      key={o.value}
-                      type="button"
-                      aria-pressed={settings.orientation === o.value}
-                      onClick={() => setSettings({ ...settings, orientation: o.value })}
-                      className={segmentClass(settings.orientation === o.value)}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <p className="text-sm font-semibold text-white/75 tabular-nums">
-                {best > 0 ? `Your best (${settings.duration} s): ${best}` : 'No record yet for this time.'}
-              </p>
-
-              <button
-                type="button"
-                onClick={startRun}
-                className="w-full py-3.5 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(57,255,136,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]"
-              >
-                Start
-              </button>
-            </div>
-          )}
-
-          {phase === 'running' && (
-            <div className={CARD_CLASS}>
-              <div className="space-y-2">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-semibold text-white">Time left</span>
-                  <span className="text-2xl font-bold tabular-nums" data-testid="seconds-left">
-                    {secondsLeft}
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-[#101b2f] overflow-hidden" aria-hidden="true">
-                  <div className="h-full bg-[#39ff88]" style={{ width: `${barPercent}%` }} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2.5">
-                <StatTile label="Score" value={String(correct)} tone="good" />
-                <StatTile label="Misses" value={String(misses)} tone="bad" />
-                <StatTile label="Accuracy" value={`${accuracyPercent(correct, misses)}%`} />
-              </div>
-
-              <div className="text-center py-2">
-                <div className="text-xs font-semibold text-white/65">Click this square</div>
-                <div className="text-7xl font-bold tracking-tight text-[#39ff88] leading-none mt-2" data-testid="target">
-                  {target}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={quitRun}
-                className="w-full py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
-              >
-                End run (not saved)
-              </button>
-            </div>
-          )}
-
-          {phase === 'finished' && result && (
-            <div className={CARD_CLASS} role="status" aria-live="polite">
-              <div className="text-center">
-                <h2 className="text-xl font-bold text-white tracking-tight">Time’s up!</h2>
-                <div className="text-7xl font-bold text-[#39ff88] leading-none mt-4 tabular-nums" data-testid="final-score">
-                  {result.correct}
-                </div>
-                <div className="text-sm font-semibold text-white/70 mt-2">
-                  {result.correct === 1 ? 'point' : 'points'}
-                </div>
-                {result.isNewBest && (
-                  <div className="inline-block mt-3 px-3 py-1 rounded-full bg-[#39ff88]/15 border border-[#39ff88] text-[#39ff88] text-xs font-bold">
-                    New best!
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-3 gap-2.5">
-                <StatTile label="Accuracy" value={`${result.accuracy}%`} />
-                <StatTile label="Misses" value={String(result.misses)} tone="bad" />
-                <StatTile label="Best" value={String(result.best)} tone="good" />
-              </div>
-
-              <div className="flex flex-col gap-2.5">
+          <div className="space-y-2">
+            <span className="text-sm font-semibold text-white">Time</span>
+            <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+              {DURATIONS.map((d) => (
                 <button
+                  key={d}
                   type="button"
-                  onClick={startRun}
-                  className="w-full py-3.5 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]"
+                  aria-pressed={settings.duration === d}
+                  onClick={() => setSettings({ ...settings, duration: d })}
+                  className={segmentClass(settings.duration === d)}
                 >
-                  Play again
+                  {d} s
                 </button>
-                <button
-                  type="button"
-                  onClick={quitRun}
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
-                >
-                  Change settings
-                </button>
-              </div>
+              ))}
             </div>
-          )}
-        </aside>
-      </main>
-    </div>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-sm font-semibold text-white">Playing as</span>
+            <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+              {ORIENTATIONS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  aria-pressed={settings.orientation === o.value}
+                  onClick={() => setSettings({ ...settings, orientation: o.value })}
+                  className={segmentClass(settings.orientation === o.value)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p className="text-sm font-semibold text-white/75 tabular-nums">
+            {best > 0 ? `Your best (${settings.duration} s): ${best}` : 'No record yet for this time.'}
+          </p>
+
+          <button
+            type="button"
+            onClick={startRun}
+            className="w-full py-3.5 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(57,255,136,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]"
+          >
+            Start
+          </button>
+        </div>
+      )}
+
+      {phase === 'running' && (
+        <div className={CARD_CLASS}>
+          <div className="space-y-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-semibold text-white">Time left</span>
+              <span className="text-2xl font-bold tabular-nums" data-testid="seconds-left">
+                {secondsLeft}
+              </span>
+            </div>
+            <div className="h-2 rounded-full bg-[#101b2f] overflow-hidden" aria-hidden="true">
+              <div className="h-full bg-[#39ff88]" style={{ width: `${barPercent}%` }} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2.5">
+            <StatTile label="Score" value={String(correct)} tone="good" />
+            <StatTile label="Misses" value={String(misses)} tone="bad" />
+            <StatTile label="Accuracy" value={`${accuracyPercent(correct, misses)}%`} />
+          </div>
+
+          <div className="text-center py-2">
+            <div className="text-xs font-semibold text-white/65">Click this square</div>
+            <div className="text-7xl font-bold tracking-tight text-[#39ff88] leading-none mt-2" data-testid="target">
+              {target}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={quitRun}
+            className="w-full py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+          >
+            End run (not saved)
+          </button>
+        </div>
+      )}
+
+      {phase === 'finished' && result && (
+        <div className={CARD_CLASS} role="status" aria-live="polite">
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-white tracking-tight">Time’s up!</h2>
+            <div className="text-7xl font-bold text-[#39ff88] leading-none mt-4 tabular-nums" data-testid="final-score">
+              {result.correct}
+            </div>
+            <div className="text-sm font-semibold text-white/70 mt-2">
+              {result.correct === 1 ? 'point' : 'points'}
+            </div>
+            {result.isNewBest && (
+              <div className="inline-block mt-3 px-3 py-1 rounded-full bg-[#39ff88]/15 border border-[#39ff88] text-[#39ff88] text-xs font-bold">
+                New best!
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 gap-2.5">
+            <StatTile label="Accuracy" value={`${result.accuracy}%`} />
+            <StatTile label="Misses" value={String(result.misses)} tone="bad" />
+            <StatTile label="Best" value={String(result.best)} tone="good" />
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={startRun}
+              className="w-full py-3.5 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]"
+            >
+              Play again
+            </button>
+            <button
+              type="button"
+              onClick={quitRun}
+              className="w-full py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+            >
+              Change settings
+            </button>
+          </div>
+        </div>
+      )}
+        </>
+      }
+    />
   );
 }

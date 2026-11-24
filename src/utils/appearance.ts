@@ -8,6 +8,24 @@ export const BOARD_SIZE_STORAGE_KEY = 'endgame_woodpecker_board_size';
 export const BOARD_SIZES = [320, 360, 400, 440, 480, 520, 560, 600, 640, 680, 720, 760] as const;
 export const DEFAULT_BOARD_SIZE = 560;
 
+/**
+ * Look of every board on the site (Woodpecker and each training mode): rounded corners, a hairline
+ * ring and a soft shadow, with no frame around it. Use this class on the element that is exactly
+ * as big as the board so all modes look and measure the same.
+ */
+export const BOARD_FRAME_CLASS =
+  'rounded-xl overflow-hidden shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_16px_44px_rgba(4,9,20,0.45)]';
+
+/**
+ * Board edge length in px for a container of `raw` px: a whole number of 8 px squares, so the
+ * squares are crisp and every mode ends up with exactly the same board. Null while unmeasured.
+ */
+export function snapBoardSize(raw: number): number | null {
+  const whole = Math.floor(raw);
+  if (!Number.isFinite(whole) || whole <= 0) return null;
+  return Math.max(8, Math.floor(whole / 8) * 8);
+}
+
 export const BOARD_SIZE_CLASS_MAP: Record<number, string> = {
   320: 'max-w-[min(320px,100%)]',
   360: 'max-w-[min(360px,100%)]',

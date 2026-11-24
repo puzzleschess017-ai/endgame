@@ -5,7 +5,7 @@ import { Minus, Plus, Settings } from 'lucide-react';
 import AppearanceSettingsModal from './components/AppearanceSettingsModal';
 import ChessboardPanel, { type PendingPromotion } from './components/ChessboardPanel';
 import SettingsPanel from './components/SettingsPanel';
-import SiteHeader from './components/SiteHeader';
+import TrainerLayout from './components/TrainerLayout';
 import TrainingSidebar from './components/TrainingSidebar';
 import WoodpeckerIntroModal from './components/WoodpeckerIntroModal';
 import type {
@@ -660,14 +660,13 @@ export default function App() {
     BOARD_SIZE_CLASS_MAP[appearance.boardSize] ?? 'max-w-[min(560px,100%)]';
 
   return (
-    <div className="min-h-screen bg-[#101b2f] text-white flex flex-col">
-      <SiteHeader username={username} muted={muted} onToggleMute={() => setMuted((m) => !m)} />
-
-      <main className="flex-1 w-full max-w-[1220px] mx-auto px-4 sm:px-6 py-5 sm:py-7 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 lg:gap-8">
-        {/* Chessboard Primary Anchor */}
-        <section
-          className={`w-full ${boardSizeClass} transition-[max-width] duration-200 ease-out flex flex-col gap-3 shrink-0`}
-        >
+    <TrainerLayout
+      username={username}
+      muted={muted}
+      onToggleMute={() => setMuted((m) => !m)}
+      boardSizeClass={boardSizeClass}
+      board={
+        <>
           <ChessboardPanel
             fen={boardState.fen}
             orientation={boardState.playerColor}
@@ -685,7 +684,10 @@ export default function App() {
             onSelectPromotion={handleSelectPromotion}
             onCancelPromotion={handleCancelPromotion}
           />
-
+        </>
+      }
+      belowBoard={
+        <>
           <div className="flex items-center justify-between px-0.5">
             <div className="flex items-center gap-2" role="group" aria-label="Board size">
               <button
@@ -720,10 +722,10 @@ export default function App() {
               <Settings className="w-4 h-4" />
             </button>
           </div>
-        </section>
-
-        {/* Right Panel: Setup or Active Training */}
-        <aside className="w-full max-w-[560px] lg:w-[370px] shrink-0">
+        </>
+      }
+      panel={
+        <>
           {!session || !currentPuzzle ? (
             <SettingsPanel
               config={config}
@@ -749,9 +751,9 @@ export default function App() {
               onRepeatSameSet={handleRepeatSameSet}
             />
           )}
-        </aside>
-      </main>
-
+        </>
+      }
+    >
       <AppearanceSettingsModal
         open={settingsOpen}
         settings={appearance}
@@ -764,6 +766,6 @@ export default function App() {
         initialUsername={username}
         onComplete={handleCompleteIntro}
       />
-    </div>
+    </TrainerLayout>
   );
 }
