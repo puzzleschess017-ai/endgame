@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
+import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
 
 const PORT = Number(process.env.PORT) || 3000;
 const FONTS_DIR = path.resolve(process.cwd(), 'public', 'fonts');
@@ -438,6 +439,30 @@ async function startServer() {
       console.error('Failed to sample puzzles:', err);
       res.status(500).json({
         error: err instanceof Error ? err.message : 'Failed to sample puzzles',
+      });
+    }
+  });
+
+  // Puzzles for Streak and Race: one per rating step, easy first, from every puzzle in the database.
+  app.get('/api/puzzles/ladder', (req, res) => {
+    const params = parseLadderParams(req.query);
+    if (!params) {
+      res.status(400).json({
+        error: 'Invalid ladder request. start 0-3200, step 5-100 and count 1-60 must be whole numbers.',
+      });
+      return;
+    }
+    try {
+      const puzzles = pickLadderPuzzles(getDb(), params).map(formatPuzzle);
+      if (puzzles.length === 0) {
+        res.status(500).json({ error: 'No puzzles available for this rating range.' });
+        return;
+      }
+      res.json({ ...params, puzzles });
+    } catch (err) {
+      console.error('Failed to build puzzle ladder:', err);
+      res.status(500).json({
+        error: err instanceof Error ? err.message : 'Failed to build puzzle ladder',
       });
     }
   });

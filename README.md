@@ -31,7 +31,8 @@ that exposes the puzzle API and serves the Vite dev server as middleware). Runni
 | Path | What it is |
 | --- | --- |
 | `src/` | React frontend (`App.tsx` is the Woodpecker trainer, `pages/` has one component per extra page such as `/coordinates`, plus `components/` and `utils/`) |
-| `server.ts` | Express server: `/api/puzzles/sample`, `/api/puzzles`, `/api/stats`, `/api/health` |
+| `server.ts` | Express server: `/api/puzzles/sample`, `/api/puzzles/ladder`, `/api/puzzles`, `/api/stats`, `/api/health` |
+| `server/ladder.ts` | Builds the easy-to-hard puzzle ladder for Streak and Race |
 | `endgame.db` | SQLite database with about 80,000 Lichess puzzles, 18.6 MB (read-only at runtime) |
 | `scripts/build-endgame-db.mjs` | Original build of the database from the Lichess CSV dump |
 | `scripts/extend-db.mjs` | Adds more puzzles to the existing database (see "What is in the database") |
@@ -83,10 +84,17 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | --- | --- |
 | `/` | Woodpecker endgame trainer |
 | `/coordinates` | Coordinates trainer: click the named square against the clock (30 or 60 s, white, black or random side). The board has no labels, on purpose |
+| `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
 
 Every path is served by the same app (`main.tsx` picks the page from the URL). Logic that can be
-tested without a browser lives in `src/utils/`; run its tests with
-`npx tsx --test src/utils/coordinates.test.ts`.
+tested without a browser lives in `src/utils/`; run all its tests with
+`npx tsx --test src/utils/*.test.ts`.
+
+Streak (and Race) get their puzzles from `GET /api/puzzles/ladder?start=500&step=40&count=30`: one
+random puzzle per rating step (start, start + step, ...), easy first, from every puzzle in the
+database. `src/utils/ladderFeed.ts` asks for the next batch before the current one runs out, and
+`src/hooks/usePuzzleSolver.ts` plays a puzzle on the board (opponent's replies, promotion, first
+wrong move reported to the page).
 
 ### Adding a new mode
 

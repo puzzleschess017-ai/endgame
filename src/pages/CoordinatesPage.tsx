@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CoordinateBoard, { type SquareMark } from '../components/CoordinateBoard';
+import { CARD_CLASS, StatTile, segmentClass } from '../components/panelUi';
 import TrainerLayout from '../components/TrainerLayout';
 import { BOARD_SIZE_CLASS_MAP, loadAppearanceSettings } from '../utils/appearance';
 import {
@@ -36,9 +37,6 @@ interface Flash {
 
 const FLASH_MS = 350;
 
-const CARD_CLASS =
-  'bg-[#16233b] border border-white/10 rounded-2xl p-6 flex flex-col gap-6 shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
-
 const DURATIONS: CoordinateDuration[] = [30, 60];
 
 const ORIENTATIONS: Array<{ value: CoordinateOrientation; label: string }> = [
@@ -46,22 +44,6 @@ const ORIENTATIONS: Array<{ value: CoordinateOrientation; label: string }> = [
   { value: 'black', label: 'Black' },
   { value: 'random', label: 'Random' },
 ];
-
-function segmentClass(active: boolean): string {
-  return `py-2 px-2 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[40px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
-    active ? 'bg-[#39ff88] text-[#101b2f] shadow-sm' : 'text-white/85 hover:text-white hover:bg-white/10'
-  }`;
-}
-
-function StatTile({ label, value, tone }: { label: string; value: string; tone?: 'good' | 'bad' }) {
-  const color = tone === 'good' ? 'text-[#39ff88]' : tone === 'bad' ? 'text-[#ff7a7a]' : 'text-white';
-  return (
-    <div className="bg-[#101b2f] border border-white/10 rounded-xl px-3 py-2.5 flex flex-col gap-0.5">
-      <span className="text-[11px] font-semibold text-white/65">{label}</span>
-      <span className={`text-xl font-bold tabular-nums ${color}`}>{value}</span>
-    </div>
-  );
-}
 
 export default function CoordinatesPage() {
   const [settings, setSettings] = useState<CoordinateSettings>(() => loadCoordinateSettings());
