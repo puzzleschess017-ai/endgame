@@ -49,6 +49,7 @@ export const BOARD_THEMES: Array<{
 }> = [
   { id: 'green', name: 'Green', lightClass: 'bg-[#eeeed2]', darkClass: 'bg-[#769656]' },
   { id: 'brown', name: 'Brown', lightClass: 'bg-[#f0d9b5]', darkClass: 'bg-[#b58863]' },
+  { id: 'maple', name: 'Maple', lightClass: 'bg-[#debd91]', darkClass: 'bg-[#b87541]' },
   { id: 'blue', name: 'Blue', lightClass: 'bg-[#dee3e6]', darkClass: 'bg-[#8ca2ad]' },
   { id: 'purple', name: 'Purple', lightClass: 'bg-[#e6dff0]', darkClass: 'bg-[#7d5ba6]' },
   { id: 'grey', name: 'Grey', lightClass: 'bg-[#e0e0e0]', darkClass: 'bg-[#888888]' },
@@ -70,7 +71,7 @@ export const DEFAULT_APPEARANCE: AppearanceSettings = {
   pieceSet: 'cburnett',
 };
 
-const VALID_THEMES = new Set<BoardTheme>(['green', 'brown', 'blue', 'purple', 'grey', 'pink']);
+const VALID_THEMES = new Set<BoardTheme>(['green', 'brown', 'maple', 'blue', 'purple', 'grey', 'pink']);
 const VALID_PIECES = new Set<PieceSet>(['merida', 'cburnett', 'alpha', 'staunty', 'chessnut', 'neo']);
 
 export function clampBoardSize(size: number): number {
