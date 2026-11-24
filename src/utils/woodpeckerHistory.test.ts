@@ -92,3 +92,18 @@ test('finished cycles also count as training activity, once', () => {
   assert.equal(days.length, 1);
   assert.deepEqual(days[0], { sessions: 1, ms: 600_000, puzzles: 45, correct: 45, wrong: 5 });
 });
+
+test('a cycle is not counted again after the history was removed (signing out) while its session stayed', () => {
+  const session = { id: 's9', config, cycleResults: [cycle(1, 37, 3, 600_000), cycle(2, 40, 0, 500_000)] };
+  assert.equal(recordFinishedCycles(session), 2);
+  assert.equal(loadActivity()[Object.keys(loadActivity())[0]].puzzles, 77);
+  // what signing out does to the browser: the account's history and activity are removed
+  store.delete(WOODPECKER_HISTORY_STORAGE_KEY);
+  store.delete('ctg_activity_v1');
+  assert.equal(recordFinishedCycles(session), 0);
+  assert.deepEqual(loadActivity(), {});
+  assert.deepEqual(loadWoodpeckerHistory(), []);
+  // a new cycle of the same session is still counted
+  const more = { ...session, cycleResults: [...session.cycleResults, cycle(3, 30, 0, 400_000)] };
+  assert.equal(recordFinishedCycles(more), 1);
+});
