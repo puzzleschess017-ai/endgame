@@ -55,6 +55,11 @@ NODE_ENV=production npm start
 In production `server.ts` serves the built files from `dist/` and falls back to
 `index.html` for every other path.
 
+Render builds with `bun install --frozen-lockfile && bun run build`, so
+`bun.lock` must always match `package.json`. After adding, removing or updating
+a dependency, run `bun install` and commit `bun.lock` together with
+`package.json` and `package-lock.json`; otherwise the Render build fails.
+
 ## Pages
 
 | Path | What it is |
