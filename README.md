@@ -71,6 +71,14 @@ Every path is served by the same app (`main.tsx` picks the page from the URL). L
 tested without a browser lives in `src/utils/`; run its tests with
 `npx tsx --test src/utils/coordinates.test.ts`.
 
+### Adding a new mode
+
+Every mode must look the same as Woodpecker: build the page with `TrainerLayout`
+(`src/components/TrainerLayout.tsx`, header, board column and right-hand panel in fixed places),
+draw the board inside an element that uses `BOARD_FRAME_CLASS` and whose side comes from
+`snapBoardSize` (both in `src/utils/appearance.ts`), and add the page to `NAV_ITEMS` in
+`SiteHeader.tsx`. That keeps the board size, corners and panel position identical on every page.
+
 ## Saved progress
 
 Training sessions and settings are stored in the browser (`localStorage`), so they

@@ -4,6 +4,7 @@ import type { Api } from 'chessground/api';
 import type { Key } from 'chessground/types';
 
 import type { BoardTheme, PieceSet } from '../types';
+import { BOARD_FRAME_CLASS, snapBoardSize } from '../utils/appearance';
 
 export interface PendingPromotion {
   from: Key;
@@ -498,9 +499,8 @@ export default function ChessboardPanel({
 
     const measure = () => {
       const rect = stageEl.getBoundingClientRect();
-      const raw = Math.floor(Math.min(rect.width, rect.height));
-      if (raw <= 0) return;
-      const snapped = Math.max(8, Math.floor(raw / 8) * 8);
+      const snapped = snapBoardSize(Math.min(rect.width, rect.height));
+      if (snapped === null) return;
       setBoardPx((prev) => (prev === snapped ? prev : snapped));
     };
 
@@ -877,15 +877,15 @@ export default function ChessboardPanel({
       <div
         className={`board-shell board-theme-${boardTheme} piece-set-${pieceSet} ${
           useCanvasPieces ? 'canvas-pieces-active' : ''
-        } relative w-full rounded-2xl border border-white/10 shadow-[0_14px_38px_rgba(4,9,20,0.5)] overflow-hidden bg-[#16233b] p-1`}
+        } relative w-full`}
       >
         <div ref={stageRef} className="relative w-full aspect-square flex items-center justify-center">
           <div
             style={boardPx ? { width: `${boardPx}px`, height: `${boardPx}px` } : undefined}
             className={
               boardPx
-                ? 'relative rounded-xl overflow-hidden shrink-0'
-                : 'relative w-full h-full rounded-xl overflow-hidden'
+                ? `relative ${BOARD_FRAME_CLASS} shrink-0`
+                : `relative w-full h-full ${BOARD_FRAME_CLASS}`
             }
           >
             <canvas
