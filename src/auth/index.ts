@@ -2,7 +2,7 @@
 import { useSyncExternalStore } from 'react';
 import { USERNAME_STORAGE_KEY } from '../utils/profile';
 import { createAuthClient } from './client';
-import { forgetGuestChoice } from './guest';
+import { chooseGuest } from './guest';
 import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './project';
 import { AUTH_STORAGE_KEY, createAuthStore, type AuthState } from './store';
 
@@ -31,13 +31,14 @@ export const auth = createAuthStore({
 if (typeof window !== 'undefined') {
   // A signed-in visitor is greeted by the account name on every page.
   // Signing out takes that name away again, so the next visitor of this browser is a guest, not the account.
+  // Someone who just signed out is not a new visitor: they continue as a guest, with no welcome window.
   let wasSignedIn = false;
   auth.subscribe(() => {
     const { session, name } = auth.getState();
     try {
       if (!session) {
         if (wasSignedIn) {
-          forgetGuestChoice();
+          chooseGuest();
           localStorage.removeItem(USERNAME_STORAGE_KEY);
         }
         wasSignedIn = false;

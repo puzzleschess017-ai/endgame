@@ -201,8 +201,8 @@ the plan (`free` or `premium`) is changed by hand in the Supabase Table Editor u
 A visitor who has neither signed in nor chosen "Play as a guest" sees a window over every page (the page behind
 it is blurred and cannot be used): create a free account, sign in, or play as a guest
 (`src/components/AccessGate.tsx`, drawn by `AppShell`). `/login` itself is never covered. The guest choice is
-remembered in this browser (`ctg_guest_v1`, `src/auth/guest.ts`) and forgotten when someone signs out, so the
-window comes back after signing out.
+remembered in this browser (`ctg_guest_v1`, `src/auth/guest.ts`). Someone who signs out is not a new visitor: signing out
+sets the guest choice, so they land on Home as a guest and the window does not come back.
 
 #### What each plan may use
 
