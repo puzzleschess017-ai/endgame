@@ -18,6 +18,10 @@ Then open <http://localhost:3000>. The terminal should print
 
 No API keys or `.env` file are needed.
 
+If `npm install` stops with a `node-gyp` or Python error, run `npm install --ignore-scripts`
+instead: `better-sqlite3` ships prebuilt binaries for Windows, macOS and Linux, so nothing
+needs to be compiled.
+
 This is not a plain Vite app: `npm run dev` starts `server.ts` (an Express server
 that exposes the puzzle API and serves the Vite dev server as middleware). Running
 `vite` on its own, or opening `index.html` directly, shows the page without puzzles.
