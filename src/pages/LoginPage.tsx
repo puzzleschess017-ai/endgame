@@ -3,6 +3,7 @@ import { LogOut, UserRound } from 'lucide-react';
 import AppShell from '../components/AppShell';
 import { CARD_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, segmentClass } from '../components/panelUi';
 import { auth, useAuth } from '../auth';
+import { chooseGuest } from '../auth/guest';
 import { signOutAndSync, useSyncState } from '../sync';
 import { readSavedUsername } from '../utils/profile';
 
@@ -208,7 +209,7 @@ export default function LoginPage() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <a href="/" data-testid="play-as-guest" className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center no-underline`}>
+              <a href="/" data-testid="play-as-guest" onClick={chooseGuest} className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center no-underline`}>
                 Play as a guest
               </a>
               <p className="text-xs font-medium text-white/60 leading-relaxed">

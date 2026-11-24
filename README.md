@@ -192,6 +192,14 @@ shows the account and Sign out. `?next=/streak` sends the visitor back to that p
 plan, one row per account, created by a trigger). People can read their row and change their name only;
 the plan (`free` or `premium`) is changed by hand in the Supabase Table Editor until payments exist.
 
+#### Welcome window
+
+A visitor who has neither signed in nor chosen "Play as a guest" sees a window over every page (the page behind
+it is blurred and cannot be used): create a free account, sign in, or play as a guest
+(`src/components/AccessGate.tsx`, drawn by `AppShell`). `/login` itself is never covered. The guest choice is
+remembered in this browser (`ctg_guest_v1`, `src/auth/guest.ts`) and forgotten when someone signs out, so the
+window comes back after signing out.
+
 #### What each plan may use
 
 `src/utils/access.ts` is the one table of rules, used by the pages and by the server.

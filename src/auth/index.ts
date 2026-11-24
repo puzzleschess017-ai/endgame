@@ -2,6 +2,7 @@
 import { useSyncExternalStore } from 'react';
 import { USERNAME_STORAGE_KEY } from '../utils/profile';
 import { createAuthClient } from './client';
+import { forgetGuestChoice } from './guest';
 import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './project';
 import { AUTH_STORAGE_KEY, createAuthStore, type AuthState } from './store';
 
@@ -36,6 +37,7 @@ if (typeof window !== 'undefined') {
     try {
       if (!session) {
         if (wasSignedIn) {
+          forgetGuestChoice();
           localStorage.removeItem(USERNAME_STORAGE_KEY);
         }
         wasSignedIn = false;
