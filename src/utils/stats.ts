@@ -1,6 +1,7 @@
-// Everything Home shows: the best results of every mode, read from localStorage.
+// Everything Home shows: the results of every mode, read from localStorage.
 import type { TrainingSession } from '../types';
 import { BLINDFOLD_LEVELS, ROUND_SIZE, levelDescription, loadBlindfoldBest } from './blindfold';
+import { dayStreaks, formatTotalTime, loadActivity, totalActivity, type ActivityLog } from './activity';
 import { formatDuration, loadSessionFromStorage } from './chessHelpers';
 import { loadBestScore } from './coordinates';
 import { DRILL_KINDS, drillLabel, loadDrillBest } from './drills';
@@ -13,12 +14,24 @@ export interface StatLine {
   value: string;
 }
 
+export interface RecentCycle {
+  /** e.g. "24 Nov". */
+  date: string;
+  puzzles: string;
+  accuracy: string;
+  time: string;
+}
+
 export interface HomeStats {
   /** Lines per mode id (see MODE_ITEMS). Empty means "no results yet". */
   modes: Record<string, StatLine[]>;
   /** The four numbers at the top of Home. */
   summary: { records: number; woodpeckerCycles: number; bestStreak: number; bestRace3: number };
+  /** The last finished Woodpecker cycles, newest first. */
+  recentCycles: RecentCycle[];
 }
+
+const RECENT_CYCLES_SHOWN = 5;
 
 function currentSessionLine(session: TrainingSession | null): StatLine | null {
   if (!session || session.status === 'all_complete') return null;
@@ -74,6 +87,16 @@ export function collectHomeStats(): HomeStats {
     blindfoldLines.length +
     (wood.cycles > 0 ? 1 : 0);
 
+  const recentCycles: RecentCycle[] = history
+    .slice(-RECENT_CYCLES_SHOWN)
+    .reverse()
+    .map((r) => ({
+      date: new Date(r.completedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+      puzzles: `${r.correct}/${r.correct + r.incorrect}`,
+      accuracy: `${Math.round(r.accuracy)}%`,
+      time: formatDuration(r.timeMs),
+    }));
+
   return {
     modes: {
       woodpecker: woodLines,
@@ -88,5 +111,63 @@ export function collectHomeStats(): HomeStats {
       bestStreak,
       bestRace3: raceBests.find((r) => r.d === 180)?.best ?? 0,
     },
+    recentCycles,
+  };
+}
+
+export interface OverviewTile {
+  id: string;
+  label: string;
+  value: string;
+  sub: string;
+  /** Green numbers for streaks, white for the rest. */
+  tone?: 'good';
+}
+
+/** The six tiles of "Training Overview" on Home and the activity log behind the charts. */
+export function collectOverview(now: number = Date.now()): { tiles: OverviewTile[]; log: ActivityLog } {
+  const log = loadActivity();
+  const totals = totalActivity(log);
+  const streaks = dayStreaks(log, now);
+  const bestStreak = loadBestStreak();
+  const wood = summarizeWoodpecker(loadWoodpeckerHistory());
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  return {
+    log,
+    tiles: [
+      { id: 'puzzles', label: 'Puzzles Solved', value: String(totals.puzzles), sub: 'Across all puzzle modes' },
+      {
+        id: 'time',
+        label: 'Total Training Time',
+        value: formatTotalTime(totals.ms),
+        sub: `${plural(totals.sessions, 'total session')}`,
+      },
+      {
+        id: 'streak',
+        label: 'Current Daily Streak',
+        value: `${streaks.current}d`,
+        sub: `Best streak: ${streaks.best}d`,
+        tone: 'good',
+      },
+      {
+        id: 'accuracy',
+        label: 'Average Accuracy',
+        value: totals.accuracy === null ? '–' : `${totals.accuracy}%`,
+        sub: 'All training modes',
+      },
+      {
+        id: 'bestStreak',
+        label: 'Best Puzzle Streak',
+        value: bestStreak > 0 ? String(bestStreak) : '–',
+        sub: 'Puzzle Streak record',
+        tone: 'good',
+      },
+      {
+        id: 'woodpecker',
+        label: 'Woodpecker Cycles',
+        value: String(wood.cycles),
+        sub: wood.cycles > 0 ? `Best accuracy: ${wood.bestAccuracy}%` : 'No cycles finished yet',
+      },
+    ],
   };
 }

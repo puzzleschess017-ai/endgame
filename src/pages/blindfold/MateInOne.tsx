@@ -26,6 +26,7 @@ import {
   type BlindfoldItem,
   type BlindfoldSettings,
 } from '../../utils/blindfold';
+import { recordActivity } from '../../utils/activity';
 import { playMoveSound } from '../../utils/sound';
 import { ModeTabs, ViewBoard, type BlindfoldModeProps } from './shared';
 
@@ -68,6 +69,7 @@ export default function MateInOne({ username, muted, onToggleMute, mode, onModeC
   const itemsRef = useRef<BlindfoldItem[]>([]);
   const correctRef = useRef(0);
   const endAtRef = useRef(0);
+  const roundStartedAtRef = useRef(Date.now());
   const inputRef = useRef<HTMLInputElement | null>(null);
   const mutedRef = useRef(muted);
   mutedRef.current = muted;
@@ -139,6 +141,7 @@ export default function MateInOne({ username, muted, onToggleMute, mode, onModeC
       const round = await fetchBlindfoldRound(settingsRef.current.level, ROUND_SIZE);
       if (runId !== runIdRef.current) return;
       itemsRef.current = round;
+      roundStartedAtRef.current = Date.now();
       setItems(round);
       beginMemorize(0);
     } catch (err) {
@@ -151,6 +154,13 @@ export default function MateInOne({ username, muted, onToggleMute, mode, onModeC
   const finishRound = useCallback(() => {
     const total = itemsRef.current.length;
     const { best, isNewBest } = saveBlindfoldBest(settingsRef.current.level, correctRef.current);
+    recordActivity({
+      mode: 'blindfold',
+      ms: Date.now() - roundStartedAtRef.current,
+      correct: correctRef.current,
+      wrong: Math.max(0, total - correctRef.current),
+      puzzles: correctRef.current,
+    });
     setResult({ correct: correctRef.current, total, best, isNewBest });
     go('finished');
     playMoveSound('success', mutedRef.current);

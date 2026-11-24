@@ -1,24 +1,33 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  Bird,
+  ChartColumn,
+  ChevronDown,
+  Crosshair,
   EyeOff,
   Flame,
-  Grid3x3,
-  LayoutDashboard,
+  House,
+  Repeat,
   Timer,
   Volume2,
   VolumeX,
   type LucideIcon,
 } from 'lucide-react';
-import { saveLastMode } from '../utils/lastMode';
 
 export interface NavItem {
   id: string;
   href: string;
   label: string;
-  /** One line shown on the home page cards. */
-  description: string;
   icon: LucideIcon;
+  /** Colour of the icon. Every entry has its own. */
+  iconClass: string;
+  /** Soft background behind the icon. */
+  chipClass: string;
+}
+
+export interface NavGroup {
+  id: string;
+  label: string;
+  items: NavItem[];
 }
 
 // Every page is a normal link (full page load); the server serves the same app for all paths.
@@ -26,54 +35,127 @@ export const HOME_ITEM: NavItem = {
   id: 'home',
   href: '/',
   label: 'Home',
-  description: 'Your results at a glance',
-  icon: LayoutDashboard,
+  icon: House,
+  iconClass: 'text-[#39ff88]',
+  chipClass: 'bg-[#39ff88]/15',
 };
 
-/** The training modes, in the order of the menu. */
-export const MODE_ITEMS: NavItem[] = [
+export const NAV_GROUPS: NavGroup[] = [
   {
-    id: 'woodpecker',
-    href: '/woodpecker',
-    label: 'Woodpecker',
-    description: 'Repeat the same endgame puzzles in cycles and get faster every time.',
-    icon: Bird,
+    id: 'puzzles',
+    label: 'Puzzles',
+    items: [
+      {
+        id: 'woodpecker',
+        href: '/woodpecker',
+        label: 'Woodpecker Method',
+        icon: Repeat,
+        iconClass: 'text-amber-300',
+        chipClass: 'bg-amber-400/15',
+      },
+      {
+        id: 'streak',
+        href: '/streak',
+        label: 'Puzzle Streak',
+        icon: Flame,
+        iconClass: 'text-orange-400',
+        chipClass: 'bg-orange-500/15',
+      },
+      {
+        id: 'race',
+        href: '/race',
+        label: 'Puzzle Race',
+        icon: Timer,
+        iconClass: 'text-sky-400',
+        chipClass: 'bg-sky-500/15',
+      },
+    ],
   },
   {
-    id: 'coordinates',
-    href: '/coordinates',
-    label: 'Coordinates',
-    description: 'Click the named square against the clock.',
-    icon: Grid3x3,
+    id: 'training',
+    label: 'Training',
+    items: [
+      {
+        id: 'coordinates',
+        href: '/coordinates',
+        label: 'Coordinate Training',
+        icon: Crosshair,
+        iconClass: 'text-violet-400',
+        chipClass: 'bg-violet-500/15',
+      },
+      {
+        id: 'blindfold',
+        href: '/blindfold',
+        label: 'Blindfold Training',
+        icon: EyeOff,
+        iconClass: 'text-pink-400',
+        chipClass: 'bg-pink-500/15',
+      },
+    ],
   },
   {
-    id: 'streak',
-    href: '/streak',
-    label: 'Streak',
-    description: 'Puzzles from easy to hard. One wrong move ends the run.',
-    icon: Flame,
-  },
-  {
-    id: 'race',
-    href: '/race',
-    label: 'Race',
-    description: 'Solve as many puzzles as you can in 1, 3 or 5 minutes.',
-    icon: Timer,
-  },
-  {
-    id: 'blindfold',
-    href: '/blindfold',
-    label: 'Blindfold',
-    description: 'Memorize, then find the mate without seeing the pieces.',
-    icon: EyeOff,
+    id: 'progress',
+    label: 'Progress',
+    items: [
+      {
+        id: 'statistics',
+        href: '/statistics',
+        label: 'Statistics',
+        icon: ChartColumn,
+        iconClass: 'text-emerald-400',
+        chipClass: 'bg-emerald-500/15',
+      },
+    ],
   },
 ];
 
-export const NAV_ITEMS: NavItem[] = [HOME_ITEM, ...MODE_ITEMS];
+/** The training modes (everything except Home and Statistics), in menu order. */
+export const MODE_ITEMS: NavItem[] = NAV_GROUPS.filter((g) => g.id !== 'progress').flatMap((g) => g.items);
+
+export const NAV_ITEMS: NavItem[] = [HOME_ITEM, ...NAV_GROUPS.flatMap((g) => g.items)];
+
+export const COLLAPSED_STORAGE_KEY = 'ctg_sidebar_collapsed_v1';
 
 export function currentPath(): string {
   if (typeof window === 'undefined') return '/';
   return window.location.pathname.replace(/\/+$/, '') || '/';
+}
+
+function loadCollapsed(): string[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(COLLAPSED_STORAGE_KEY) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCollapsed(ids: string[]): void {
+  try {
+    localStorage.setItem(COLLAPSED_STORAGE_KEY, JSON.stringify(ids));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+  const Icon = item.icon;
+  return (
+    <a
+      href={item.href}
+      aria-current={active ? 'page' : undefined}
+      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold whitespace-nowrap border transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+        active
+          ? 'bg-[#39ff88]/12 border-[#39ff88]/40 text-white'
+          : 'border-transparent text-white/80 hover:text-white hover:bg-white/5'
+      }`}
+    >
+      <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${item.chipClass}`}>
+        <Icon className={`w-[17px] h-[17px] ${item.iconClass}`} aria-hidden="true" />
+      </span>
+      {item.label}
+    </a>
+  );
 }
 
 interface SidebarProps {
@@ -83,78 +165,112 @@ interface SidebarProps {
 }
 
 /**
- * The menu. A rounded card on the left of big screens; on small screens it is a card on top of the
- * page with the entries scrolling sideways.
+ * The menu: a full-height panel on the left of big screens, with collapsible groups. On smaller
+ * screens it is a bar on top of the page and the entries scroll sideways in one row.
  */
 export default function Sidebar({ username, muted, onToggleMute }: SidebarProps) {
   const path = currentPath();
+  const [collapsed, setCollapsed] = useState<string[]>(() => loadCollapsed());
 
-  // The Home page offers "continue where you left off".
   useEffect(() => {
-    if (MODE_ITEMS.some((item) => item.href === path)) saveLastMode(path);
-  }, [path]);
+    saveCollapsed(collapsed);
+  }, [collapsed]);
+
+  const toggle = (id: string) =>
+    setCollapsed((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
-    <aside
-      className="xl:w-[224px] xl:shrink-0 xl:sticky xl:top-7 xl:self-start bg-[#16233b] border border-white/10 rounded-2xl p-3 flex flex-wrap xl:flex-col items-center xl:items-stretch gap-x-3 gap-y-2 xl:gap-3 shadow-[0_16px_44px_rgba(4,9,20,0.45)]"
-    >
-      <a
-        href="/"
-        className="flex items-center gap-2.5 shrink-0 px-1 xl:px-2 xl:py-1.5"
-        aria-label="Chess Tactics Guide home"
-      >
-        <img
-          src="/assets/aistudio/Add_a_heading__16_-removebg-preview_c70fa2ca.png"
-          alt="Chess Tactics Guide logo"
-          className="w-7 h-7 object-contain select-none shrink-0"
-          draggable={false}
-        />
-        <h1 className="text-base font-bold tracking-tight text-white whitespace-nowrap leading-tight">
-          Chess Tactics Guide
-        </h1>
-      </a>
-
-      <div className="ml-auto xl:ml-0 xl:order-3 flex items-center gap-2 min-w-0 xl:border-t xl:border-white/10 xl:pt-3 xl:justify-between">
-        {username && (
-          <span className="hidden sm:inline text-xs sm:text-sm font-semibold text-white/85 truncate max-w-[150px] xl:max-w-[130px]">
-            Welcome, {username}
+    <aside className="xl:w-[256px] xl:shrink-0 xl:sticky xl:top-0 xl:h-screen xl:flex xl:flex-col bg-[#0d1627] border-b xl:border-b-0 xl:border-r border-white/10">
+      <div className="flex flex-wrap xl:flex-col items-center xl:items-stretch gap-x-3 gap-y-2 px-4 pt-3 xl:pt-0 xl:flex-1 xl:min-h-0">
+        <a
+          href="/"
+          className="flex items-center gap-3 shrink-0 xl:py-5 xl:border-b xl:border-white/10"
+          aria-label="Chess Tactics Guide home"
+        >
+          <img
+            src="/assets/aistudio/Add_a_heading__16_-removebg-preview_c70fa2ca.png"
+            alt="Chess Tactics Guide logo"
+            className="w-8 h-8 object-contain select-none shrink-0"
+            draggable={false}
+          />
+          <span className="flex flex-col leading-tight">
+            <h1 className="text-base font-bold tracking-tight text-white whitespace-nowrap">Chess Tactics Guide</h1>
+            <span className="text-xs font-medium text-white/60">Improve Every Day</span>
           </span>
-        )}
+        </a>
+
+        <div className="ml-auto xl:hidden flex items-center gap-2 min-w-0">
+          {username && (
+            <span className="hidden sm:inline text-xs sm:text-sm font-semibold text-white/85 truncate max-w-[150px]">
+              Hello, {username}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={onToggleMute}
+            className="p-2 rounded-xl text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0"
+            aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}
+            title={muted ? 'Unmute sounds' : 'Mute sounds'}
+          >
+            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
+        </div>
+
+        <nav
+          aria-label="Training modes"
+          className="w-full xl:flex-1 xl:min-h-0 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-x-visible xl:overflow-y-auto pb-3 xl:py-4"
+        >
+          <NavLink item={HOME_ITEM} active={HOME_ITEM.href === path} />
+          {NAV_GROUPS.map((group) => {
+            const hasActive = group.items.some((item) => item.href === path);
+            // The group of the current page stays open, so the current entry is never hidden.
+            const open = hasActive || !collapsed.includes(group.id);
+            return (
+              <div key={group.id} className="contents xl:flex xl:flex-col xl:gap-1 xl:mt-3">
+                <button
+                  type="button"
+                  onClick={() => toggle(group.id)}
+                  aria-expanded={open}
+                  aria-controls={`nav-group-${group.id}`}
+                  className="hidden xl:flex items-center justify-between px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white/50 hover:text-white/80 cursor-pointer"
+                >
+                  {group.label}
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-150 ${open ? '' : '-rotate-90'}`}
+                    aria-hidden="true"
+                  />
+                </button>
+                <div id={`nav-group-${group.id}`} className={`contents xl:flex xl:flex-col xl:gap-1 ${open ? '' : 'xl:hidden'}`}>
+                  {group.items.map((item) => (
+                    <NavLink key={item.id} item={item} active={item.href === path} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </nav>
+      </div>
+
+      <div className="hidden xl:flex items-center justify-between gap-2 px-4 py-3 border-t border-white/10">
+        <span className="text-sm font-semibold text-white/80 truncate">
+          {username ? (
+            <>
+              Hello, <span className="text-[#39ff88]">{username}</span>
+            </>
+          ) : (
+            'Hello!'
+          )}
+        </span>
         <button
           type="button"
           onClick={onToggleMute}
-          className="p-2 rounded-xl text-white/85 hover:text-[#39ff88] hover:bg-[#101b2f] border border-transparent hover:border-white/15 transition-all duration-150 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0"
+          className="p-2 rounded-xl text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0"
           aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}
           title={muted ? 'Unmute sounds' : 'Mute sounds'}
         >
           {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
       </div>
-
-      <nav
-        aria-label="Training modes"
-        className="w-full xl:order-2 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-visible"
-      >
-        {NAV_ITEMS.map((item) => {
-          const active = item.href === path;
-          const Icon = item.icon;
-          return (
-            <a
-              key={item.id}
-              href={item.href}
-              aria-current={active ? 'page' : undefined}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap border transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
-                active
-                  ? 'bg-[#39ff88]/12 border-[#39ff88]/40 text-white'
-                  : 'border-transparent text-white/75 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Icon className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-[#39ff88]' : ''}`} aria-hidden="true" />
-              {item.label}
-            </a>
-          );
-        })}
-      </nav>
     </aside>
   );
 }

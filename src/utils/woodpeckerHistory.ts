@@ -1,6 +1,7 @@
 // Finished Woodpecker cycles, kept in localStorage so Home can show progress. The trainer itself
 // only keeps the current session; this is the long-term record (newest last, capped).
 import type { CycleResult, TrainingSession } from '../types';
+import { recordActivity } from './activity';
 
 export const WOODPECKER_HISTORY_STORAGE_KEY = 'ctg_woodpecker_history_v1';
 export const WOODPECKER_HISTORY_LIMIT = 300;
@@ -55,6 +56,16 @@ export function recordFinishedCycles(
     });
   }
   if (added.length === 0) return 0;
+  for (const r of added) {
+    recordActivity({
+      mode: 'woodpecker',
+      ms: r.timeMs,
+      correct: r.correct,
+      wrong: r.incorrect,
+      puzzles: r.correct,
+      now: r.completedAt,
+    });
+  }
   try {
     const next = [...history, ...added].slice(-WOODPECKER_HISTORY_LIMIT);
     localStorage.setItem(WOODPECKER_HISTORY_STORAGE_KEY, JSON.stringify(next));

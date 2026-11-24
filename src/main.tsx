@@ -4,6 +4,7 @@ import CoordinatesPage from './pages/CoordinatesPage.tsx';
 import BlindfoldPage from './pages/BlindfoldPage.tsx';
 import HomePage from './pages/HomePage.tsx';
 import RacePage from './pages/RacePage.tsx';
+import StatisticsPage from './pages/StatisticsPage.tsx';
 import StreakPage from './pages/StreakPage.tsx';
 import './index.css';
 
@@ -14,6 +15,7 @@ const PAGES: Record<string, () => React.JSX.Element> = {
   '/streak': StreakPage,
   '/race': RacePage,
   '/blindfold': BlindfoldPage,
+  '/statistics': StatisticsPage,
 };
 
 const path = window.location.pathname.replace(/\/+$/, '') || '/';
