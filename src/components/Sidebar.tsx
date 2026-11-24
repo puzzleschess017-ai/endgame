@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ChartColumn,
   ChevronDown,
@@ -165,13 +165,15 @@ function saveCollapsed(ids: string[]): void {
   }
 }
 
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+function NavLink({ item, active, hideOnPhone }: { item: NavItem; active: boolean; hideOnPhone?: boolean }) {
   const Icon = item.icon;
   return (
     <a
       href={item.href}
       aria-current={active ? 'page' : undefined}
       className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap border transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+        hideOnPhone ? 'max-sm:hidden' : ''
+      } ${
         active
           ? 'bg-[#39ff88]/12 border-[#39ff88]/40 text-white'
           : 'border-transparent text-white/80 hover:text-white hover:bg-white/5'
@@ -237,6 +239,23 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
     saveCollapsed(collapsed);
   }, [collapsed]);
 
+  // On a phone the entries scroll sideways: bring the current one to the middle, so after opening a page
+  // the menu does not jump back to the start.
+  const navRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const center = () => {
+      const nav = navRef.current;
+      const active = nav?.querySelector<HTMLElement>('a[aria-current="page"]');
+      if (!nav || !active || nav.scrollWidth <= nav.clientWidth) return;
+      const navBox = nav.getBoundingClientRect();
+      const box = active.getBoundingClientRect();
+      nav.scrollLeft += box.left + box.width / 2 - (navBox.left + navBox.width / 2);
+    };
+    center();
+    // The font arrives after the first paint and changes the widths.
+    void document.fonts?.ready.then(center);
+  }, []);
+
   const toggle = (id: string) =>
     setCollapsed((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
@@ -271,6 +290,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         </div>
 
         <nav
+          ref={navRef}
           aria-label="Training modes"
           className="w-full xl:flex-1 xl:min-h-0 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-x-visible xl:overflow-y-auto pb-3 xl:py-3"
         >
@@ -296,7 +316,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
                 </button>
                 <div id={`nav-group-${group.id}`} className={`contents xl:flex xl:flex-col xl:gap-1 ${open ? '' : 'xl:hidden'}`}>
                   {group.items.map((item) => (
-                    <NavLink key={item.id} item={item} active={item.href === path} />
+                    <NavLink key={item.id} item={item} active={item.href === path} hideOnPhone={group.id === 'tools'} />
                   ))}
                 </div>
               </div>

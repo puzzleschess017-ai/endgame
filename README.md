@@ -150,6 +150,10 @@ the site always had and 100 % is twice that.
 
 ### Board Editor and Endgame Tablebase
 
+The two tools are for bigger screens: below 640 px (phones) they are not in the top menu, and opening `/editor` or
+`/tablebase` there shows a short note with a link Home (`BigScreenOnly`; the tool code is not even downloaded).
+On phones the top menu also scrolls so the current page's entry sits in the middle and stays highlighted.
+
 The two tools share the board component with the trainers. `ChessboardPanel` has an optional `edit`
 prop that turns it into an editor (free movement, a piece dragged off the board is deleted, new
 pieces can be dragged in with chessground's `dragNewPiece`). The logic that needs no browser lives in
