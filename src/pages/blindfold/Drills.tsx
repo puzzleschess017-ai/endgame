@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CARD_CLASS,
+  COMPACT_CARD_CLASS,
+  SETUP_TEXT_CLASS,
+  START_BUTTON_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   StatTile,
@@ -244,11 +247,11 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
       panel={
         <>
           {phase === 'setup' && (
-            <div className={CARD_CLASS}>
+            <div className={COMPACT_CARD_CLASS}>
               <ModeTabs mode={mode} onChange={onModeChange} />
               <div>
                 <h2 className="text-xl font-bold text-white tracking-tight">Visualization drills</h2>
-                <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
+                <p className={SETUP_TEXT_CLASS}>
                   {limit === 'minute'
                     ? '60 seconds, no board. Answer as many questions as you can.'
                     : 'No board and no time limit. Answer for as long as you like, then finish.'}
@@ -257,7 +260,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
 
               <DrillPicker kind={kind} onChange={setKind} />
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <span className="text-sm font-semibold text-white">Time</span>
                 <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
                   {DRILL_LIMITS.map((l) => (
@@ -267,7 +270,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
                       data-testid={`limit-${l}`}
                       aria-pressed={limit === l}
                       onClick={() => setLimit(l)}
-                      className={segmentClass(limit === l)}
+                      className={segmentClass(limit === l, true)}
                     >
                       {drillLimitLabel(l)}
                     </button>
@@ -275,7 +278,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
                 </div>
               </div>
 
-              <p className="text-sm font-semibold text-white/75 tabular-nums">
+              <p className="text-[13px] font-semibold text-white/75 tabular-nums leading-snug">
                 {limit === 'endless'
                   ? 'Practice mode: your answers count in Statistics, but there is no record.'
                   : best > 0
@@ -284,7 +287,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
               </p>
 
               {canOpenBlindfold(tier) ? (
-                <button type="button" onClick={start} className={PRIMARY_BUTTON_CLASS}>
+                <button type="button" onClick={start} className={START_BUTTON_CLASS}>
                   Start
                 </button>
               ) : (

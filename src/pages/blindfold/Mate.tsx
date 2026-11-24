@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Key } from 'chessground/types';
 import {
   CARD_CLASS,
+  COMPACT_CARD_CLASS,
+  SETUP_TEXT_CLASS,
+  START_BUTTON_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   StatTile,
@@ -304,11 +307,11 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
       panel={
         <>
           {(phase === 'setup' || phase === 'loading') && (
-            <div className={CARD_CLASS}>
+            <div className={COMPACT_CARD_CLASS}>
               <ModeTabs mode={mode} onChange={onModeChange} />
               <div>
                 <h2 className="text-xl font-bold text-white tracking-tight">Blindfold: mate in {settings.mateIn}</h2>
-                <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
+                <p className={SETUP_TEXT_CLASS}>
                   {longMate ? (
                     <>
                       Memorize the position. Then the pieces vanish and you type your moves one at a time, for
@@ -324,7 +327,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                 </p>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <span className="text-sm font-semibold text-white">Mate in</span>
                 <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
                   {MATE_IN_OPTIONS.map((moves) => {
@@ -340,7 +343,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                         title={locked ? unlockHint(tier, needs) : undefined}
                         disabled={phase === 'loading'}
                         onClick={locks.choose(`Mate in ${moves}`, needs, () => setSettings({ ...settings, mateIn: moves }))}
-                        className={`${segmentClass(settings.mateIn === moves)} ${locked ? LOCKED_CLASS : ''}`}
+                        className={`${segmentClass(settings.mateIn === moves, true)} ${locked ? LOCKED_CLASS : ''}`}
                       >
                         {moves}
                         {locked && <LockMark />}
@@ -350,7 +353,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <span className="text-sm font-semibold text-white">Pieces on the board</span>
                 <div className="grid grid-cols-5 gap-1 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
                   {BLINDFOLD_LEVELS.map((level) => {
@@ -366,7 +369,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                         title={locked ? unlockHint(tier, needs) : undefined}
                         disabled={phase === 'loading'}
                         onClick={locks.choose(levelDescription(level), needs, () => setSettings({ ...settings, level }))}
-                        className={`${segmentClass(settings.level === level)} ${locked ? LOCKED_CLASS : ''}`}
+                        className={`${segmentClass(settings.level === level, true)} ${locked ? LOCKED_CLASS : ''}`}
                         aria-label={levelDescription(level)}
                       >
                         {level === 32 ? 'Any' : `≤ ${level}`}
@@ -377,7 +380,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <span className="text-sm font-semibold text-white">Memorize time</span>
                 <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
                   {MEMORIZE_OPTIONS.map((seconds) => {
@@ -393,7 +396,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                         title={locked ? unlockHint(tier, needs) : undefined}
                         disabled={phase === 'loading'}
                         onClick={locks.choose(`${seconds} seconds to memorize`, needs, () => setSettings({ ...settings, memorize: seconds }))}
-                        className={`${segmentClass(settings.memorize === seconds)} ${locked ? LOCKED_CLASS : ''}`}
+                        className={`${segmentClass(settings.memorize === seconds, true)} ${locked ? LOCKED_CLASS : ''}`}
                       >
                         {seconds} s
                         {locked && <LockMark />}
@@ -414,7 +417,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                 </div>
               )}
 
-              <p className="text-sm font-semibold text-white/75 tabular-nums">
+              <p className="text-[13px] font-semibold text-white/75 tabular-nums leading-snug">
                 {best > 0
                   ? `Your best (${longMate ? `mate in ${settings.mateIn}, ` : ''}${levelDescription(settings.level)}): ${best}/${ROUND_SIZE}`
                   : `A round is ${ROUND_SIZE} puzzles. No record yet for this level.`}
@@ -427,7 +430,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                   type="button"
                   onClick={() => void startRound()}
                   disabled={phase === 'loading'}
-                  className={PRIMARY_BUTTON_CLASS}
+                  className={START_BUTTON_CLASS}
                 >
                   {phase === 'loading' ? 'Loading puzzles…' : 'Start'}
                 </button>
