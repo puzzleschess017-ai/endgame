@@ -92,7 +92,7 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | `/` | Home, a dashboard: six overview tiles (puzzles solved, total training time and sessions, daily streak, average accuracy, best Puzzle Streak, Woodpecker cycles) and four bar charts (sessions, minutes, puzzles, accuracy per day) with a 7 / 30 / 90 days switch. Everything is read from the browser. Unknown paths show Home too |
 | `/woodpecker` | Woodpecker endgame trainer (it used to be on `/`) |
 | `/statistics` | Statistics: personal records of every mode and the last Woodpecker cycles |
-| `/coordinates` | Coordinates trainer: click the named square against the clock (30 or 60 s, white, black or random side). The board has no labels, on purpose |
+| `/coordinates` | Coordinates trainer: click the named square against the clock (30 or 60 s, playing as White or Black). The board has no labels, on purpose |
 | `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
 | `/race` | Puzzle Race: solve as many puzzles as possible in 1, 3 or 5 minutes, easy to hard from the whole database. A wrong move costs 10 seconds and moves on to the next puzzle. Best score per time saved in the browser (a run ended early is not saved) |
 | `/login` | Sign in, create an account or play as a guest; the account page (name, email, plan, Sign out) for someone signed in |

@@ -4,7 +4,7 @@ export const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
 export const RANKS = ['1', '2', '3', '4', '5', '6', '7', '8'] as const;
 
 export type CoordinateDuration = 30 | 60;
-export type CoordinateOrientation = 'white' | 'black' | 'random';
+export type CoordinateOrientation = 'white' | 'black';
 
 export interface CoordinateSettings {
   duration: CoordinateDuration;
@@ -63,10 +63,8 @@ export function loadCoordinateSettings(): CoordinateSettings {
   if (!parsed || typeof parsed !== 'object') return { ...d };
   return {
     duration: parsed.duration === 60 || parsed.duration === 30 ? parsed.duration : d.duration,
-    orientation:
-      parsed.orientation === 'white' || parsed.orientation === 'black' || parsed.orientation === 'random'
-        ? parsed.orientation
-        : d.orientation,
+    // Older versions also offered "random"; that (or anything unknown) becomes the default now.
+    orientation: parsed.orientation === 'white' || parsed.orientation === 'black' ? parsed.orientation : d.orientation,
   };
 }
 

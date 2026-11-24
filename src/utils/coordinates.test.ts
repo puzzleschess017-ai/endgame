@@ -57,9 +57,14 @@ test('settings fall back to defaults for missing or corrupt data', () => {
 });
 
 test('settings round-trip', () => {
-  const s = { duration: 60, orientation: 'random' } as const;
+  const s = { duration: 60, orientation: 'black' } as const;
   c.saveCoordinateSettings(s);
   assert.deepEqual(c.loadCoordinateSettings(), s);
+});
+
+test('a saved "random" side (offered by an older version) becomes white', () => {
+  store.set(c.SETTINGS_STORAGE_KEY, JSON.stringify({ duration: 60, orientation: 'random' }));
+  assert.deepEqual(c.loadCoordinateSettings(), { duration: 60, orientation: 'white' });
 });
 
 test('settings saved by the older version (with mode and showLabels) still load', () => {
