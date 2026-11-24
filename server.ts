@@ -5,6 +5,7 @@ import Database from 'better-sqlite3';
 import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
 import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
 import { createTablebase } from './server/tablebase.ts';
+import { cleanSiteUrl, pageFor, renderPage, robotsTxt, sitemapXml } from './server/seo.ts';
 import {
   RATING_BANDS,
   parseSampleQuery,
@@ -597,6 +598,16 @@ async function startServer() {
     }
   });
 
+  // For search engines: robots.txt and sitemap.xml. SITE_URL (default https://chesstacticsguide.com) is
+  // the address written into canonical links and the sitemap.
+  const siteUrl = cleanSiteUrl(process.env.SITE_URL);
+  app.get('/robots.txt', (_req, res) => {
+    res.type('text/plain').set('Cache-Control', 'public, max-age=3600').send(robotsTxt(siteUrl));
+  });
+  app.get('/sitemap.xml', (_req, res) => {
+    res.type('application/xml').set('Cache-Control', 'public, max-age=3600').send(sitemapXml(siteUrl));
+  });
+
   const isProduction = process.env.NODE_ENV === 'production';
   if (!isProduction) {
     const { createServer: createViteServer } = await import('vite');
@@ -622,9 +633,12 @@ async function startServer() {
         },
       }),
     );
-    app.get('*', (_req, res) => {
-      res.setHeader('Cache-Control', 'no-cache');
-      res.sendFile(path.join(distDir, 'index.html'));
+    // The page: index.html with the title, description and canonical address of the path asked for.
+    // A path the app does not have still shows Home (as before), but with status 404.
+    const template = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
+    app.get('*', (req, res) => {
+      const page = pageFor(req.path);
+      res.status(page ? 200 : 404).set('Cache-Control', 'no-cache').type('html').send(renderPage(template, page, siteUrl));
     });
   }
 

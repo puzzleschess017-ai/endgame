@@ -166,6 +166,17 @@ minute to Lichess in total. Set `TABLEBASE_URL` to use another host (the tests u
 There is no engine: a chess engine would add a large download and its own licence, so only the
 endgames the tablebase covers are analysed.
 
+### Search engines (SEO)
+
+`server/seo.ts` holds the title, description and "may be listed" flag of every page (`PAGES`). In
+production the server puts them into `index.html` for the path asked for (title, description, canonical
+link, robots, Open Graph and Twitter tags, JSON-LD), because not every crawler runs the app. It also
+serves `/robots.txt` and `/sitemap.xml` (the indexable pages). `/statistics` is personal, so it is
+`noindex` and not in the sitemap; a path the app does not have shows Home with status 404.
+`SITE_URL` (default `https://chesstacticsguide.com`) is the address used in canonical links and the
+sitemap. **A new page needs one entry in `PAGES`** (plus its route in `src/main.tsx`). Descriptions
+should stay 50-170 characters and titles under 70; `server/seo.test.ts` checks that.
+
 ## Saved progress
 
 Training sessions and settings are stored in the browser (`localStorage`), so they
