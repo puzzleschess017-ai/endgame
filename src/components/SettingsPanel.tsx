@@ -13,6 +13,11 @@ const DIFFICULTIES: Array<{ value: Difficulty; label: string; range: string }> =
   { value: 'hard', label: 'Hard', range: '1600–1999' },
   { value: 'expert', label: 'Expert', range: '2000+' },
 ];
+const MIXED: { value: Difficulty; label: string; range: string } = {
+  value: 'mixed',
+  label: 'Mixed',
+  range: 'All ratings, an even share of each',
+};
 
 interface SettingsPanelProps {
   config: TrainingConfig;
@@ -101,14 +106,17 @@ export default function SettingsPanel({
           <span className="text-sm font-semibold text-white">Difficulty</span>
         </div>
         <div className="grid grid-cols-2 gap-2.5">
-          {DIFFICULTIES.map((d) => {
+          {[...DIFFICULTIES, MIXED].map((d) => {
             const active = config.difficulty === d.value;
             return (
               <button
                 key={d.value}
                 type="button"
                 onClick={() => onChange({ ...config, difficulty: d.value })}
+                aria-pressed={active}
                 className={`py-2.5 px-3.5 rounded-xl border text-left transition-all duration-150 cursor-pointer min-h-[46px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                  d.value === 'mixed' ? 'col-span-2' : ''
+                } ${
                   active
                     ? 'bg-[#39ff88]/15 border-[#39ff88] text-white'
                     : 'bg-[#101b2f] border-white/10 text-white/90 hover:border-white/40 hover:text-white'
