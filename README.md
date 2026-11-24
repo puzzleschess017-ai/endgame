@@ -182,6 +182,18 @@ serves `/robots.txt` and `/sitemap.xml` (the indexable pages). `/statistics` is 
 sitemap. **A new page needs one entry in `PAGES`** (plus its route in `src/main.tsx`). Descriptions
 should stay 50-170 characters and titles under 70; `server/seo.test.ts` checks that.
 
+### About, Privacy, Contact and cookies
+
+`/about`, `/privacy` and `/contact` live in `src/pages/legal/` (shared frame: `LegalLayout`). They are never covered
+by the welcome window (`isInfoPath` in `src/site.ts`). The contact e-mail address is `CONTACT_EMAIL` in
+`src/site.ts`; while it is empty the Contact page says the address is coming. Change `PRIVACY_UPDATED` there when
+the privacy text changes.
+
+Google Tag Manager / Google Analytics is **not** in `index.html`: `src/utils/consent.ts` adds the script only after
+the visitor pressed Accept in the cookie banner (`CookieBanner`, shown after the welcome window). The choice is saved
+as `ctg_consent_v1`; declining removes the `_ga*` cookies. The "Cookies" link in the footer (and the buttons on the
+Privacy page) let a visitor change it.
+
 ### Accounts (sign-in)
 
 Sign-in uses [Supabase](https://supabase.com) (project address and public key in `src/auth/project.ts`;

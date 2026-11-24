@@ -13,7 +13,7 @@ export interface PageMeta {
   /** false: asks search engines not to list the page (personal pages) and keeps it out of the sitemap. */
   indexable: boolean;
   /** Page type for structured data: the home page is the website itself, the rest are free web apps. */
-  kind: 'website' | 'app';
+  kind: 'website' | 'app' | 'info';
   priority: number;
 }
 
@@ -87,6 +87,31 @@ export const PAGES: PageMeta[] = [
     priority: 0.6,
   },
   {
+    path: '/about',
+    title: 'About | Chess Tactics Guide',
+    description:
+      'About Chess Tactics Guide: free chess training with the Woodpecker method, puzzles from the open Lichess database, blindfold drills and an endgame tablebase.',
+    indexable: true,
+    kind: 'info',
+    priority: 0.5,
+  },
+  {
+    path: '/privacy',
+    title: 'Privacy | Chess Tactics Guide',
+    description: 'What Chess Tactics Guide stores about you, how cookies and analytics work, and how to ask for your data to be deleted.',
+    indexable: true,
+    kind: 'info',
+    priority: 0.3,
+  },
+  {
+    path: '/contact',
+    title: 'Contact | Chess Tactics Guide',
+    description: 'Contact Chess Tactics Guide: report a bug, suggest an idea or ask about your account data.',
+    indexable: true,
+    kind: 'info',
+    priority: 0.3,
+  },
+  {
     path: '/login',
     title: 'Sign in | Chess Tactics Guide',
     description: 'Sign in or create an account to keep your chess training results on every device, or play as a guest.',
@@ -130,7 +155,16 @@ function jsonLd(page: PageMeta, siteUrl: string): string {
   const data =
     page.kind === 'website'
       ? { '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url, description: page.description }
-      : {
+      : page.kind === 'info'
+        ? {
+            '@context': 'https://schema.org',
+            '@type': page.path === '/about' ? 'AboutPage' : page.path === '/contact' ? 'ContactPage' : 'WebPage',
+            name: page.title.split(' | ')[0],
+            url,
+            description: page.description,
+            isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: siteUrl },
+          }
+        : {
           '@context': 'https://schema.org',
           '@type': 'WebApplication',
           name: page.title.split(' | ')[0],

@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage.tsx';
 import BigScreenOnly from './components/BigScreenOnly.tsx';
 import './index.css';
 import './sync';  // keeps the results of a signed-in visitor on the account
+import { initConsent } from './utils/consent';
 
 // One page per path. Home (statistics) is the landing page and the fallback for unknown paths, so it
 // is in the main bundle; every other page is loaded when it is opened, so the boards, chess rules and
@@ -30,7 +31,12 @@ const PAGES: Record<string, ComponentType> = {
   '/editor': bigScreenOnly('Board Editor', lazy(() => import('./pages/EditorPage.tsx'))),
   '/tablebase': bigScreenOnly('Endgame Tablebase', lazy(() => import('./pages/TablebasePage.tsx'))),
   '/login': lazy(() => import('./pages/LoginPage.tsx')),
+  '/about': lazy(() => import('./pages/legal/AboutPage.tsx')),
+  '/privacy': lazy(() => import('./pages/legal/PrivacyPage.tsx')),
+  '/contact': lazy(() => import('./pages/legal/ContactPage.tsx')),
 };
+
+initConsent();  // Google Analytics is loaded only for a visitor who accepted cookies
 
 const path = window.location.pathname.replace(/\/+$/, '') || '/';
 const Page = PAGES[path] ?? HomePage;

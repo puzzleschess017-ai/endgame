@@ -2,18 +2,24 @@ import { useEffect, useRef } from 'react';
 import { LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '../auth';
 import { chooseGuest, useGuestChoice } from '../auth/guest';
+import { isInfoPath } from '../site';
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
+
+/** True while the welcome window is covering the page. The login page and the About/Privacy/Contact pages are never covered. */
+export function useGateOpen(): boolean {
+  const { session } = useAuth();
+  const chosenGuest = useGuestChoice();
+  const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
+  return !session && !chosenGuest && path !== '/login' && !isInfoPath(path);
+}
 
 /**
  * Shown over every page (blurred) to a visitor who has neither signed in nor chosen "Play as a guest",
  * so nobody starts training without knowing an account exists. The login page itself is never covered.
  */
 export default function AccessGate() {
-  const { session } = useAuth();
-  const chosenGuest = useGuestChoice();
   const firstButton = useRef<HTMLAnchorElement | null>(null);
-  const onLoginPage = typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/login';
-  const open = !session && !chosenGuest && !onLoginPage;
+  const open = useGateOpen();
 
   useEffect(() => {
     if (open) firstButton.current?.focus();
