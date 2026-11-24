@@ -35,7 +35,7 @@ describe('the three tiers', () => {
   it('guest: no Blindfold at all', () => {
     assert.equal(canOpenBlindfold('guest'), false);
     assert.equal(ok(checkBlindfoldMate('guest', { level: 6, memorize: 10 })), false);
-    for (const kind of ['color', 'check', 'diagonal', 'knight'] as const) assert.equal(ok(checkBlindfoldDrill('guest', kind)), false);
+    for (const kind of ['color', 'check', 'diagonal', 'knight', 'reconstruct'] as const) assert.equal(ok(checkBlindfoldDrill('guest', kind)), false);
   });
   it('signed in: Classic, easy to hard, 10 to 100 puzzles, 2 to 4 cycles', () => {
     const w = ACCESS.free.woodpecker;
@@ -59,6 +59,8 @@ describe('the three tiers', () => {
     const diagonal = checkBlindfoldDrill('free', 'diagonal');
     assert.deepEqual([diagonal.ok, !diagonal.ok && diagonal.needs], [false, 'premium']);
     assert.equal(ok(checkBlindfoldDrill('free', 'knight')), false);
+    const rebuild = checkBlindfoldDrill('free', 'reconstruct');
+    assert.deepEqual([rebuild.ok, !rebuild.ok && rebuild.needs], [false, 'premium']);
   });
   it('premium has everything', () => {
     assert.deepEqual(ACCESS.premium.woodpecker.cycles, ALL_CYCLES);
@@ -68,7 +70,7 @@ describe('the three tiers', () => {
     assert.deepEqual(ACCESS.premium.blindfold.levels, ALL_LEVELS);
     assert.deepEqual(ACCESS.premium.blindfold.memorize, ALL_MEMORIZE);
     assert.deepEqual(ACCESS.premium.blindfold.mateIn, ALL_MATE_IN);
-    for (const kind of ['color', 'check', 'diagonal', 'knight'] as const) assert.ok(ok(checkBlindfoldDrill('premium', kind)));
+    for (const kind of ['color', 'check', 'diagonal', 'knight', 'reconstruct'] as const) assert.ok(ok(checkBlindfoldDrill('premium', kind)));
   });
   it('every tier has at least what the lower tier has', () => {
     for (const [low, high] of [['guest', 'free'], ['free', 'premium']] as const) {
@@ -217,6 +219,8 @@ describe('checks the server can make and the clamps', () => {
   it('clampDrill: free keeps the colour and check drills and moves the others to the first one', () => {
     assert.equal(clampDrill('free', 'color'), 'color');
     assert.equal(clampDrill('free', 'check'), 'check');
+    assert.equal(clampDrill('free', 'reconstruct'), 'color');
+    assert.equal(clampDrill('premium', 'reconstruct'), 'reconstruct');
     assert.equal(clampDrill('free', 'knight'), 'color');
     assert.equal(clampDrill('premium', 'knight'), 'knight');
   });
