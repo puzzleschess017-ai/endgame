@@ -65,7 +65,7 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | Path | What it is |
 | --- | --- |
 | `/` | Woodpecker endgame trainer |
-| `/coordinates` | Coordinates trainer: find the named square or name the highlighted one against the clock |
+| `/coordinates` | Coordinates trainer: click the named square against the clock (30 or 60 s, white, black or random side). The board has no labels, on purpose |
 
 Every path is served by the same app (`main.tsx` picks the page from the URL). Logic that can be
 tested without a browser lives in `src/utils/`; run its tests with

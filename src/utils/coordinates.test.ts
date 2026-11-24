@@ -52,32 +52,45 @@ test('settings fall back to defaults for missing or corrupt data', () => {
   assert.deepEqual(c.loadCoordinateSettings(), c.DEFAULT_COORDINATE_SETTINGS);
   store.set(c.SETTINGS_STORAGE_KEY, '{not json');
   assert.deepEqual(c.loadCoordinateSettings(), c.DEFAULT_COORDINATE_SETTINGS);
-  store.set(c.SETTINGS_STORAGE_KEY, JSON.stringify({ mode: 'bogus', duration: 45, orientation: 'x', showLabels: 'yes' }));
+  store.set(c.SETTINGS_STORAGE_KEY, JSON.stringify({ duration: 45, orientation: 'x' }));
   assert.deepEqual(c.loadCoordinateSettings(), c.DEFAULT_COORDINATE_SETTINGS);
 });
 
 test('settings round-trip', () => {
-  const s = { mode: 'name', duration: 60, orientation: 'random', showLabels: true } as const;
+  const s = { duration: 60, orientation: 'random' } as const;
   c.saveCoordinateSettings(s);
   assert.deepEqual(c.loadCoordinateSettings(), s);
 });
 
-test('best score is kept per mode and duration and only improves', () => {
-  assert.equal(c.loadBestScore('find', 30), 0);
-  assert.deepEqual(c.saveBestScore('find', 30, 0), { best: 0, isNewBest: false });
-  assert.deepEqual(c.saveBestScore('find', 30, 12), { best: 12, isNewBest: true });
-  assert.deepEqual(c.saveBestScore('find', 30, 12), { best: 12, isNewBest: false });
-  assert.deepEqual(c.saveBestScore('find', 30, 9), { best: 12, isNewBest: false });
-  assert.deepEqual(c.saveBestScore('find', 30, 15), { best: 15, isNewBest: true });
-  assert.equal(c.loadBestScore('find', 60), 0);
-  assert.equal(c.loadBestScore('name', 30), 0);
-  assert.deepEqual(c.saveBestScore('name', 60, 7), { best: 7, isNewBest: true });
-  assert.equal(c.loadBestScore('find', 30), 15);
+test('settings saved by the older version (with mode and showLabels) still load', () => {
+  store.set(
+    c.SETTINGS_STORAGE_KEY,
+    JSON.stringify({ mode: 'name', duration: 60, orientation: 'black', showLabels: true }),
+  );
+  assert.deepEqual(c.loadCoordinateSettings(), { duration: 60, orientation: 'black' });
+});
+
+test('best score is kept per duration and only improves', () => {
+  assert.equal(c.loadBestScore(30), 0);
+  assert.deepEqual(c.saveBestScore(30, 0), { best: 0, isNewBest: false });
+  assert.deepEqual(c.saveBestScore(30, 12), { best: 12, isNewBest: true });
+  assert.deepEqual(c.saveBestScore(30, 12), { best: 12, isNewBest: false });
+  assert.deepEqual(c.saveBestScore(30, 9), { best: 12, isNewBest: false });
+  assert.deepEqual(c.saveBestScore(30, 15), { best: 15, isNewBest: true });
+  assert.equal(c.loadBestScore(60), 0);
+  assert.deepEqual(c.saveBestScore(60, 7), { best: 7, isNewBest: true });
+  assert.equal(c.loadBestScore(30), 15);
+});
+
+test('records saved before the other mode was removed still count', () => {
+  store.set(c.BEST_STORAGE_KEY, JSON.stringify({ find_30: 21, name_30: 99 }));
+  assert.equal(c.loadBestScore(30), 21);
+  assert.equal(c.loadBestScore(60), 0);
 });
 
 test('corrupt best-score storage does not throw', () => {
   store.set(c.BEST_STORAGE_KEY, 'garbage');
-  assert.equal(c.loadBestScore('find', 30), 0);
-  assert.deepEqual(c.saveBestScore('find', 30, 5), { best: 5, isNewBest: true });
-  assert.equal(c.loadBestScore('find', 30), 5);
+  assert.equal(c.loadBestScore(30), 0);
+  assert.deepEqual(c.saveBestScore(30, 5), { best: 5, isNewBest: true });
+  assert.equal(c.loadBestScore(30), 5);
 });
