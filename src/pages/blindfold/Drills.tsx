@@ -4,6 +4,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   StatTile,
+  segmentClass,
 } from '../../components/panelUi';
 import TrainerLayout from '../../components/TrainerLayout';
 import { useAuth } from '../../auth';
@@ -11,14 +12,20 @@ import { canOpenBlindfold, clampDrill } from '../../utils/access';
 import { useAppearance } from '../../hooks/useAppearance';
 import {
   DRILL_DURATION_MS,
+  DRILL_LIMITS,
   drillAccuracy,
   drillLabel,
+  drillLimitLabel,
   loadDrillBest,
   loadDrillKind,
+  loadDrillLimit,
   makeQuestion,
   saveDrillBest,
   saveDrillKind,
+  saveDrillLimit,
+  secondsPerAnswer,
   type DrillKind,
+  type DrillLimit,
   type DrillQuestion,
   type QuestionKind,
 } from '../../utils/drills';
@@ -36,6 +43,9 @@ interface DrillResult {
   accuracy: number;
   best: number;
   isNewBest: boolean;
+  /** Endless run: no record, and the time it took. */
+  endless: boolean;
+  ms: number;
 }
 
 const TICK_MS = 100;
@@ -43,6 +53,7 @@ const TICK_MS = 100;
 export default function Drills({ username, mode, onModeChange }: BlindfoldModeProps) {
   const { tier } = useAuth();
   const [kind, setKind] = useState<DrillKind>(() => clampDrill(tier, loadDrillKind()));
+  const [limit, setLimit] = useState<DrillLimit>(() => loadDrillLimit());
   const [appearance, setAppearance] = useAppearance();
   const [phase, setPhase] = useState<Phase>('setup');
   const [question, setQuestion] = useState<DrillQuestion | null>(null);
@@ -55,6 +66,9 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
   const phaseRef = useRef<Phase>('setup');
   const kindRef = useRef(kind);
   kindRef.current = kind;
+  const limitRef = useRef(limit);
+  limitRef.current = limit;
+  const startedAtRef = useRef(0);
   const questionRef = useRef<DrillQuestion | null>(null);
   const correctRef = useRef(0);
   const wrongRef = useRef(0);
@@ -85,12 +99,21 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
     saveDrillKind(kind);
   }, [kind]);
 
+  useEffect(() => {
+    saveDrillLimit(limit);
+  }, [limit]);
+
   const finish = useCallback(() => {
     if (phaseRef.current !== 'running') return;
-    const { best, isNewBest } = saveDrillBest(kindRef.current, correctRef.current);
+    const endless = limitRef.current === 'endless';
+    const ms = endless ? Math.max(0, Math.round(performance.now() - startedAtRef.current)) : DRILL_DURATION_MS;
+    // The minute run has a record; the endless run is practice and keeps none.
+    const { best, isNewBest } = endless
+      ? { best: 0, isNewBest: false }
+      : saveDrillBest(kindRef.current, correctRef.current);
     recordActivity({
       mode: 'drills',
-      ms: DRILL_DURATION_MS,
+      ms,
       correct: correctRef.current,
       wrong: wrongRef.current,
     });
@@ -100,6 +123,8 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
       accuracy: drillAccuracy(correctRef.current, wrongRef.current),
       best,
       isNewBest,
+      endless,
+      ms,
     });
     setMsLeft(0);
     go('finished');
@@ -109,6 +134,10 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
   useEffect(() => {
     if (phase !== 'running') return;
     const id = window.setInterval(() => {
+      if (limitRef.current === 'endless') {
+        setMsLeft(performance.now() - startedAtRef.current); // the clock counts up
+        return;
+      }
       const left = endAtRef.current - performance.now();
       if (left <= 0) finish();
       else setMsLeft(left);
@@ -124,8 +153,9 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
     setWrong(0);
     setLast(null);
     setResult(null);
-    endAtRef.current = performance.now() + DRILL_DURATION_MS;
-    setMsLeft(DRILL_DURATION_MS);
+    startedAtRef.current = performance.now();
+    endAtRef.current = limitRef.current === 'endless' ? Infinity : startedAtRef.current + DRILL_DURATION_MS;
+    setMsLeft(limitRef.current === 'endless' ? 0 : DRILL_DURATION_MS);
     const first = makeQuestion(kindRef.current as QuestionKind);
     questionRef.current = first;
     setQuestion(first);
@@ -181,7 +211,8 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
   }
 
   const best = loadDrillBest(kind);
-  const lowTime = msLeft > 0 && msLeft <= 10_000;
+  const endless = limit === 'endless';
+  const lowTime = !endless && msLeft > 0 && msLeft <= 10_000;
 
   return (
     <TrainerLayout
@@ -218,14 +249,38 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
               <div>
                 <h2 className="text-xl font-bold text-white tracking-tight">Visualization drills</h2>
                 <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
-                  60 seconds, no board. Answer as many questions as you can.
+                  {limit === 'minute'
+                    ? '60 seconds, no board. Answer as many questions as you can.'
+                    : 'No board and no time limit. Answer for as long as you like, then finish.'}
                 </p>
               </div>
 
               <DrillPicker kind={kind} onChange={setKind} />
 
+              <div className="space-y-2">
+                <span className="text-sm font-semibold text-white">Time</span>
+                <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+                  {DRILL_LIMITS.map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      data-testid={`limit-${l}`}
+                      aria-pressed={limit === l}
+                      onClick={() => setLimit(l)}
+                      className={segmentClass(limit === l)}
+                    >
+                      {drillLimitLabel(l)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <p className="text-sm font-semibold text-white/75 tabular-nums">
-                {best > 0 ? `Your best (${drillLabel(kind)}): ${best}` : 'No record yet for this drill.'}
+                {limit === 'endless'
+                  ? 'Practice mode: your answers count in Statistics, but there is no record.'
+                  : best > 0
+                    ? `Your best (${drillLabel(kind)}): ${best}`
+                    : 'No record yet for this drill.'}
               </p>
 
               {canOpenBlindfold(tier) ? (
@@ -241,7 +296,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
           {phase === 'running' && question && (
             <div className={CARD_CLASS}>
               <div className="flex items-baseline justify-between">
-                <span className="text-sm font-semibold text-white">Time left</span>
+                <span className="text-sm font-semibold text-white">{endless ? 'Time' : 'Time left'}</span>
                 <span
                   className={`text-2xl font-bold tabular-nums ${lowTime ? 'text-[#ff7a7a]' : 'text-white'}`}
                   data-testid="clock"
@@ -281,6 +336,11 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
                 {last ? (last.ok ? '✓ Correct' : `✗ ${last.text}`) : 'Keys: ' + question.options.map((o) => o.key.toUpperCase()).join(' / ')}
               </p>
 
+              {endless && (
+                <button type="button" data-testid="finish-drill" onClick={finish} className={PRIMARY_BUTTON_CLASS}>
+                  Finish and save
+                </button>
+              )}
               <button type="button" onClick={backToSetup} className={SECONDARY_BUTTON_CLASS}>
                 End drill (not saved)
               </button>
@@ -290,7 +350,9 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
           {phase === 'finished' && result && (
             <div className={CARD_CLASS} role="status" aria-live="polite">
               <div className="text-center">
-                <h2 className="text-xl font-bold text-white tracking-tight">Time’s up!</h2>
+                <h2 className="text-xl font-bold text-white tracking-tight">
+                  {result.endless ? 'Drill finished' : 'Time’s up!'}
+                </h2>
                 <div
                   className="text-7xl font-bold text-[#39ff88] leading-none mt-4 tabular-nums"
                   data-testid="final-correct"
@@ -307,8 +369,20 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
               <div className="grid grid-cols-3 gap-2.5">
                 <StatTile label="Accuracy" value={`${result.accuracy}%`} />
                 <StatTile label="Wrong" value={String(result.wrong)} tone="bad" />
-                <StatTile label="Best" value={String(result.best)} tone="good" />
+                {result.endless ? (
+                  <StatTile
+                    label="Per answer"
+                    value={`${secondsPerAnswer(result.ms, result.correct + result.wrong)} s`}
+                  />
+                ) : (
+                  <StatTile label="Best" value={String(result.best)} tone="good" />
+                )}
               </div>
+              {result.endless && (
+                <p className="text-center text-sm font-semibold text-white/70" data-testid="endless-time">
+                  {formatClock(result.ms)} in total. Practice runs keep no record.
+                </p>
+              )}
               <div className="flex flex-col gap-2.5">
                 <button type="button" onClick={start} className={PRIMARY_BUTTON_CLASS}>
                   Play again

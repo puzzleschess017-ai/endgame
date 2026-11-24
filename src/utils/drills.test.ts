@@ -7,7 +7,11 @@ import {
   DRILLS_SETTINGS_STORAGE_KEY,
   drillAccuracy,
   drillLabel,
+  drillLimitLabel,
   givesCheck,
+  loadDrillLimit,
+  saveDrillLimit,
+  secondsPerAnswer,
   isDrillKind,
   isLightSquare,
   knightDistance,
@@ -225,4 +229,32 @@ test('the rebuild drill is a drill kind but has no questions', () => {
   assert.deepEqual(QUESTION_KINDS, ['color', 'check', 'diagonal', 'knight']);
   saveDrillKind('reconstruct');
   assert.equal(loadDrillKind(), 'reconstruct');
+});
+
+test('the time limit: a minute by default, remembered, and kept apart from the chosen drill', () => {
+  assert.equal(loadDrillLimit(), 'minute');
+  saveDrillLimit('endless');
+  assert.equal(loadDrillLimit(), 'endless');
+  assert.equal(loadDrillKind(), 'color');
+  saveDrillKind('knight');
+  assert.equal(loadDrillKind(), 'knight');
+  assert.equal(loadDrillLimit(), 'endless', 'choosing a drill keeps the time limit');
+  saveDrillLimit('minute');
+  assert.equal(loadDrillKind(), 'knight', 'choosing the time keeps the drill');
+  store.set(DRILLS_SETTINGS_STORAGE_KEY, JSON.stringify({ kind: 'check', limit: 'forever' }));
+  assert.equal(loadDrillLimit(), 'minute');
+  assert.equal(loadDrillKind(), 'check');
+  store.set(DRILLS_SETTINGS_STORAGE_KEY, JSON.stringify({ kind: 'diagonal' })); // saved before this option existed
+  assert.equal(loadDrillLimit(), 'minute');
+  store.set(DRILLS_SETTINGS_STORAGE_KEY, 'not json');
+  assert.equal(loadDrillLimit(), 'minute');
+  assert.equal(drillLimitLabel('minute'), '1 minute');
+  assert.equal(drillLimitLabel('endless'), 'No time limit');
+});
+
+test('seconds per answer', () => {
+  assert.equal(secondsPerAnswer(60_000, 20), 3);
+  assert.equal(secondsPerAnswer(10_000, 4), 2.5);
+  assert.equal(secondsPerAnswer(12_345, 7), 1.8);
+  assert.equal(secondsPerAnswer(5000, 0), 0);
 });

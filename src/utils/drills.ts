@@ -376,17 +376,58 @@ function readJson(key: string): unknown {
   }
 }
 
-export function loadDrillKind(): DrillKind {
-  const saved = readJson(DRILLS_SETTINGS_STORAGE_KEY) as { kind?: unknown } | null;
-  return isDrillKind(saved?.kind) ? saved.kind : 'color';
+/** How long a run lasts: a minute, or until the player stops ("endless", for practice: no record). */
+export type DrillLimit = 'minute' | 'endless';
+export const DRILL_LIMITS: DrillLimit[] = ['minute', 'endless'];
+
+export function isDrillLimit(value: unknown): value is DrillLimit {
+  return value === 'minute' || value === 'endless';
 }
 
-export function saveDrillKind(kind: DrillKind): void {
+export function drillLimitLabel(limit: DrillLimit): string {
+  return limit === 'minute' ? '1 minute' : 'No time limit';
+}
+
+interface DrillSettings {
+  kind: DrillKind;
+  limit: DrillLimit;
+}
+
+function loadDrillSettings(): DrillSettings {
+  const saved = readJson(DRILLS_SETTINGS_STORAGE_KEY) as { kind?: unknown; limit?: unknown } | null;
+  return {
+    kind: isDrillKind(saved?.kind) ? saved.kind : 'color',
+    limit: isDrillLimit(saved?.limit) ? saved.limit : 'minute',
+  };
+}
+
+function saveDrillSettings(patch: Partial<DrillSettings>): void {
   try {
-    localStorage.setItem(DRILLS_SETTINGS_STORAGE_KEY, JSON.stringify({ kind }));
+    localStorage.setItem(DRILLS_SETTINGS_STORAGE_KEY, JSON.stringify({ ...loadDrillSettings(), ...patch }));
   } catch {
     // ignore storage errors
   }
+}
+
+export function loadDrillKind(): DrillKind {
+  return loadDrillSettings().kind;
+}
+
+export function saveDrillKind(kind: DrillKind): void {
+  saveDrillSettings({ kind });
+}
+
+export function loadDrillLimit(): DrillLimit {
+  return loadDrillSettings().limit;
+}
+
+export function saveDrillLimit(limit: DrillLimit): void {
+  saveDrillSettings({ limit });
+}
+
+/** Average seconds per answer (0 when nothing was answered), for the endless mode. */
+export function secondsPerAnswer(ms: number, answered: number): number {
+  return answered <= 0 ? 0 : Math.round((ms / answered / 1000) * 10) / 10;
 }
 
 export function loadDrillBest(kind: DrillKind): number {
