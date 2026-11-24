@@ -96,7 +96,7 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
 | `/race` | Puzzle Race: solve as many puzzles as possible in 1, 3 or 5 minutes, easy to hard from the whole database. A wrong move costs 10 seconds and moves on to the next puzzle. Best score per time saved in the browser (a run ended early is not saved) |
 | `/login` | Sign in, create an account or play as a guest; the account page (name, email, plan, Sign out) for someone signed in |
-| `/blindfold` | Blindfold: *Checkmate* (mate in 1, 2 or 3: memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; in a mate in 2 or 3 you type your moves one at a time, the opponent's reply is shown as text after each right one and the board stays empty; checkmate always counts, other moves must be the puzzle's own; levels by number of pieces: up to 6, 7, 8, 10 or any; a round is 10 puzzles; a best score for each length and level) and *Drills* (60 s without a board: square color, same diagonal, knight route). Best scores saved in the browser |
+| `/blindfold` | Blindfold: *Checkmate* (mate in 1, 2 or 3: memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; in a mate in 2 or 3 you type your moves one at a time, the opponent's reply is shown as text after each right one and the board stays empty; checkmate always counts, other moves must be the puzzle's own; levels by number of pieces: up to 6, 7, 8, 10 or any; a round is 10 puzzles; a best score for each length and level) and *Drills* (60 s without a board: square color, check or not, same diagonal, knight route). Best scores saved in the browser |
 | `/editor` | Board Editor: set up any position by dragging pieces in from the palette (or choosing a piece and tapping squares), moving them, or dragging them off the board; side to move, castling rights and en passant; load or copy a FEN; "Check in the Tablebase" opens it on the Tablebase page. The button is only on when the position is legal (both kings, no pawns on the first or last rank, the side not to move is not in check) |
 | `/tablebase` | Endgame Tablebase: perfect play for any position with 7 pieces or fewer (Syzygy tables, through the public Lichess tablebase). Shows who wins (with the mate distance when known), draws by the 50-move rule, and every legal move marked Wins / Draws / Loses, best first; click a move to play it, hover to see it as an arrow. Play on the board, step through the game (buttons, arrow keys, Home/End), try the example positions (K+Q vs K, K+R vs K, K+P vs K, Lucena), load a FEN, import and copy a PGN. `?fen=...` starts from a position. Positions with more than 7 pieces or with castling rights cannot be looked up and say so |
 
@@ -216,7 +216,7 @@ window comes back after signing out.
 | Cycles | 2, 3 | 2, 3, 4 | 2 to 9 |
 | Blindfold mate in 1 | page visible, every choice locked | up to 6 or 7 pieces, 10 s | all levels, 5, 10 and 20 s |
 | Blindfold mate in 2 and 3 | locked | locked | yes |
-| Blindfold drills | page visible, every choice locked | square colours | all |
+| Blindfold drills | page visible, every choice locked | square colours, check or not | all |
 | Streak, Race, Coordinates, Board Editor, Tablebase, Statistics | yes | yes | yes |
 
 Choices a visitor may not use stay visible with a small lock; clicking one says to sign in or that it is

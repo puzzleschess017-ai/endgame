@@ -74,7 +74,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
       .querySelector('meta[name="description"]')
       ?.setAttribute(
         'content',
-        'Chess visualization drills: square colors, diagonals and knight routes, with no board to look at.',
+        'Chess visualization drills: square colors, check or not, diagonals and knight routes, with no board to look at.',
       );
   }, []);
 
@@ -191,7 +191,10 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
           {phase === 'running' && question ? (
             <>
               <p className="text-white/60 text-sm font-semibold">{drillLabel(question.kind)}</p>
-              <p className="text-3xl sm:text-4xl font-bold text-white tracking-tight" data-testid="question">
+              <p
+                className={`${question.prompt.length > 48 ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-4xl'} font-bold text-white tracking-tight`}
+                data-testid="question"
+              >
                 {question.prompt}
               </p>
             </>
@@ -219,7 +222,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
 
               <div className="space-y-2">
                 <span className="text-sm font-semibold text-white">Drill</span>
-                <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+                <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
                   {DRILL_KINDS.map((k) => {
                     const needs = tierFor((a) => a.blindfold.drills, k);
                     const locked = locks.isLocked(needs);

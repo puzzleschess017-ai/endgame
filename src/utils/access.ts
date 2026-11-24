@@ -33,7 +33,7 @@ export interface BlindfoldAccess {
   memorize: MemorizeSeconds[];
   /** How long the mate may be: in 1, 2 or 3 moves. */
   mateIn: MateIn[];
-  /** Which drills (square colours, diagonals, knight routes) may be played. */
+  /** Which drills (square colours, check or not, diagonals, knight routes) may be played. */
   drills: DrillKind[];
 }
 
@@ -49,7 +49,7 @@ export const ACCESS: Record<Tier, Access> = {
   },
   free: {
     woodpecker: { cycles: [2, 3, 4], counts: [10, 50, 100], difficulties: ['easy', 'medium', 'hard'], types: ['classic'] },
-    blindfold: { levels: [6, 7], memorize: [10], mateIn: [1], drills: ['color'] },
+    blindfold: { levels: [6, 7], memorize: [10], mateIn: [1], drills: ['color', 'check'] },
   },
   premium: {
     woodpecker: { cycles: ALL_CYCLES, counts: ALL_COUNTS, difficulties: ALL_DIFFICULTIES, types: ALL_TYPES },
@@ -154,7 +154,12 @@ export function clampDrill(tier: Tier, kind: DrillKind): DrillKind {
   return drills.length === 0 || drills.includes(kind) ? kind : drills[0];
 }
 
-const DRILL_NAME: Record<DrillKind, string> = { color: 'Square colours', diagonal: 'Diagonals', knight: 'Knight routes' };
+const DRILL_NAME: Record<DrillKind, string> = {
+  color: 'Square colours',
+  check: 'Check or not',
+  diagonal: 'Diagonals',
+  knight: 'Knight routes',
+};
 
 export function checkBlindfoldDrill(tier: Tier, kind: DrillKind): Check {
   return ACCESS[tier].blindfold.drills.includes(kind)
