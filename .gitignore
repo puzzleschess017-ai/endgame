@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# SQLite side files and local backups
+endgame.db-shm
+endgame.db-wal
+endgame.db-journal
+*.backup

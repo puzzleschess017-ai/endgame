@@ -202,6 +202,17 @@ function getMeta() {
   return cachedMeta;
 }
 
+// Extra SQL condition that limits puzzles to real endgames.
+// - New databases carry an `is_endgame` flag precomputed with the material rule
+//   from scripts/build-endgame-db.mjs.
+// - Older databases fall back to the (very loose) Lichess "endgame" theme tag.
+function endgameCondition(database: Database.Database, hasThemes: boolean): string {
+  if (hasColumn(database, 'puzzles', 'is_endgame')) {
+    return 'AND is_endgame = 1';
+  }
+  return hasThemes ? "AND themes LIKE '%endgame%'" : '';
+}
+
 function formatPuzzle(row: RawPuzzleRow) {
   const moveList = row.moves.trim().split(/\s+/);
   const numMoves =
@@ -261,7 +272,7 @@ function samplePuzzlesFromDb(
 
   // Actual Lichess database structure
   const ratingRange = DIFFICULTY_RATING_RANGES[difficulty] ?? { minRating: 1200, maxRating: 1600 };
-  const themeCondition = hasThemes ? "AND themes LIKE '%endgame%'" : '';
+  const themeCondition = endgameCondition(database, hasThemes);
 
   if (hasRandKey) {
     const MAX_RAND_KEY = 2147483647;
@@ -462,7 +473,7 @@ async function startServer() {
           .all(diffCode, limit, offset) as RawPuzzleRow[];
       } else {
         const ratingRange = DIFFICULTY_RATING_RANGES[difficulty] ?? { minRating: 1200, maxRating: 1600 };
-        const themeCondition = hasThemes ? "AND themes LIKE '%endgame%'" : '';
+        const themeCondition = endgameCondition(database, hasThemes);
         rows = database
           .prepare(
             `SELECT puzzle_id, fen, moves, rating, rating_deviation, popularity, themes

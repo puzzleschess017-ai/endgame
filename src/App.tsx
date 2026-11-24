@@ -525,6 +525,22 @@ export default function App() {
     const expected = currentPuzzle.moves[moveIndexRef.current];
     if (!expected || expected.length < 4) return;
     setHintArrow([expected.slice(0, 2) as Key, expected.slice(2, 4) as Key]);
+
+    // Using the hint means the puzzle was not solved unaided, so it counts as
+    // incorrect (once per puzzle), exactly like a wrong move does.
+    setSession((prev) => {
+      if (!prev || prev.currentPuzzleFailed) return prev;
+      return {
+        ...prev,
+        cycleIncorrect: prev.cycleIncorrect + 1,
+        currentPuzzleFailed: true,
+      };
+    });
+    setFeedback((prev) =>
+      prev.type === 'error' || prev.type === 'solved'
+        ? prev
+        : { type: 'idle', message: 'Hint used — this puzzle counts as incorrect' },
+    );
   }, [currentPuzzle, session]);
 
   const handleStartTraining = useCallback(async () => {
