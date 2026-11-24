@@ -10,6 +10,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Woodpecker' },
   { href: '/coordinates', label: 'Coordinates' },
   { href: '/streak', label: 'Streak' },
+  { href: '/race', label: 'Race' },
 ];
 
 function currentPath(): string {
