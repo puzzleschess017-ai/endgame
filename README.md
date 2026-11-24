@@ -110,6 +110,10 @@ right-hand panel in fixed places), draw the board inside an element that uses `B
 and whose side comes from `snapBoardSize` (both in `src/utils/appearance.ts`), add the page to
 `NAV_GROUPS` in `src/components/Sidebar.tsx` (pick a group, an icon and its colour) and to `PAGES`
 in `src/main.tsx`. That keeps the board size, corners and panel position identical on every page.
+Get the board size, colours and pieces from `useAppearance()` (`src/hooks/useAppearance.ts`) and pass
+them to `TrainerLayout` as `appearance` / `onAppearanceChange`: the layout then shows the board size
+buttons (+ / −) and the board settings button under the board, so every mode can resize its board and
+the choice is saved once for all pages (`endgame_woodpecker_appearance_v1`).
 To show the mode's records on the Statistics page, add its lines to `collectHomeStats` in
 `src/utils/stats.ts`. To make its runs count in the Home dashboard, call `recordActivity` from
 `src/utils/activity.ts` when a run ends (`mode`, time spent in ms, correct and wrong answers, puzzles).

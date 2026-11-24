@@ -9,7 +9,7 @@ import {
 } from '../../components/panelUi';
 import TrainerLayout from '../../components/TrainerLayout';
 import { PREVIEW_FEN } from '../../hooks/usePuzzleSolver';
-import { BOARD_SIZE_CLASS_MAP, loadAppearanceSettings } from '../../utils/appearance';
+import { useAppearance } from '../../hooks/useAppearance';
 import {
   BLINDFOLD_LEVELS,
   EMPTY_FEN,
@@ -48,7 +48,7 @@ const TICK_MS = 100;
 
 export default function MateInOne({ username, muted, onToggleMute, mode, onModeChange }: BlindfoldModeProps) {
   const [settings, setSettings] = useState<BlindfoldSettings>(() => loadBlindfoldSettings());
-  const [appearance] = useState(() => loadAppearanceSettings());
+  const [appearance, setAppearance] = useAppearance();
 
   const [phase, setPhase] = useState<Phase>('setup');
   const [items, setItems] = useState<BlindfoldItem[]>([]);
@@ -214,7 +214,6 @@ export default function MateInOne({ username, muted, onToggleMute, mode, onModeC
   }, []);
 
   const best = loadBlindfoldBest(settings.level);
-  const boardSizeClass = BOARD_SIZE_CLASS_MAP[appearance.boardSize] ?? 'max-w-[min(560px,100%)]';
   const sideName = current ? (current.position.playerColor === 'white' ? 'White' : 'Black') : '';
   const running = phase === 'memorize' || phase === 'answer' || phase === 'feedback';
 
@@ -243,7 +242,8 @@ export default function MateInOne({ username, muted, onToggleMute, mode, onModeC
       username={username}
       muted={muted}
       onToggleMute={onToggleMute}
-      boardSizeClass={boardSizeClass}
+      appearance={appearance}
+      onAppearanceChange={setAppearance}
       board={
         <ViewBoard
           fen={boardFen}
