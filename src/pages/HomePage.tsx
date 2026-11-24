@@ -3,6 +3,7 @@ import AppShell from '../components/AppShell';
 import BarChart, { type BarDatum } from '../components/BarChart';
 import { segmentClass } from '../components/panelUi';
 import { dailySeries } from '../utils/activity';
+import { useSyncVersion } from '../sync';
 import { readSavedUsername } from '../utils/profile';
 import { collectOverview } from '../utils/stats';
 
@@ -27,7 +28,9 @@ function labels(day: string, range: Range): { label: string; fullLabel: string }
 
 /** Landing page: a dashboard with the overview of your training and charts over time. */
 export default function HomePage() {
-  const [overview] = useState(() => collectOverview());
+  // Read again when the results of the account arrive (a sync after the page opened).
+  const syncVersion = useSyncVersion();
+  const overview = useMemo(() => collectOverview(), [syncVersion]);
   const [username] = useState(() => readSavedUsername());
   const [range, setRange] = useState<Range>(7);
 
@@ -37,7 +40,7 @@ export default function HomePage() {
       .querySelector('meta[name="description"]')
       ?.setAttribute(
         'content',
-        'Free chess training: the Woodpecker method for endgames, puzzle streaks and races, coordinates and blindfold drills. Your results stay in your browser.',
+        'Free chess training: Woodpecker endgames, puzzle streaks and races, coordinates and blindfold drills. Sign in to keep your results on every device.',
       );
   }, []);
 

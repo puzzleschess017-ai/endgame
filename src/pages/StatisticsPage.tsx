@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AppShell from '../components/AppShell';
 import { MODE_ITEMS } from '../components/Sidebar';
+import { useAuth } from '../auth';
+import { useSyncVersion } from '../sync';
 import { readSavedUsername } from '../utils/profile';
 import { collectHomeStats } from '../utils/stats';
 
@@ -9,14 +11,16 @@ const CARD_BASE =
 
 /** Personal records of every mode and the last Woodpecker cycles. */
 export default function StatisticsPage() {
-  const [stats] = useState(() => collectHomeStats());
+  const { session } = useAuth();
+  const syncVersion = useSyncVersion();
+  const stats = useMemo(() => collectHomeStats(), [syncVersion]);
   const [username] = useState(() => readSavedUsername());
 
   useEffect(() => {
     document.title = 'Statistics | Chess Tactics Guide';
     document
       .querySelector('meta[name="description"]')
-      ?.setAttribute('content', 'Your personal records in every chess training mode, saved in your browser.');
+      ?.setAttribute('content', 'Your personal records in every chess training mode, saved on your account or in your browser.');
   }, []);
 
   const { recentCycles } = stats;
@@ -27,7 +31,9 @@ export default function StatisticsPage() {
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Statistics</h2>
           <p className="mt-1.5 text-sm sm:text-base font-medium text-white/70">
-            Your best results in every mode. Everything is saved in this browser only.
+            {session
+              ? 'Your best results in every mode. They are saved on your account and follow you to every device.'
+              : 'Your best results in every mode. As a guest they are saved in this browser only: sign in to keep them on every device.'}
           </p>
         </div>
 

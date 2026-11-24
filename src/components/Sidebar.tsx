@@ -14,7 +14,8 @@ import {
   Timer,
   type LucideIcon,
 } from 'lucide-react';
-import { auth, useAuth } from '../auth';
+import { useAuth } from '../auth';
+import { signOutAndSync } from '../sync';
 import SoundMenu from './SoundMenu';
 
 export interface NavItem {
@@ -207,7 +208,7 @@ function AccountControls({ compact }: { compact?: boolean }) {
     <button
       type="button"
       data-testid="sign-out-button"
-      onClick={() => void auth.signOut().then(() => window.location.assign('/'))}
+      onClick={() => void signOutAndSync().then(() => window.location.assign('/'))}
       className={`${button} min-h-[40px] min-w-[40px]`}
       aria-label="Sign out"
       title="Sign out"

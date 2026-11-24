@@ -3,6 +3,7 @@ import type { ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 import HomePage from './pages/HomePage.tsx';
 import './index.css';
+import './sync';  // keeps the results of a signed-in visitor on the account
 
 // One page per path. Home (statistics) is the landing page and the fallback for unknown paths, so it
 // is in the main bundle; every other page is loaded when it is opened, so the boards, chess rules and

@@ -216,7 +216,31 @@ reached a signed-in visitor counts as free. The number of cycles, the memorize t
 reach the server, so those are locked in the browser only. `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`
 can override the project on the server too.
 
+#### Results on the account (sync)
+
+Results follow the account to every device (`src/sync/`). The pages still write their results to
+`localStorage` as before; the sync watches only the keys in `src/sync/data.ts` (daily activity, finished
+Woodpecker cycles, personal bests of Streak, Race, Coordinates, Blindfold and Drills). Settings such as board
+colours and sound stay on the device. On the server they are one row per key in the table `user_data`
+(created by `supabase/schema.sql`, protected so everybody sees only their own rows).
+
+- **Signing in:** the account's results are read and put together with the ones in this browser. Results made
+  as a guest are *added* to the account (days are summed, bests take the larger value, cycles are joined by
+  their id), once. Later syncs of the same account never add anything twice (`reconcile`: the larger value of
+  each day wins).
+- **While signed in:** a changed result is saved within about 5 seconds; the account is read again when the
+  tab comes back, after reconnecting and every 5 minutes, so results from another device show up (Home and
+  Statistics redraw by themselves).
+- **Signing out:** the results are saved first (waits 4 seconds at most), then removed from this browser, so the
+  next visitor is a guest. Results that could not be saved are kept and count as the guest's own, and go to
+  the next account that signs in.
+- **When saving fails** (offline, or the table is missing) nothing in the browser changes; the account page
+  says so and the sync tries again after a minute.
+- Known limit: two devices that train on the same day while offline both count that day; when they meet, the
+  larger day total is kept, so a few sessions of that day can be missed.
+
 ## Saved progress
 
-Training sessions and settings are stored in the browser (`localStorage`), so they
-are tied to one browser and are lost if site data is cleared.
+Training sessions and settings are stored in the browser (`localStorage`). Results (not settings or the
+unfinished Woodpecker set) are also saved on the account when someone is signed in; as a guest they live in the
+browser only and are lost if site data is cleared.

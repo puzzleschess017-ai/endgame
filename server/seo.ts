@@ -22,7 +22,7 @@ export const PAGES: PageMeta[] = [
     path: '/',
     title: 'Chess Tactics Guide | Chess training: endgames, puzzles and blindfold',
     description:
-      'Free chess training: the Woodpecker method for endgames, puzzle streaks and races, coordinates and blindfold drills. Your results stay in your browser.',
+      'Free chess training: Woodpecker endgames, puzzle streaks and races, coordinates and blindfold drills. Sign in to keep your results on every device.',
     indexable: true,
     kind: 'website',
     priority: 1.0,
