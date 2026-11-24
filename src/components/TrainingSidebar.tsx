@@ -304,6 +304,7 @@ export default function TrainingSidebar({
             type="button"
             onClick={onRequestHint}
             disabled={hintActive}
+            title="Using the arrow counts this puzzle as incorrect"
             className="flex-1 py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white disabled:opacity-50 text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer min-h-[42px] whitespace-nowrap"
           >
             <Eye className="w-4 h-4" />
