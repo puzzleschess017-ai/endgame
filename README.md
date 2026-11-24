@@ -85,12 +85,13 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | `/` | Woodpecker endgame trainer |
 | `/coordinates` | Coordinates trainer: click the named square against the clock (30 or 60 s, white, black or random side). The board has no labels, on purpose |
 | `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
+| `/race` | Puzzle Race: solve as many puzzles as possible in 1, 3 or 5 minutes, easy to hard from the whole database. A wrong move costs 10 seconds and moves on to the next puzzle. Best score per time saved in the browser (a run ended early is not saved) |
 
 Every path is served by the same app (`main.tsx` picks the page from the URL). Logic that can be
 tested without a browser lives in `src/utils/`; run all its tests with
 `npx tsx --test src/utils/*.test.ts`.
 
-Streak (and Race) get their puzzles from `GET /api/puzzles/ladder?start=500&step=40&count=30`: one
+Streak and Race get their puzzles from `GET /api/puzzles/ladder?start=500&step=40&count=30` (Race asks for `step=25`): one
 random puzzle per rating step (start, start + step, ...), easy first, from every puzzle in the
 database. `src/utils/ladderFeed.ts` asks for the next batch before the current one runs out, and
 `src/hooks/usePuzzleSolver.ts` plays a puzzle on the board (opponent's replies, promotion, first
