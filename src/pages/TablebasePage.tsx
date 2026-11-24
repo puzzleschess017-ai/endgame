@@ -14,7 +14,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import ChessboardPanel, { type PendingPromotion } from '../components/ChessboardPanel';
-import { CARD_CLASS, SECONDARY_BUTTON_CLASS } from '../components/panelUi';
+import { COMPACT_CARD_CLASS, SECONDARY_BUTTON_CLASS } from '../components/panelUi';
 import TrainerLayout from '../components/TrainerLayout';
 import { useAppearance } from '../hooks/useAppearance';
 import {
@@ -49,7 +49,7 @@ import {
 } from '../utils/tablebase';
 
 const NAV_BUTTON_CLASS =
-  'py-2.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-[#39ff88] hover:text-[#39ff88] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/20 disabled:hover:text-white text-white flex items-center justify-center cursor-pointer min-h-[44px] focus-visible:outline-2 focus-visible:outline-[#39ff88]';
+  'py-1.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-[#39ff88] hover:text-[#39ff88] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/20 disabled:hover:text-white text-white flex items-center justify-center cursor-pointer min-h-[36px] focus-visible:outline-2 focus-visible:outline-[#39ff88]';
 
 const TONE_TEXT: Record<Tone, string> = {
   good: 'text-[#39ff88]',
@@ -326,17 +326,16 @@ export default function TablebasePage() {
         />
       }
       panel={
-        <div className={CARD_CLASS} data-testid="tablebase-panel">
+        <div className={COMPACT_CARD_CLASS} data-testid="tablebase-panel">
           <div>
             <h2 className="text-xl font-bold text-white tracking-tight">Endgame Tablebase</h2>
-            <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
-              Perfect play for any position with 7 pieces or fewer: who wins, and which moves keep it. Play on the
-              board, or set up a position in the Board Editor.
+            <p className="mt-0.5 text-xs font-medium text-white/70">
+              Perfect play for positions with 7 pieces or fewer. Play on the board.
             </p>
           </div>
 
-          <div className="flex flex-col gap-2" data-testid="tb-verdict" aria-live="polite">
-            <p data-testid="analysis-status" className="text-sm font-semibold text-white/70">
+          <div className="flex flex-col gap-1" data-testid="tb-verdict" aria-live="polite">
+            <p data-testid="analysis-status" className="text-xs font-semibold text-white/70">
               {status.text}
             </p>
             {lookup.state === 'loading' && <p className="text-base font-bold text-white/80">Looking it up…</p>}
@@ -362,11 +361,11 @@ export default function TablebasePage() {
             )}
             {verdict && (
               <div>
-                <p data-testid="tb-headline" data-tone={verdict.tone} className={`text-xl font-bold tracking-tight ${TONE_TEXT[verdict.tone]}`}>
+                <p data-testid="tb-headline" data-tone={verdict.tone} className={`text-lg font-bold tracking-tight ${TONE_TEXT[verdict.tone]}`}>
                   {verdict.headline}
                 </p>
                 {verdict.detail && (
-                  <p data-testid="tb-detail" className="mt-1 text-sm font-medium text-white/75 leading-relaxed">
+                  <p data-testid="tb-detail" className="text-sm font-medium text-white/75 leading-snug">
                     {verdict.detail}
                   </p>
                 )}
@@ -375,9 +374,9 @@ export default function TablebasePage() {
           </div>
 
           {lookup.state === 'ready' && lookup.result.moves.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <h3 className="text-sm font-bold text-white">Moves, best first</h3>
-              <ul data-testid="tb-moves" className="max-h-[220px] overflow-y-auto rounded-xl bg-[#101b2f] border border-white/10 p-1.5 flex flex-col gap-0.5">
+            <div className="flex flex-col gap-1.5">
+              <h3 className="text-xs font-bold text-white/80">Moves, best first</h3>
+              <ul data-testid="tb-moves" className="max-h-[132px] overflow-y-auto rounded-xl bg-[#101b2f] border border-white/10 p-1 flex flex-col gap-0.5">
                 {lookup.result.moves.map((move) => {
                   const label = moveLabel(move);
                   return (
@@ -391,7 +390,7 @@ export default function TablebasePage() {
                         onMouseLeave={() => setHoverUci(null)}
                         onFocus={() => setHoverUci(move.uci)}
                         onBlur={() => setHoverUci(null)}
-                        className="w-full flex items-center justify-between gap-3 px-2.5 py-1.5 rounded-lg text-sm cursor-pointer hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+                        className="w-full flex items-center justify-between gap-3 px-2.5 py-1 rounded-lg text-sm cursor-pointer hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
                       >
                         <span className="font-bold text-white">{move.san}</span>
                         <span className={`font-semibold ${TONE_TEXT[label.tone]}`}>{label.text}</span>
@@ -421,10 +420,10 @@ export default function TablebasePage() {
           <div
             ref={listRef}
             data-testid="move-list"
-            className="relative max-h-[150px] min-h-[64px] overflow-y-auto rounded-xl bg-[#101b2f] border border-white/10 p-2"
+            className="relative max-h-[84px] min-h-[44px] overflow-y-auto rounded-xl bg-[#101b2f] border border-white/10 p-1.5"
           >
             {rows.length === 0 ? (
-              <p className="px-2 py-2 text-sm font-medium text-white/60">Moves you play appear here.</p>
+              <p className="px-2 py-1 text-sm font-medium text-white/60">Moves you play appear here.</p>
             ) : (
               <ol className="flex flex-col gap-0.5">
                 {rows.map((row) => (
@@ -443,11 +442,11 @@ export default function TablebasePage() {
               type="button"
               data-testid="btn-flip"
               onClick={() => setOrientation((o) => (o === 'white' ? 'black' : 'white'))}
-              className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-1.5 !px-2`}
+              className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-1.5 !px-2 !min-h-[36px] !py-1.5`}
             >
               <FlipVertical2 className="w-4 h-4" aria-hidden="true" /> Flip
             </button>
-            <button type="button" data-testid="btn-reset" onClick={() => startFrom(analysis.startFen)} className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-1.5 !px-2`}>
+            <button type="button" data-testid="btn-reset" onClick={() => startFrom(analysis.startFen)} className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-1.5 !px-2 !min-h-[36px] !py-1.5`}>
               <RotateCcw className="w-4 h-4" aria-hidden="true" /> Reset
             </button>
             <a
@@ -459,7 +458,12 @@ export default function TablebasePage() {
             </a>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <details className="group" data-testid="share-details">
+            <summary className="cursor-pointer text-sm font-bold text-white select-none focus-visible:outline-2 focus-visible:outline-[#39ff88] rounded">
+              Examples, FEN and PGN
+            </summary>
+            <div className="mt-3 flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
             <h3 className="text-sm font-bold text-white">Try a position</h3>
             <div className="flex flex-wrap gap-2" data-testid="examples">
               {EXAMPLES.map((example) => (
@@ -476,11 +480,6 @@ export default function TablebasePage() {
             </div>
           </div>
 
-          <details className="group" data-testid="share-details">
-            <summary className="cursor-pointer text-sm font-bold text-white select-none focus-visible:outline-2 focus-visible:outline-[#39ff88] rounded">
-              Position and game (FEN, PGN)
-            </summary>
-            <div className="mt-4 flex flex-col gap-5">
               <div className="flex flex-col gap-2">
                 <label htmlFor="tb-fen" className="text-sm font-bold text-white">
                   Position (FEN)

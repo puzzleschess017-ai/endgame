@@ -4,7 +4,7 @@ import type { Api } from 'chessground/api';
 import type { Key } from 'chessground/types';
 import { Check, Copy, Database, Eraser, FlipVertical2, Hand, Trash2 } from 'lucide-react';
 import ChessboardPanel from '../components/ChessboardPanel';
-import { CARD_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, segmentClass } from '../components/panelUi';
+import { COMPACT_CARD_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, segmentClass } from '../components/panelUi';
 import TrainerLayout from '../components/TrainerLayout';
 import { useAppearance } from '../hooks/useAppearance';
 import {
@@ -57,6 +57,8 @@ function initialPosition(): EditorPosition {
   }
   return startPosition();
 }
+
+const ROW_BUTTON_CLASS = `${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-1 !px-1 !py-1.5 !min-h-[36px] !text-xs`;
 
 export default function EditorPage() {
   const [appearance, setAppearance] = useAppearance();
@@ -176,18 +178,17 @@ export default function EditorPage() {
         />
       }
       panel={
-        <div className={CARD_CLASS} data-testid="editor-panel">
+        <div className={COMPACT_CARD_CLASS} data-testid="editor-panel">
           <div>
             <h2 className="text-xl font-bold text-white tracking-tight">Board Editor</h2>
-            <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
-              Set up any position. Drag a piece onto the board, or pick one and tap squares. Drag a piece off the
-              board to remove it.
+            <p className="mt-0.5 text-xs font-medium text-white/70 leading-snug">
+              Drag a piece onto the board, or pick one and tap squares. Drag a piece off to remove it.
             </p>
           </div>
 
-          <div className="flex flex-col gap-2" role="group" aria-label="Pieces">
+          <div className="flex flex-col gap-1.5" role="group" aria-label="Pieces">
             {[WHITE_PIECES, BLACK_PIECES].map((row) => (
-              <div key={row[0]} className="grid grid-cols-6 gap-1.5">
+              <div key={row[0]} className="grid grid-cols-6 gap-1">
                 {row.map((code) => (
                   <button
                     key={code}
@@ -200,7 +201,7 @@ export default function EditorPage() {
                     onTouchStart={(e) => startDragFromPalette(code, e)}
                     onClick={() => setTool(code)}
                     style={{ touchAction: 'none' }}
-                    className={`aspect-square rounded-xl border transition-colors duration-150 cursor-grab flex items-center justify-center focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                    className={`h-10 rounded-xl border transition-colors duration-150 cursor-grab flex items-center justify-center focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
                       tool === code
                         ? 'bg-[#39ff88]/20 border-[#39ff88]'
                         : 'bg-[#101b2f] border-white/15 hover:border-white/60'
@@ -210,7 +211,7 @@ export default function EditorPage() {
                       src={`/pieces/${appearance.pieceSet}/${code}.svg`}
                       alt=""
                       draggable={false}
-                      className="w-[88%] h-[88%] select-none pointer-events-none"
+                      className="h-[88%] aspect-square select-none pointer-events-none"
                     />
                   </button>
                 ))}
@@ -222,7 +223,7 @@ export default function EditorPage() {
                 data-testid="tool-pointer"
                 aria-pressed={tool === 'pointer'}
                 onClick={() => setTool('pointer')}
-                className={`${segmentClass(tool === 'pointer')} flex items-center justify-center gap-2 border border-white/10`}
+                className={`${segmentClass(tool === 'pointer')} !min-h-[36px] !py-1.5 flex items-center justify-center gap-2 border border-white/10`}
               >
                 <Hand className="w-4 h-4" aria-hidden="true" /> Move pieces
               </button>
@@ -231,26 +232,47 @@ export default function EditorPage() {
                 data-testid="tool-trash"
                 aria-pressed={tool === 'trash'}
                 onClick={() => setTool('trash')}
-                className={`${segmentClass(tool === 'trash')} flex items-center justify-center gap-2 border border-white/10`}
+                className={`${segmentClass(tool === 'trash')} !min-h-[36px] !py-1.5 flex items-center justify-center gap-2 border border-white/10`}
               >
                 <Eraser className="w-4 h-4" aria-hidden="true" /> Delete pieces
               </button>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <h3 className="text-sm font-bold text-white">Side to move</h3>
-            <div className="grid grid-cols-2 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10" role="group" aria-label="Side to move">
-              <button type="button" data-testid="turn-w" aria-pressed={position.turn === 'w'} onClick={() => update({ turn: 'w' })} className={segmentClass(position.turn === 'w')}>
+          <div className="flex flex-col gap-2.5">
+            <div className="grid grid-cols-2 gap-3 items-end">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-xs font-bold text-white/80">Side to move</h3>
+                <div className="grid grid-cols-2 gap-1 bg-[#101b2f] p-0.5 rounded-xl border border-white/10" role="group" aria-label="Side to move">
+              <button type="button" data-testid="turn-w" aria-pressed={position.turn === 'w'} onClick={() => update({ turn: 'w' })} className={`${segmentClass(position.turn === 'w')} !min-h-[34px] !py-1`}>
                 White
               </button>
-              <button type="button" data-testid="turn-b" aria-pressed={position.turn === 'b'} onClick={() => update({ turn: 'b' })} className={segmentClass(position.turn === 'b')}>
+              <button type="button" data-testid="turn-b" aria-pressed={position.turn === 'b'} onClick={() => update({ turn: 'b' })} className={`${segmentClass(position.turn === 'b')} !min-h-[34px] !py-1`}>
                 Black
               </button>
             </div>
+              </div>
+              <label className="flex flex-col gap-1 text-xs font-bold text-white/80">
+              En passant
+              <select
+                data-testid="ep-select"
+                value={effectiveEp}
+                onChange={(e) => update({ ep: e.target.value || null })}
+                className="bg-[#101b2f] border border-white/20 rounded-lg px-2 py-1 text-sm font-semibold text-white min-h-[34px] w-full focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+              >
+                <option value="">None</option>
+                {['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((file) => (
+                  <option key={file} value={file} disabled={enPassantSquare(position.placement, position.turn, file) === '-'}>
+                    {file}-file
+                  </option>
+                ))}
+              </select>
+            </label>
+            </div>
 
-            <h3 className="text-sm font-bold text-white mt-1">Castling</h3>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+            <div className="flex flex-col gap-1.5">
+              <h3 className="text-xs font-bold text-white/80">Castling</h3>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
               {CASTLING_OPTIONS.map(({ key, label }) => {
                 const possible = possibleCastling(position.placement, { K: true, Q: true, k: true, q: true })[key];
                 return (
@@ -271,27 +293,11 @@ export default function EditorPage() {
                 );
               })}
             </div>
-
-            <label className="flex items-center justify-between gap-3 text-sm font-bold text-white mt-1">
-              En passant
-              <select
-                data-testid="ep-select"
-                value={effectiveEp}
-                onChange={(e) => update({ ep: e.target.value || null })}
-                className="bg-[#101b2f] border border-white/20 rounded-lg px-2.5 py-2 text-sm font-semibold text-white min-h-[40px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
-              >
-                <option value="">None</option>
-                {['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((file) => (
-                  <option key={file} value={file} disabled={enPassantSquare(position.placement, position.turn, file) === '-'}>
-                    {file}-file
-                  </option>
-                ))}
-              </select>
-            </label>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="editor-fen" className="text-sm font-bold text-white">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="editor-fen" className="sr-only">
               FEN
             </label>
             <div className="flex gap-2">
@@ -308,60 +314,64 @@ export default function EditorPage() {
                 }}
                 spellCheck={false}
                 autoComplete="off"
-                className="min-w-0 flex-1 bg-[#101b2f] border border-white/20 rounded-lg px-3 py-2 text-xs font-mono text-white min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+                className="min-w-0 flex-1 bg-[#101b2f] border border-white/20 rounded-lg px-3 py-1.5 text-xs font-mono text-white min-h-[38px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
               />
-              <button type="button" data-testid="fen-load" onClick={loadFen} className={`${SECONDARY_BUTTON_CLASS} !w-auto`}>
+              <button type="button" data-testid="fen-load" onClick={loadFen} className={`${SECONDARY_BUTTON_CLASS} !w-auto !min-h-[38px] !py-1.5`}>
                 Load
               </button>
             </div>
             {fenError ? (
-              <p role="alert" data-testid="fen-error" className="text-sm font-semibold text-[#ff7a7a]">
+              <p role="alert" data-testid="fen-error" className="text-xs font-semibold text-[#ff7a7a]">
                 {fenError}
               </p>
             ) : validation.ok ? (
-              <p data-testid="fen-status" className="text-sm font-semibold text-[#39ff88]">
+              <p data-testid="fen-status" className="text-xs font-semibold text-[#39ff88]">
                 This position is valid.
               </p>
             ) : (
-              <p data-testid="fen-status" className="text-sm font-semibold text-amber-300">
+              <p data-testid="fen-status" className="text-xs font-semibold text-amber-300">
                 {validation.reason}
               </p>
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-4 gap-1.5">
             <button
               type="button"
               data-testid="btn-start"
+              title="Start position"
               onClick={() => update(startPosition())}
-              className={SECONDARY_BUTTON_CLASS}
+              className={ROW_BUTTON_CLASS}
             >
-              Start position
+              Start
             </button>
             <button
               type="button"
               data-testid="btn-clear"
+              title="Clear board"
               onClick={() => update(emptyPosition())}
-              className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2`}
+              className={ROW_BUTTON_CLASS}
             >
-              <Trash2 className="w-4 h-4" aria-hidden="true" /> Clear board
+              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" /> Clear
             </button>
             <button
               type="button"
               data-testid="btn-flip"
+              title="Flip board"
               onClick={() => setOrientation((o) => (o === 'white' ? 'black' : 'white'))}
-              className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2`}
+              className={ROW_BUTTON_CLASS}
             >
-              <FlipVertical2 className="w-4 h-4" aria-hidden="true" /> Flip board
+              <FlipVertical2 className="w-3.5 h-3.5" aria-hidden="true" /> Flip
             </button>
             <button
               type="button"
               data-testid="btn-copy"
+              title="Copy FEN"
               onClick={copyFen}
-              className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2`}
+              className={ROW_BUTTON_CLASS}
             >
-              {copied ? <Check className="w-4 h-4 text-[#39ff88]" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
-              {copied ? 'Copied' : 'Copy FEN'}
+              {copied ? <Check className="w-3.5 h-3.5 text-[#39ff88]" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+              {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
 
@@ -369,17 +379,17 @@ export default function EditorPage() {
             <a
               href={tablebaseHref}
               data-testid="btn-analyze"
-              className={`${PRIMARY_BUTTON_CLASS} flex items-center justify-center gap-2 no-underline`}
+              className={`${PRIMARY_BUTTON_CLASS} !min-h-[44px] !py-2.5 flex items-center justify-center gap-2 no-underline`}
             >
               <Database className="w-5 h-5" aria-hidden="true" /> Check in the Tablebase
             </a>
           ) : (
-            <button type="button" data-testid="btn-analyze" disabled className={`${PRIMARY_BUTTON_CLASS} flex items-center justify-center gap-2`}>
+            <button type="button" data-testid="btn-analyze" disabled className={`${PRIMARY_BUTTON_CLASS} !min-h-[44px] !py-2.5 flex items-center justify-center gap-2`}>
               <Database className="w-5 h-5" aria-hidden="true" /> Check in the Tablebase
             </button>
           )}
           {tablebaseProblem && (
-            <p data-testid="tablebase-note" className="-mt-3 text-xs font-medium text-amber-300 leading-relaxed">
+            <p data-testid="tablebase-note" className="-mt-1 text-xs font-medium text-amber-300 leading-snug">
               {tablebaseProblem}
             </p>
           )}
