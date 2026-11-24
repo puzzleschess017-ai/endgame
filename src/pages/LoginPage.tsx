@@ -3,6 +3,7 @@ import { LogOut, UserRound } from 'lucide-react';
 import AppShell from '../components/AppShell';
 import { CARD_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, segmentClass } from '../components/panelUi';
 import { auth, useAuth } from '../auth';
+import { signOutAndSync, useSyncState } from '../sync';
 import { readSavedUsername } from '../utils/profile';
 
 type Mode = 'signin' | 'signup';
@@ -21,6 +22,7 @@ export function nextPath(search: string): string {
 /** Sign in, create an account, or carry on as a guest; and, for someone signed in, the account. */
 export default function LoginPage() {
   const state = useAuth();
+  const syncState = useSyncState();
   const [mode, setMode] = useState<Mode>(() => (new URLSearchParams(window.location.search).get('tab') === 'signup' ? 'signup' : 'signin'));
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -94,13 +96,24 @@ export default function LoginPage() {
                 {state.status === 'loading' ? '…' : PLAN_NAME[state.tier === 'premium' ? 'premium' : 'free']}
               </span>
             </p>
+            <p
+              data-testid="sync-status"
+              data-status={syncState.status}
+              className={`text-sm font-medium leading-snug ${syncState.status === 'error' ? 'text-[#ffd2cc]' : 'text-white/70'}`}
+            >
+              {syncState.status === 'saved'
+                ? 'Your results are saved on this account and follow you to every device.'
+                : syncState.status === 'error'
+                  ? `Your results could not be saved on the account yet (${syncState.error}) They stay in this browser and we will try again.`
+                  : 'Saving your results on the account…'}
+            </p>
             <a href="/" className={`${PRIMARY_BUTTON_CLASS} flex items-center justify-center no-underline`}>
               Continue
             </a>
             <button
               type="button"
               data-testid="sign-out"
-              onClick={() => void auth.signOut()}
+              onClick={() => void signOutAndSync()}
               className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2`}
             >
               <LogOut className="w-4 h-4" aria-hidden="true" /> Sign out

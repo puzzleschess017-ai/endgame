@@ -19,8 +19,11 @@ function browserStorage() {
   }
 }
 
+/** Where the Supabase project is: the other parts of the page that talk to it (saved results) use this. */
+export const supabaseConfig = { url: SUPABASE_URL, key: SUPABASE_KEY };
+
 export const auth = createAuthStore({
-  client: createAuthClient({ url: SUPABASE_URL, key: SUPABASE_KEY }),
+  client: createAuthClient(supabaseConfig),
   storage: typeof window === 'undefined' ? noStorage : browserStorage(),
 });
 
