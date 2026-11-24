@@ -41,10 +41,15 @@ that exposes the puzzle API and serves the Vite dev server as middleware). Runni
 
 ## Puzzle selection
 
+Woodpecker has two puzzle types, chosen above the difficulty: *Endgame* (the default) draws only from
+real endgames, *Classic* draws from every puzzle in the database (endgames included, about 60 % of the
+rows, the rest are opening, middlegame and tactics puzzles). The API takes `mode=classic|endgame`
+(`GET /api/puzzles/sample?count=50&difficulty=mixed&mode=classic`, endgame when `mode` is missing).
+
 Puzzles are sampled at random for the chosen difficulty (rating ranges: easy < 1200,
 medium 1200–1599, hard 1600–1999, expert 2000+). *Mixed* takes an even share from each of the four
 ranges and shuffles them together (10 puzzles = 2 or 3 from each; the extra ones go to randomly
-chosen ranges, see `server/woodpecker.ts`). Only puzzles flagged `is_endgame = 1`
+chosen ranges, see `server/woodpecker.ts`). In the Endgame type only puzzles flagged `is_endgame = 1`
 are used. The flag is computed with the material rule in
 `applyFirstMoveAndCheckEndgame` (`scripts/lib/endgame-rule.mjs`); the Lichess
 `endgame` tag alone is much too loose and also matches positions with many pieces.
@@ -54,8 +59,8 @@ If the database has no `is_endgame` column, the server falls back to the tag.
 
 | Rows | What |
 | --- | --- |
-| 47,851 with `is_endgame = 1` | Real endgames. Only these are used by Woodpecker |
-| about 32,000 with `is_endgame = 0` | Puzzles of every other kind (opening, middlegame, tactics) plus endgame-tagged puzzles with too much material. Meant for Streak, Race and Blindfold, which use every row |
+| 47,851 with `is_endgame = 1` | Real endgames. The only puzzles in the Endgame type of Woodpecker (Classic uses all rows) |
+| about 32,000 with `is_endgame = 0` | Puzzles of every other kind (opening, middlegame, tactics) plus endgame-tagged puzzles with too much material. Used by Classic Woodpecker, Streak, Race and Blindfold, which use every row |
 | 10,445 one-move mates | Puzzles with exactly two moves (mate in 1); 4,419 of them have at most 10 pieces, for Blindfold |
 
 The database is kept small on purpose because the site runs on free hosting (about 230 bytes

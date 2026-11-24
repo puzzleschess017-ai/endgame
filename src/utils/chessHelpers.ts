@@ -78,7 +78,11 @@ const THEME_LABELS: Record<string, string> = {
   opposition: 'Opposition',
 };
 
-export function getEndgameThemeLabel(themes: string[]): string {
+/**
+ * Short name of what a puzzle is about. `genericLabel` is used when nothing more specific is known
+ * and the puzzle is not tagged as an endgame (classic sets contain every kind of puzzle).
+ */
+export function getEndgameThemeLabel(themes: string[], genericLabel = 'Endgame'): string {
   const specificOrder = [
     'pawnEndgame',
     'rookEndgame',
@@ -97,7 +101,7 @@ export function getEndgameThemeLabel(themes: string[]): string {
       return THEME_LABELS[t];
     }
   }
-  return 'Endgame';
+  return themes.includes('endgame') ? 'Endgame' : genericLabel;
 }
 
 export function saveSessionToStorage(session: TrainingSession | null): void {

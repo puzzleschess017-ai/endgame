@@ -9,12 +9,24 @@ export type RatingBand = (typeof RATING_BANDS)[number];
 export const SAMPLE_DIFFICULTIES = [...RATING_BANDS, 'mixed'] as const;
 export type SampleDifficulty = (typeof SAMPLE_DIFFICULTIES)[number];
 
+/**
+ * Which puzzles a set is drawn from: `endgame` = real endgames only (the `is_endgame` flag),
+ * `classic` = every puzzle in the database, endgames included.
+ */
+export const SAMPLE_MODES = ['classic', 'endgame'] as const;
+export type SampleMode = (typeof SAMPLE_MODES)[number];
+export const DEFAULT_SAMPLE_MODE: SampleMode = 'endgame';
+
 export type SampleQuery =
-  | { ok: true; count: number; difficulty: SampleDifficulty }
+  | { ok: true; count: number; difficulty: SampleDifficulty; mode: SampleMode }
   | { ok: false; error: string };
 
-/** Checks the query string of the sample endpoint. */
-export function parseSampleQuery(query: { count?: unknown; difficulty?: unknown }): SampleQuery {
+/** Checks the query string of the sample endpoint. `mode` is optional and defaults to endgame. */
+export function parseSampleQuery(query: {
+  count?: unknown;
+  difficulty?: unknown;
+  mode?: unknown;
+}): SampleQuery {
   const count = Number(query.count);
   if (!Number.isInteger(count) || !(SAMPLE_COUNTS as readonly number[]).includes(count)) {
     return { ok: false, error: `Invalid count. Must be ${SAMPLE_COUNTS.join(', ')}.` };
@@ -26,7 +38,15 @@ export function parseSampleQuery(query: { count?: unknown; difficulty?: unknown 
       error: 'Invalid difficulty. Must be easy, medium, hard, expert, or mixed.',
     };
   }
-  return { ok: true, count, difficulty: difficulty as SampleDifficulty };
+  let mode: SampleMode = DEFAULT_SAMPLE_MODE;
+  if (query.mode !== undefined) {
+    const requested = typeof query.mode === 'string' ? query.mode.toLowerCase() : '';
+    if (!(SAMPLE_MODES as readonly string[]).includes(requested)) {
+      return { ok: false, error: 'Invalid mode. Must be classic or endgame.' };
+    }
+    mode = requested as SampleMode;
+  }
+  return { ok: true, count, difficulty: difficulty as SampleDifficulty, mode };
 }
 
 /**

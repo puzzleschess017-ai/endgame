@@ -38,6 +38,7 @@ const INTRO_COMPLETED_STORAGE_KEY = 'ctg_intro_completed_v1';
 const DEFAULT_CONFIG: TrainingConfig = {
   puzzleCount: 50,
   totalCycles: 4,
+  puzzleMode: 'endgame',
   difficulty: 'medium',
 };
 
@@ -557,6 +558,7 @@ export default function App() {
       const params = new URLSearchParams({
         count: String(config.puzzleCount),
         difficulty: config.difficulty,
+        mode: config.puzzleMode ?? 'endgame',
       });
       const res = await fetch(`/api/puzzles/sample?${params.toString()}`);
       const data = await res.json();
@@ -564,7 +566,7 @@ export default function App() {
         throw new Error(data.error || 'Failed to load puzzles');
       }
       if (!Array.isArray(data.puzzles) || data.puzzles.length === 0) {
-        throw new Error('No endgame puzzles returned from database');
+        throw new Error('No puzzles returned from database');
       }
 
       const newSession: TrainingSession = {
