@@ -42,7 +42,9 @@ that exposes the puzzle API and serves the Vite dev server as middleware). Runni
 ## Puzzle selection
 
 Puzzles are sampled at random for the chosen difficulty (rating ranges: easy < 1200,
-medium 1200–1599, hard 1600–1999, expert 2000+). Only puzzles flagged `is_endgame = 1`
+medium 1200–1599, hard 1600–1999, expert 2000+). *Mixed* takes an even share from each of the four
+ranges and shuffles them together (10 puzzles = 2 or 3 from each; the extra ones go to randomly
+chosen ranges, see `server/woodpecker.ts`). Only puzzles flagged `is_endgame = 1`
 are used. The flag is computed with the material rule in
 `applyFirstMoveAndCheckEndgame` (`scripts/lib/endgame-rule.mjs`); the Lichess
 `endgame` tag alone is much too loose and also matches positions with many pieces.
