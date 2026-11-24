@@ -12,8 +12,8 @@ import { DRILL_KINDS, type DrillKind } from './drills.ts';
 export type Tier = 'guest' | 'free' | 'premium';
 export const TIERS: Tier[] = ['guest', 'free', 'premium'];
 
-export const ALL_CYCLES: CycleCountOption[] = [2, 3, 4, 5, 6, 7];
-export const ALL_COUNTS: PuzzleCountOption[] = [10, 50, 100, 200];
+export const ALL_CYCLES: CycleCountOption[] = [2, 3, 4, 5, 6, 7, 8, 9];
+export const ALL_COUNTS: PuzzleCountOption[] = [10, 50, 100, 200, 300, 500];
 export const ALL_DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard', 'expert', 'mixed'];
 export const ALL_TYPES: PuzzleMode[] = ['classic', 'endgame'];
 export const ALL_LEVELS: BlindfoldLevel[] = [6, 7, 8, 10, 32];

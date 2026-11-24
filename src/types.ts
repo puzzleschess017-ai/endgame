@@ -2,9 +2,9 @@
 export type RatingBand = 'easy' | 'medium' | 'hard' | 'expert';
 export type Difficulty = RatingBand | 'mixed';
 
-export type PuzzleCountOption = 10 | 50 | 100 | 200;
+export type PuzzleCountOption = 10 | 50 | 100 | 200 | 300 | 500;
 
-export type CycleCountOption = 2 | 3 | 4 | 5 | 6 | 7;
+export type CycleCountOption = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 export interface Puzzle {
   puzzleId: string;

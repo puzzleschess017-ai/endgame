@@ -5,7 +5,7 @@ import { RATING_BANDS, parseSampleQuery, splitMixedCount } from './woodpecker.ts
 const total = (split: Record<string, number>) => Object.values(split).reduce((a, b) => a + b, 0);
 
 test('splitMixedCount adds up to the count and is even to within one puzzle', () => {
-  for (const count of [10, 50, 100, 200]) {
+  for (const count of [10, 50, 100, 200, 300, 500]) {
     for (let run = 0; run < 50; run++) {
       const split = splitMixedCount(count);
       assert.equal(total(split), count);
@@ -60,5 +60,14 @@ test('parseSampleQuery: mode defaults to endgame, accepts classic and endgame, r
   }
   for (const mode of ['', 'blitz', 'all', 5, null]) {
     assert.equal(parseSampleQuery({ count: '10', difficulty: 'easy', mode }).ok, false, String(mode));
+  }
+});
+
+test('parseSampleQuery accepts 300 and 500 puzzles, and still refuses other counts', () => {
+  for (const count of ['10', '50', '100', '200', '300', '500']) {
+    assert.equal(parseSampleQuery({ count, difficulty: 'easy' }).ok, true, count);
+  }
+  for (const count of ['0', '20', '250', '400', '501', '1000', 'abc', '']) {
+    assert.equal(parseSampleQuery({ count, difficulty: 'easy' }).ok, false, count);
   }
 });

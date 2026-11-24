@@ -1,6 +1,6 @@
 /** Rules for the puzzle sets Woodpecker asks for (`GET /api/puzzles/sample`). */
 
-export const SAMPLE_COUNTS = [10, 50, 100, 200] as const;
+export const SAMPLE_COUNTS = [10, 50, 100, 200, 300, 500] as const;
 
 /** The four rating bands, in order. Mixed draws from all of them. */
 export const RATING_BANDS = ['easy', 'medium', 'hard', 'expert'] as const;

@@ -144,6 +144,21 @@ describe('helpers', () => {
   });
 });
 
+describe('the biggest Woodpecker sets are Premium only', () => {
+  it('300 and 500 puzzles, 8 and 9 cycles: only Premium', () => {
+    for (const tier of ['guest', 'free'] as const) {
+      assert.ok(!ACCESS[tier].woodpecker.counts.includes(300) && !ACCESS[tier].woodpecker.counts.includes(500), tier);
+      assert.ok(!ACCESS[tier].woodpecker.cycles.includes(8) && !ACCESS[tier].woodpecker.cycles.includes(9), tier);
+    }
+    assert.ok(ACCESS.premium.woodpecker.counts.includes(300) && ACCESS.premium.woodpecker.counts.includes(500));
+    assert.ok(ACCESS.premium.woodpecker.cycles.includes(8) && ACCESS.premium.woodpecker.cycles.includes(9));
+    assert.equal(tierFor((a) => a.woodpecker.counts, 500), 'premium');
+    assert.equal(tierFor((a) => a.woodpecker.cycles, 9), 'premium');
+    assert.ok(!ok(checkWoodpecker('free', { puzzleCount: 300, difficulty: 'easy', puzzleMode: 'classic' })));
+    assert.ok(ok(checkWoodpecker('premium', { puzzleCount: 500, totalCycles: 9, difficulty: 'mixed', puzzleMode: 'endgame' })));
+  });
+});
+
 describe('checks the server can make and the clamps', () => {
   it('checkWoodpecker without cycles only checks type, difficulty and count', () => {
     assert.ok(ok(checkWoodpecker('guest', { puzzleCount: 50, difficulty: 'medium', puzzleMode: 'classic' })));

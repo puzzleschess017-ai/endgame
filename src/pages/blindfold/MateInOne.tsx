@@ -10,7 +10,7 @@ import {
 import TrainerLayout from '../../components/TrainerLayout';
 import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
 import { authHeaders, useAuth } from '../../auth';
-import { clampBlindfold, tierFor, unlockHint } from '../../utils/access';
+import { canOpenBlindfold, clampBlindfold, tierFor, unlockHint } from '../../utils/access';
 import { PREVIEW_FEN } from '../../hooks/usePuzzleSolver';
 import { useAppearance } from '../../hooks/useAppearance';
 import {
@@ -31,7 +31,7 @@ import {
 } from '../../utils/blindfold';
 import { recordActivity } from '../../utils/activity';
 import { playMoveSound } from '../../utils/sound';
-import { ModeTabs, ViewBoard, type BlindfoldModeProps } from './shared';
+import { GuestStart, ModeTabs, ViewBoard, type BlindfoldModeProps } from './shared';
 
 type Phase = 'setup' | 'loading' | 'memorize' | 'answer' | 'feedback' | 'finished';
 
@@ -142,8 +142,10 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
     if (phase === 'answer') inputRef.current?.focus();
   }, [phase]);
 
+  const closed = !canOpenBlindfold(tier);
+
   const startRound = useCallback(async () => {
-    if (phaseRef.current === 'loading') return;
+    if (phaseRef.current === 'loading' || closed) return;
     runIdRef.current += 1;
     const runId = runIdRef.current;
     setError(null);
@@ -163,7 +165,7 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
       setError(err instanceof Error ? err.message : 'Could not load puzzles. Check your connection.');
       go('setup');
     }
-  }, [beginMemorize]);
+  }, [beginMemorize, closed]);
 
   const finishRound = useCallback(() => {
     const total = itemsRef.current.length;
@@ -350,14 +352,18 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
                   : `A round is ${ROUND_SIZE} puzzles. No record yet for this level.`}
               </p>
 
-              <button
-                type="button"
-                onClick={() => void startRound()}
-                disabled={phase === 'loading'}
-                className={PRIMARY_BUTTON_CLASS}
-              >
-                {phase === 'loading' ? 'Loading puzzles…' : 'Start'}
-              </button>
+              {closed ? (
+                <GuestStart />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void startRound()}
+                  disabled={phase === 'loading'}
+                  className={PRIMARY_BUTTON_CLASS}
+                >
+                  {phase === 'loading' ? 'Loading puzzles…' : 'Start'}
+                </button>
+              )}
             </div>
           )}
 
