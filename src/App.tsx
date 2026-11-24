@@ -1,26 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Chess, Square } from 'chess.js';
 import type { Key } from 'chessground/types';
-import { Minus, Plus, Settings } from 'lucide-react';
-import AppearanceSettingsModal from './components/AppearanceSettingsModal';
 import ChessboardPanel, { type PendingPromotion } from './components/ChessboardPanel';
 import SettingsPanel from './components/SettingsPanel';
 import TrainerLayout from './components/TrainerLayout';
 import TrainingSidebar from './components/TrainingSidebar';
 import WoodpeckerIntroModal from './components/WoodpeckerIntroModal';
 import type {
-  AppearanceSettings,
   CycleResult,
   Puzzle,
   TrainingConfig,
   TrainingSession,
 } from './types';
-import {
-  BOARD_SIZES,
-  BOARD_SIZE_CLASS_MAP,
-  loadAppearanceSettings,
-  saveAppearanceSettings,
-} from './utils/appearance';
 import {
   applyUciMove,
   getLegalDests,
@@ -28,6 +19,7 @@ import {
   loadSessionFromStorage,
   saveSessionToStorage,
 } from './utils/chessHelpers';
+import { useAppearance } from './hooks/useAppearance';
 import { playMoveSound } from './utils/sound';
 import { recordFinishedCycles } from './utils/woodpeckerHistory';
 
@@ -75,8 +67,7 @@ export default function App() {
 
   const [config, setConfig] = useState<TrainingConfig>(DEFAULT_CONFIG);
   const [session, setSession] = useState<TrainingSession | null>(() => loadSessionFromStorage());
-  const [appearance, setAppearance] = useState<AppearanceSettings>(() => loadAppearanceSettings());
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [appearance, setAppearance] = useAppearance();
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
@@ -120,11 +111,7 @@ export default function App() {
     return id;
   }, []);
 
-  // Persist appearance & session whenever key state changes and on beforeunload
-  useEffect(() => {
-    saveAppearanceSettings(appearance);
-  }, [appearance]);
-
+  // Persist the session whenever it changes and on beforeunload (the appearance saves itself).
   useEffect(() => {
     saveSessionToStorage(session);
   }, [session]);
@@ -642,35 +629,13 @@ export default function App() {
     setShowWoodpeckerIntro(false);
   }, []);
 
-  const sizeIndex = BOARD_SIZES.indexOf(appearance.boardSize as (typeof BOARD_SIZES)[number]);
-  const canDecreaseSize = sizeIndex > 0;
-  const canIncreaseSize = sizeIndex !== -1 && sizeIndex < BOARD_SIZES.length - 1;
-
-  const handleDecreaseBoardSize = () => {
-    setAppearance((prev) => {
-      const idx = BOARD_SIZES.indexOf(prev.boardSize as (typeof BOARD_SIZES)[number]);
-      if (idx <= 0) return prev;
-      return { ...prev, boardSize: BOARD_SIZES[idx - 1] };
-    });
-  };
-
-  const handleIncreaseBoardSize = () => {
-    setAppearance((prev) => {
-      const idx = BOARD_SIZES.indexOf(prev.boardSize as (typeof BOARD_SIZES)[number]);
-      if (idx === -1 || idx >= BOARD_SIZES.length - 1) return prev;
-      return { ...prev, boardSize: BOARD_SIZES[idx + 1] };
-    });
-  };
-
-  const boardSizeClass =
-    BOARD_SIZE_CLASS_MAP[appearance.boardSize] ?? 'max-w-[min(560px,100%)]';
-
   return (
     <TrainerLayout
       username={username}
       muted={muted}
       onToggleMute={() => setMuted((m) => !m)}
-      boardSizeClass={boardSizeClass}
+      appearance={appearance}
+      onAppearanceChange={setAppearance}
       board={
         <>
           <ChessboardPanel
@@ -690,44 +655,6 @@ export default function App() {
             onSelectPromotion={handleSelectPromotion}
             onCancelPromotion={handleCancelPromotion}
           />
-        </>
-      }
-      belowBoard={
-        <>
-          <div className="flex items-center justify-between px-0.5">
-            <div className="flex items-center gap-2" role="group" aria-label="Board size">
-              <button
-                type="button"
-                onClick={handleDecreaseBoardSize}
-                disabled={!canDecreaseSize}
-                className="p-2 rounded-xl bg-[#16233b] border border-white/15 hover:border-[#39ff88] hover:text-[#39ff88] disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all duration-150 shadow-sm cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
-                aria-label="Decrease board size"
-                title="Decrease board size"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={handleIncreaseBoardSize}
-                disabled={!canIncreaseSize}
-                className="p-2 rounded-xl bg-[#16233b] border border-white/15 hover:border-[#39ff88] hover:text-[#39ff88] disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all duration-150 shadow-sm cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
-                aria-label="Increase board size"
-                title="Increase board size"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setSettingsOpen(true)}
-              className="p-2 rounded-xl bg-[#16233b] border border-white/15 hover:border-[#39ff88] text-white hover:text-[#39ff88] transition-all duration-150 shadow-sm cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
-              aria-label="Board settings"
-              title="Board settings"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-          </div>
         </>
       }
       panel={
@@ -760,13 +687,6 @@ export default function App() {
         </>
       }
     >
-      <AppearanceSettingsModal
-        open={settingsOpen}
-        settings={appearance}
-        onChange={setAppearance}
-        onClose={() => setSettingsOpen(false)}
-      />
-
       <WoodpeckerIntroModal
         open={showWoodpeckerIntro}
         initialUsername={username}
