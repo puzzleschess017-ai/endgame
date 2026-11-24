@@ -1,28 +1,28 @@
-import {createRoot} from 'react-dom/client';
-import App from './App.tsx';
-import CoordinatesPage from './pages/CoordinatesPage.tsx';
-import EditorPage from './pages/EditorPage.tsx';
-import BlindfoldPage from './pages/BlindfoldPage.tsx';
+import { lazy, Suspense } from 'react';
+import type { ComponentType } from 'react';
+import { createRoot } from 'react-dom/client';
 import HomePage from './pages/HomePage.tsx';
-import RacePage from './pages/RacePage.tsx';
-import StatisticsPage from './pages/StatisticsPage.tsx';
-import StreakPage from './pages/StreakPage.tsx';
-import TablebasePage from './pages/TablebasePage.tsx';
 import './index.css';
 
-// One bundle, one page per path. Home (statistics) is the landing page and the fallback for unknown paths.
-const PAGES: Record<string, () => React.JSX.Element> = {
-  '/woodpecker': App,
-  '/coordinates': CoordinatesPage,
-  '/streak': StreakPage,
-  '/race': RacePage,
-  '/blindfold': BlindfoldPage,
-  '/statistics': StatisticsPage,
-  '/editor': EditorPage,
-  '/tablebase': TablebasePage,
+// One page per path. Home (statistics) is the landing page and the fallback for unknown paths, so it
+// is in the main bundle; every other page is loaded when it is opened, so the boards, chess rules and
+// the like are not downloaded by someone who only looks at the dashboard.
+const PAGES: Record<string, ComponentType> = {
+  '/woodpecker': lazy(() => import('./App.tsx')),
+  '/coordinates': lazy(() => import('./pages/CoordinatesPage.tsx')),
+  '/streak': lazy(() => import('./pages/StreakPage.tsx')),
+  '/race': lazy(() => import('./pages/RacePage.tsx')),
+  '/blindfold': lazy(() => import('./pages/BlindfoldPage.tsx')),
+  '/statistics': lazy(() => import('./pages/StatisticsPage.tsx')),
+  '/editor': lazy(() => import('./pages/EditorPage.tsx')),
+  '/tablebase': lazy(() => import('./pages/TablebasePage.tsx')),
 };
 
 const path = window.location.pathname.replace(/\/+$/, '') || '/';
 const Page = PAGES[path] ?? HomePage;
 
-createRoot(document.getElementById('root')!).render(<Page />);
+createRoot(document.getElementById('root')!).render(
+  <Suspense fallback={null}>
+    <Page />
+  </Suspense>,
+);
