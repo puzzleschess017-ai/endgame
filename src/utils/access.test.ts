@@ -9,6 +9,9 @@ import {
   ALL_MEMORIZE,
   canOpenBlindfold,
   checkBlindfoldDrill,
+  checkBlindfoldLevel,
+  clampBlindfold,
+  clampDrill,
   checkBlindfoldMate,
   checkWoodpecker,
   defaultWoodpecker,
@@ -138,5 +141,36 @@ describe('helpers', () => {
     for (const tier of ['guest', 'free', 'premium'] as const) assert.ok(ok(checkWoodpecker(tier, defaultWoodpecker(tier))), tier);
     assert.equal(defaultWoodpecker('premium').puzzleMode, 'endgame');
     assert.equal(defaultWoodpecker('guest').puzzleMode, 'classic');
+  });
+});
+
+describe('checks the server can make and the clamps', () => {
+  it('checkWoodpecker without cycles only checks type, difficulty and count', () => {
+    assert.ok(ok(checkWoodpecker('guest', { puzzleCount: 50, difficulty: 'medium', puzzleMode: 'classic' })));
+    assert.ok(!ok(checkWoodpecker('guest', { puzzleCount: 100, difficulty: 'medium', puzzleMode: 'classic' })));
+    assert.ok(!ok(checkWoodpecker('free', { puzzleCount: 50, difficulty: 'expert', puzzleMode: 'classic' })));
+    assert.ok(!ok(checkWoodpecker('free', { puzzleCount: 50, difficulty: 'easy', puzzleMode: 'endgame' })));
+    assert.ok(ok(checkWoodpecker('premium', { puzzleCount: 200, difficulty: 'mixed', puzzleMode: 'endgame' })));
+  });
+  it('a set with no type is an endgame set (old saved sessions)', () => {
+    assert.ok(!ok(checkWoodpecker('free', { puzzleCount: 50, difficulty: 'easy' })));
+  });
+  it('checkBlindfoldLevel: guests none, free 6 and 7, premium all', () => {
+    assert.ok(!ok(checkBlindfoldLevel('guest', 6)));
+    assert.ok(ok(checkBlindfoldLevel('free', 6)) && ok(checkBlindfoldLevel('free', 7)));
+    assert.ok(!ok(checkBlindfoldLevel('free', 8)) && !ok(checkBlindfoldLevel('free', 32)));
+    for (const level of ALL_LEVELS) assert.ok(ok(checkBlindfoldLevel('premium', level)));
+  });
+  it('clampBlindfold keeps allowed settings and moves the others to the nearest allowed ones', () => {
+    assert.deepEqual(clampBlindfold('free', { level: 7, memorize: 10 }), { level: 7, memorize: 10 });
+    assert.deepEqual(clampBlindfold('free', { level: 10, memorize: 20 }), { level: 7, memorize: 10 });
+    assert.deepEqual(clampBlindfold('free', { level: 32, memorize: 5 }), { level: 7, memorize: 10 });
+    assert.deepEqual(clampBlindfold('premium', { level: 32, memorize: 5 }), { level: 32, memorize: 5 });
+    assert.deepEqual(clampBlindfold('guest', { level: 32, memorize: 5 }), { level: 32, memorize: 5 });
+  });
+  it('clampDrill: free keeps the colour drill and moves the others to it', () => {
+    assert.equal(clampDrill('free', 'color'), 'color');
+    assert.equal(clampDrill('free', 'knight'), 'color');
+    assert.equal(clampDrill('premium', 'knight'), 'knight');
   });
 });

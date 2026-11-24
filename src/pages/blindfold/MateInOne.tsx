@@ -8,6 +8,9 @@ import {
   segmentClass,
 } from '../../components/panelUi';
 import TrainerLayout from '../../components/TrainerLayout';
+import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
+import { authHeaders, useAuth } from '../../auth';
+import { clampBlindfold, tierFor, unlockHint } from '../../utils/access';
 import { PREVIEW_FEN } from '../../hooks/usePuzzleSolver';
 import { useAppearance } from '../../hooks/useAppearance';
 import {
@@ -47,7 +50,12 @@ interface RoundResult {
 const TICK_MS = 100;
 
 export default function MateInOne({ username, mode, onModeChange }: BlindfoldModeProps) {
-  const [settings, setSettings] = useState<BlindfoldSettings>(() => loadBlindfoldSettings());
+  const { tier } = useAuth();
+  const locks = useLocks(tier);
+  const [settings, setSettings] = useState<BlindfoldSettings>(() => ({
+    ...loadBlindfoldSettings(),
+    ...clampBlindfold(tier, loadBlindfoldSettings()),
+  }));
   const [appearance, setAppearance] = useAppearance();
 
   const [phase, setPhase] = useState<Phase>('setup');
@@ -87,6 +95,14 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
         'Blindfold chess training: memorize the position, then find the checkmate in one move without seeing the pieces.',
       );
   }, []);
+
+  // Settings saved earlier (or left open by signing out) may not be allowed now.
+  useEffect(() => {
+    const allowed = clampBlindfold(tier, settings);
+    if (allowed.level !== settings.level || allowed.memorize !== settings.memorize) {
+      setSettings({ ...settings, ...allowed });
+    }
+  }, [tier, settings]);
 
   useEffect(() => {
     saveBlindfoldSettings(settings);
@@ -136,7 +152,7 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
     correctRef.current = 0;
     go('loading');
     try {
-      const round = await fetchBlindfoldRound(settingsRef.current.level, ROUND_SIZE);
+      const round = await fetchBlindfoldRound(settingsRef.current.level, ROUND_SIZE, fetch, authHeaders());
       if (runId !== runIdRef.current) return;
       itemsRef.current = round;
       roundStartedAtRef.current = Date.now();
@@ -267,39 +283,57 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
               <div className="space-y-2">
                 <span className="text-sm font-semibold text-white">Pieces on the board</span>
                 <div className="grid grid-cols-5 gap-1 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
-                  {BLINDFOLD_LEVELS.map((level) => (
-                    <button
-                      key={level}
-                      type="button"
-                      aria-pressed={settings.level === level}
-                      disabled={phase === 'loading'}
-                      onClick={() => setSettings({ ...settings, level })}
-                      className={segmentClass(settings.level === level)}
-                      aria-label={levelDescription(level)}
-                    >
-                      {level === 32 ? 'Any' : `≤ ${level}`}
-                    </button>
-                  ))}
+                  {BLINDFOLD_LEVELS.map((level) => {
+                    const needs = tierFor((a) => a.blindfold.levels, level);
+                    const locked = locks.isLocked(needs);
+                    return (
+                      <button
+                        key={level}
+                        type="button"
+                        data-testid={`level-${level}`}
+                        aria-pressed={settings.level === level}
+                        aria-disabled={locked || undefined}
+                        title={locked ? unlockHint(tier, needs) : undefined}
+                        disabled={phase === 'loading'}
+                        onClick={locks.choose(levelDescription(level), needs, () => setSettings({ ...settings, level }))}
+                        className={`${segmentClass(settings.level === level)} ${locked ? LOCKED_CLASS : ''}`}
+                        aria-label={levelDescription(level)}
+                      >
+                        {level === 32 ? 'Any' : `≤ ${level}`}
+                        {locked && <LockMark />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <span className="text-sm font-semibold text-white">Memorize time</span>
                 <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
-                  {MEMORIZE_OPTIONS.map((seconds) => (
-                    <button
-                      key={seconds}
-                      type="button"
-                      aria-pressed={settings.memorize === seconds}
-                      disabled={phase === 'loading'}
-                      onClick={() => setSettings({ ...settings, memorize: seconds })}
-                      className={segmentClass(settings.memorize === seconds)}
-                    >
-                      {seconds} s
-                    </button>
-                  ))}
+                  {MEMORIZE_OPTIONS.map((seconds) => {
+                    const needs = tierFor((a) => a.blindfold.memorize, seconds);
+                    const locked = locks.isLocked(needs);
+                    return (
+                      <button
+                        key={seconds}
+                        type="button"
+                        data-testid={`memorize-${seconds}`}
+                        aria-pressed={settings.memorize === seconds}
+                        aria-disabled={locked || undefined}
+                        title={locked ? unlockHint(tier, needs) : undefined}
+                        disabled={phase === 'loading'}
+                        onClick={locks.choose(`${seconds} seconds to memorize`, needs, () => setSettings({ ...settings, memorize: seconds }))}
+                        className={`${segmentClass(settings.memorize === seconds)} ${locked ? LOCKED_CLASS : ''}`}
+                      >
+                        {seconds} s
+                        {locked && <LockMark />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+
+              <UnlockNotice notice={locks.notice} />
 
               {error && (
                 <div

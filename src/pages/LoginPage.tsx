@@ -21,7 +21,7 @@ export function nextPath(search: string): string {
 /** Sign in, create an account, or carry on as a guest; and, for someone signed in, the account. */
 export default function LoginPage() {
   const state = useAuth();
-  const [mode, setMode] = useState<Mode>('signin');
+  const [mode, setMode] = useState<Mode>(() => (new URLSearchParams(window.location.search).get('tab') === 'signup' ? 'signup' : 'signin'));
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

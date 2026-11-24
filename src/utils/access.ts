@@ -7,7 +7,7 @@
 // grey out choices) and on the server (to refuse a request that asks for more than the visitor may have).
 import type { CycleCountOption, Difficulty, PuzzleCountOption, PuzzleMode, TrainingConfig } from '../types';
 import type { BlindfoldLevel, MemorizeSeconds } from './blindfold';
-import { DRILL_KINDS, type DrillKind } from './drills';
+import { DRILL_KINDS, type DrillKind } from './drills.ts';
 
 export type Tier = 'guest' | 'free' | 'premium';
 export const TIERS: Tier[] = ['guest', 'free', 'premium'];
@@ -77,30 +77,63 @@ function refuse(name: string, needs: Tier | null): Check {
   return { ok: false, reason: `${name} is not available to you yet.`, needs: needs ?? 'premium' };
 }
 
-/** Checks a whole Woodpecker setup (the type counts as classic when missing, like old saved sessions). */
-export function checkWoodpecker(tier: Tier, config: Pick<TrainingConfig, 'puzzleCount' | 'totalCycles' | 'difficulty' | 'puzzleMode'>): Check {
+/**
+ * Checks a Woodpecker setup (the type counts as endgame when missing, like old saved sessions).
+ * The number of cycles is optional: the server never sees it, so it only checks the rest.
+ */
+export function checkWoodpecker(
+  tier: Tier,
+  config: Pick<TrainingConfig, 'puzzleCount' | 'difficulty' | 'puzzleMode'> & { totalCycles?: CycleCountOption },
+): Check {
   const allowed = ACCESS[tier].woodpecker;
   const type = config.puzzleMode ?? 'endgame';
   const checks: Array<[boolean, string, Tier | null]> = [
     [allowed.types.includes(type), `The ${type} puzzle type`, tierFor((a) => a.woodpecker.types, type)],
     [allowed.difficulties.includes(config.difficulty), `The ${config.difficulty} difficulty`, tierFor((a) => a.woodpecker.difficulties, config.difficulty)],
     [allowed.counts.includes(config.puzzleCount), `${config.puzzleCount} puzzles per cycle`, tierFor((a) => a.woodpecker.counts, config.puzzleCount)],
-    [allowed.cycles.includes(config.totalCycles), `${config.totalCycles} cycles`, tierFor((a) => a.woodpecker.cycles, config.totalCycles)],
   ];
+  const cycles = config.totalCycles;
+  if (cycles !== undefined) {
+    checks.push([allowed.cycles.includes(cycles), `${cycles} cycles`, tierFor((a) => a.woodpecker.cycles, cycles)]);
+  }
   for (const [ok, name, needs] of checks) if (!ok) return refuse(name, needs);
   return { ok: true };
 }
 
+/** Checks how many pieces a Blindfold "mate in 1" round may have (the server can check this one). */
+export function checkBlindfoldLevel(tier: Tier, level: BlindfoldLevel): Check {
+  return ACCESS[tier].blindfold.levels.includes(level)
+    ? { ok: true }
+    : refuse(level === 32 ? 'Any number of pieces' : `Up to ${level} pieces`, tierFor((a) => a.blindfold.levels, level));
+}
+
 /** Checks a Blindfold "mate in 1" round: how many pieces at most, and how long the position is shown. */
 export function checkBlindfoldMate(tier: Tier, settings: { level: BlindfoldLevel; memorize: MemorizeSeconds }): Check {
-  const allowed = ACCESS[tier].blindfold;
-  if (!allowed.levels.includes(settings.level)) {
-    return refuse(settings.level === 32 ? 'Any number of pieces' : `Up to ${settings.level} pieces`, tierFor((a) => a.blindfold.levels, settings.level));
-  }
-  if (!allowed.memorize.includes(settings.memorize)) {
+  const level = checkBlindfoldLevel(tier, settings.level);
+  if (!level.ok) return level;
+  if (!ACCESS[tier].blindfold.memorize.includes(settings.memorize)) {
     return refuse(`${settings.memorize} seconds to memorize`, tierFor((a) => a.blindfold.memorize, settings.memorize));
   }
   return { ok: true };
+}
+
+/** The nearest settings the tier may use: the largest allowed level not above the wanted one, the closest memorize time. */
+export function clampBlindfold(tier: Tier, settings: { level: BlindfoldLevel; memorize: MemorizeSeconds }): { level: BlindfoldLevel; memorize: MemorizeSeconds } {
+  const { levels, memorize } = ACCESS[tier].blindfold;
+  if (levels.length === 0 || memorize.length === 0) return settings;
+  const level = levels.includes(settings.level)
+    ? settings.level
+    : [...levels].sort((a, b) => a - b).filter((l) => l <= settings.level).pop() ?? levels[0];
+  const time = memorize.includes(settings.memorize)
+    ? settings.memorize
+    : [...memorize].sort((a, b) => Math.abs(a - settings.memorize) - Math.abs(b - settings.memorize))[0];
+  return { level, memorize: time };
+}
+
+/** The drill to show: the wanted one when allowed, else the first allowed one (or the wanted one when none is). */
+export function clampDrill(tier: Tier, kind: DrillKind): DrillKind {
+  const { drills } = ACCESS[tier].blindfold;
+  return drills.length === 0 || drills.includes(kind) ? kind : drills[0];
 }
 
 const DRILL_NAME: Record<DrillKind, string> = { color: 'Square colours', diagonal: 'Diagonals', knight: 'Knight routes' };
