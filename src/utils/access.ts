@@ -7,6 +7,7 @@
 // grey out choices) and on the server (to refuse a request that asks for more than the visitor may have).
 import type { CycleCountOption, Difficulty, PuzzleCountOption, PuzzleMode, TrainingConfig } from '../types';
 import type { BlindfoldLevel, MemorizeSeconds } from './blindfold';
+import { DRILL_KINDS, type DrillKind } from './drills';
 
 export type Tier = 'guest' | 'free' | 'premium';
 export const TIERS: Tier[] = ['guest', 'free', 'premium'];
@@ -15,7 +16,7 @@ export const ALL_CYCLES: CycleCountOption[] = [2, 3, 4, 5, 6, 7];
 export const ALL_COUNTS: PuzzleCountOption[] = [10, 50, 100, 200];
 export const ALL_DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard', 'expert', 'mixed'];
 export const ALL_TYPES: PuzzleMode[] = ['classic', 'endgame'];
-export const ALL_LEVELS: BlindfoldLevel[] = [6, 8, 10, 32];
+export const ALL_LEVELS: BlindfoldLevel[] = [6, 7, 8, 10, 32];
 export const ALL_MEMORIZE: MemorizeSeconds[] = [5, 10, 20];
 
 export interface WoodpeckerAccess {
@@ -29,8 +30,8 @@ export interface BlindfoldAccess {
   /** Mate in 1: the piece limits and memorize times allowed. Empty: the mode is closed. */
   levels: BlindfoldLevel[];
   memorize: MemorizeSeconds[];
-  /** Square colours, diagonals and knight routes. */
-  drills: boolean;
+  /** Which drills (square colours, diagonals, knight routes) may be played. */
+  drills: DrillKind[];
 }
 
 export interface Access {
@@ -41,15 +42,15 @@ export interface Access {
 export const ACCESS: Record<Tier, Access> = {
   guest: {
     woodpecker: { cycles: [2, 3], counts: [10, 50], difficulties: ['easy', 'medium'], types: ['classic'] },
-    blindfold: { levels: [], memorize: [], drills: false },
+    blindfold: { levels: [], memorize: [], drills: [] },
   },
   free: {
     woodpecker: { cycles: [2, 3, 4], counts: [10, 50, 100], difficulties: ['easy', 'medium', 'hard'], types: ['classic'] },
-    blindfold: { levels: [6], memorize: [5, 10], drills: false },
+    blindfold: { levels: [6, 7], memorize: [10], drills: ['color'] },
   },
   premium: {
     woodpecker: { cycles: ALL_CYCLES, counts: ALL_COUNTS, difficulties: ALL_DIFFICULTIES, types: ALL_TYPES },
-    blindfold: { levels: ALL_LEVELS, memorize: ALL_MEMORIZE, drills: true },
+    blindfold: { levels: ALL_LEVELS, memorize: ALL_MEMORIZE, drills: DRILL_KINDS },
   },
 };
 
@@ -102,14 +103,18 @@ export function checkBlindfoldMate(tier: Tier, settings: { level: BlindfoldLevel
   return { ok: true };
 }
 
-export function checkBlindfoldDrills(tier: Tier): Check {
-  return ACCESS[tier].blindfold.drills ? { ok: true } : refuse('Blindfold drills', 'premium');
+const DRILL_NAME: Record<DrillKind, string> = { color: 'Square colours', diagonal: 'Diagonals', knight: 'Knight routes' };
+
+export function checkBlindfoldDrill(tier: Tier, kind: DrillKind): Check {
+  return ACCESS[tier].blindfold.drills.includes(kind)
+    ? { ok: true }
+    : refuse(DRILL_NAME[kind], tierFor((a) => a.blindfold.drills, kind));
 }
 
 /** True when the tier may open Blindfold at all (some mode of it). */
 export function canOpenBlindfold(tier: Tier): boolean {
   const a = ACCESS[tier].blindfold;
-  return a.levels.length > 0 || a.drills;
+  return a.levels.length > 0 || a.drills.length > 0;
 }
 
 /** The first Woodpecker setup the tier is allowed to have, close to the usual one. */

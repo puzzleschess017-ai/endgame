@@ -14,7 +14,7 @@ const db = new Database(path.join(import.meta.dirname, '..', 'endgame.db'), { re
 test('parseBlindfoldParams: defaults, valid values and rejections', () => {
   assert.deepEqual(parseBlindfoldParams({}), { maxPieces: 32, count: 10 });
   assert.deepEqual(parseBlindfoldParams({ maxPieces: '6', count: '5' }), { maxPieces: 6, count: 5 });
-  assert.equal(parseBlindfoldParams({ maxPieces: '7' }), null);
+  assert.equal(parseBlindfoldParams({ maxPieces: '9' }), null);
   assert.equal(parseBlindfoldParams({ maxPieces: 'abc' }), null);
   assert.equal(parseBlindfoldParams({ count: '0' }), null);
   assert.equal(parseBlindfoldParams({ count: '21' }), null);
@@ -24,10 +24,11 @@ test('parseBlindfoldParams: defaults, valid values and rejections', () => {
 test('every level has plenty of puzzles and the levels are nested', () => {
   const sizes = blindfoldPoolSizes(db);
   assert.ok(sizes[6] >= 500, `level 6 has ${sizes[6]}`);
-  assert.ok(sizes[6] <= sizes[8] && sizes[8] <= sizes[10] && sizes[10] <= sizes[32]);
+  assert.ok(sizes[6] <= sizes[7] && sizes[7] <= sizes[8] && sizes[8] <= sizes[10] && sizes[10] <= sizes[32]);
+  assert.ok(sizes[7] >= 1000, `level 7 has ${sizes[7]}`);
 });
 
-for (const maxPieces of [6, 8, 10, 32]) {
+for (const maxPieces of [6, 7, 8, 10, 32]) {
   test(`pickBlindfoldPuzzles: ${maxPieces} pieces gives distinct real mates in one`, () => {
     const puzzles = pickBlindfoldPuzzles(db, { maxPieces, count: 12 });
     assert.equal(puzzles.length, 12);

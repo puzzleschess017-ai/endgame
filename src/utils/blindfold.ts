@@ -5,8 +5,8 @@ import type { Key } from 'chessground/types';
 import type { Puzzle } from '../types';
 
 /** Piece limits. 32 means "any number of pieces". */
-export type BlindfoldLevel = 6 | 8 | 10 | 32;
-export const BLINDFOLD_LEVELS: BlindfoldLevel[] = [6, 8, 10, 32];
+export type BlindfoldLevel = 6 | 7 | 8 | 10 | 32;
+export const BLINDFOLD_LEVELS: BlindfoldLevel[] = [6, 7, 8, 10, 32];
 
 /** How long the position stays visible before the pieces disappear. */
 export type MemorizeSeconds = 5 | 10 | 20;
@@ -28,7 +28,7 @@ export const BLINDFOLD_BEST_STORAGE_KEY = 'ctg_blindfold_best_v1';
 export const EMPTY_FEN = '8/8/8/8/8/8/8/8 w - - 0 1';
 
 export function isBlindfoldLevel(value: unknown): value is BlindfoldLevel {
-  return value === 6 || value === 8 || value === 10 || value === 32;
+  return value === 6 || value === 7 || value === 8 || value === 10 || value === 32;
 }
 
 export function isMemorizeSeconds(value: unknown): value is MemorizeSeconds {
