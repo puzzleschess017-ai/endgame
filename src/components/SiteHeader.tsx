@@ -11,6 +11,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/coordinates', label: 'Coordinates' },
   { href: '/streak', label: 'Streak' },
   { href: '/race', label: 'Race' },
+  { href: '/blindfold', label: 'Blindfold' },
 ];
 
 function currentPath(): string {
