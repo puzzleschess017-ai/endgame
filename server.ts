@@ -5,11 +5,18 @@ import Database from 'better-sqlite3';
 import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
 import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
 import { createTablebase } from './server/tablebase.ts';
+import {
+  RATING_BANDS,
+  parseSampleQuery,
+  splitMixedCount,
+  type RatingBand,
+  type SampleDifficulty,
+  type SampleMode,
+} from './server/woodpecker.ts';
 
 const PORT = Number(process.env.PORT) || 3000;
 const FONTS_DIR = path.resolve(process.cwd(), 'public', 'fonts');
 
-const VALID_COUNTS = new Set([10, 50, 100, 200]);
 const VALID_DIFFICULTIES = new Set(['easy', 'medium', 'hard', 'expert']);
 const DIFFICULTY_TO_CODE: Record<string, number> = {
   easy: 0,
@@ -205,11 +212,17 @@ function getMeta() {
   return cachedMeta;
 }
 
-// Extra SQL condition that limits puzzles to real endgames.
+// Extra SQL condition that limits puzzles to real endgames (empty for the classic set, which uses
+// every puzzle).
 // - New databases carry an `is_endgame` flag precomputed with the material rule
 //   from scripts/build-endgame-db.mjs.
 // - Older databases fall back to the (very loose) Lichess "endgame" theme tag.
-function endgameCondition(database: Database.Database, hasThemes: boolean): string {
+function endgameCondition(
+  database: Database.Database,
+  hasThemes: boolean,
+  mode: SampleMode = 'endgame',
+): string {
+  if (mode === 'classic') return '';
   if (hasColumn(database, 'puzzles', 'is_endgame')) {
     return 'AND is_endgame = 1';
   }
@@ -235,11 +248,37 @@ function formatPuzzle(row: RawPuzzleRow) {
   };
 }
 
+// Random puzzles for a difficulty. "mixed" takes an even share from every rating band, shuffled together.
+// `mode` picks the pool: real endgames only, or every puzzle (classic).
 function samplePuzzlesFromDb(
   database: Database.Database,
-  difficulty: string,
+  difficulty: SampleDifficulty,
   count: number,
-  meta: ReturnType<typeof getMeta>
+  meta: ReturnType<typeof getMeta>,
+  mode: SampleMode
+) {
+  if (difficulty !== 'mixed') return samplePuzzlesOfBand(database, difficulty, count, meta, mode);
+
+  const shares = splitMixedCount(count);
+  const rows: ReturnType<typeof samplePuzzlesOfBand> = [];
+  for (const band of RATING_BANDS) {
+    if (shares[band] > 0) rows.push(...samplePuzzlesOfBand(database, band, shares[band], meta, mode));
+  }
+  for (let i = rows.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = rows[i];
+    rows[i] = rows[j];
+    rows[j] = tmp;
+  }
+  return rows;
+}
+
+function samplePuzzlesOfBand(
+  database: Database.Database,
+  difficulty: RatingBand,
+  count: number,
+  meta: ReturnType<typeof getMeta>,
+  mode: SampleMode
 ) {
   const hasIdCol = hasColumn(database, 'puzzles', 'id');
   const hasDiffCol = hasColumn(database, 'puzzles', 'difficulty');
@@ -275,7 +314,7 @@ function samplePuzzlesFromDb(
 
   // Actual Lichess database structure
   const ratingRange = DIFFICULTY_RATING_RANGES[difficulty] ?? { minRating: 1200, maxRating: 1600 };
-  const themeCondition = endgameCondition(database, hasThemes);
+  const themeCondition = endgameCondition(database, hasThemes, mode);
 
   if (hasRandKey) {
     const MAX_RAND_KEY = 2147483647;
@@ -410,22 +449,17 @@ async function startServer() {
   });
 
   app.get('/api/puzzles/sample', (req, res) => {
-    const rawCount = Number(req.query.count);
-    const difficulty = typeof req.query.difficulty === 'string' ? req.query.difficulty.toLowerCase() : '';
-
-    if (!Number.isInteger(rawCount) || !VALID_COUNTS.has(rawCount)) {
-      res.status(400).json({ error: 'Invalid count. Must be 10, 50, 100, or 200.' });
+    const query = parseSampleQuery(req.query);
+    if (!query.ok) {
+      res.status(400).json({ error: query.error });
       return;
     }
-    if (!VALID_DIFFICULTIES.has(difficulty)) {
-      res.status(400).json({ error: 'Invalid difficulty. Must be easy, medium, hard, or expert.' });
-      return;
-    }
+    const { count: rawCount, difficulty, mode } = query;
 
     try {
       const database = getDb();
       const meta = getMeta();
-      const puzzles = samplePuzzlesFromDb(database, difficulty, rawCount, meta);
+      const puzzles = samplePuzzlesFromDb(database, difficulty, rawCount, meta, mode);
 
       if (!puzzles || puzzles.length === 0) {
         res.status(500).json({ error: 'Insufficient puzzles available for selected difficulty.' });
@@ -434,6 +468,7 @@ async function startServer() {
 
       res.json({
         difficulty,
+        mode,
         count: puzzles.length,
         puzzles,
       });

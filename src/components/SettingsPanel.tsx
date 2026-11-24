@@ -2,6 +2,7 @@ import type {
   CycleCountOption,
   Difficulty,
   PuzzleCountOption,
+  PuzzleMode,
   TrainingConfig,
 } from '../types';
 
@@ -13,6 +14,15 @@ const DIFFICULTIES: Array<{ value: Difficulty; label: string; range: string }> =
   { value: 'hard', label: 'Hard', range: '1600–1999' },
   { value: 'expert', label: 'Expert', range: '2000+' },
 ];
+const PUZZLE_MODES: Array<{ value: PuzzleMode; label: string; hint: string }> = [
+  { value: 'classic', label: 'Classic', hint: 'Puzzles of every kind' },
+  { value: 'endgame', label: 'Endgame', hint: 'Endgames only' },
+];
+const MIXED: { value: Difficulty; label: string; range: string } = {
+  value: 'mixed',
+  label: 'Mixed',
+  range: 'All ratings, an even share of each',
+};
 
 interface SettingsPanelProps {
   config: TrainingConfig;
@@ -29,6 +39,7 @@ export default function SettingsPanel({
   loading,
   error,
 }: SettingsPanelProps) {
+  const puzzleMode: PuzzleMode = config.puzzleMode ?? 'endgame';
   return (
     <div className="bg-[#16233b] border border-white/10 rounded-2xl p-6 flex flex-col gap-6 shadow-[0_16px_44px_rgba(4,9,20,0.45)]">
       <div>
@@ -36,7 +47,9 @@ export default function SettingsPanel({
           Woodpecker Setup
         </h2>
         <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
-          Solve the same endgame set across consecutive cycles to sharpen pattern recognition and calculation speed.
+          {puzzleMode === 'classic'
+            ? 'Solve the same set of puzzles of every kind across consecutive cycles to sharpen pattern recognition and calculation speed.'
+            : 'Solve the same endgame set across consecutive cycles to sharpen pattern recognition and calculation speed.'}
         </p>
       </div>
 
@@ -97,18 +110,48 @@ export default function SettingsPanel({
       </div>
 
       <div className="space-y-2">
+        <span className="text-sm font-semibold text-white">Puzzle Type</span>
+        <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+          {PUZZLE_MODES.map((m) => {
+            const active = puzzleMode === m.value;
+            return (
+              <button
+                key={m.value}
+                type="button"
+                aria-pressed={active}
+                onClick={() => onChange({ ...config, puzzleMode: m.value })}
+                className={`py-2 px-3 rounded-lg text-left transition-all duration-150 cursor-pointer min-h-[46px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                  active
+                    ? 'bg-[#39ff88] text-[#101b2f] shadow-sm'
+                    : 'text-white/85 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <div className="text-sm font-bold leading-tight">{m.label}</div>
+                <div className={`text-xs font-semibold mt-0.5 ${active ? 'text-[#101b2f]/75' : 'text-white/60'}`}>
+                  {m.hint}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="space-y-2">
         <div className="flex items-baseline justify-between">
           <span className="text-sm font-semibold text-white">Difficulty</span>
         </div>
         <div className="grid grid-cols-2 gap-2.5">
-          {DIFFICULTIES.map((d) => {
+          {[...DIFFICULTIES, MIXED].map((d) => {
             const active = config.difficulty === d.value;
             return (
               <button
                 key={d.value}
                 type="button"
                 onClick={() => onChange({ ...config, difficulty: d.value })}
+                aria-pressed={active}
                 className={`py-2.5 px-3.5 rounded-xl border text-left transition-all duration-150 cursor-pointer min-h-[46px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                  d.value === 'mixed' ? 'col-span-2' : ''
+                } ${
                   active
                     ? 'bg-[#39ff88]/15 border-[#39ff88] text-white'
                     : 'bg-[#101b2f] border-white/10 text-white/90 hover:border-white/40 hover:text-white'
@@ -139,7 +182,7 @@ export default function SettingsPanel({
         disabled={loading}
         className="w-full py-3.5 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] disabled:opacity-60 disabled:cursor-not-allowed text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(57,255,136,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]"
       >
-        {loading ? 'Loading Endgame Set...' : 'Start Training'}
+        {loading ? `Loading ${puzzleMode === 'classic' ? 'Classic' : 'Endgame'} Set...` : 'Start Training'}
       </button>
     </div>
   );

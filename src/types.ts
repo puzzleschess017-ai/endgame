@@ -1,4 +1,6 @@
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
+/** The four rating bands; `mixed` takes puzzles from all of them. */
+export type RatingBand = 'easy' | 'medium' | 'hard' | 'expert';
+export type Difficulty = RatingBand | 'mixed';
 
 export type PuzzleCountOption = 10 | 50 | 100 | 200;
 
@@ -24,9 +26,14 @@ export interface CycleResult {
   completedAt: number;
 }
 
+/** Where a Woodpecker set comes from: puzzles of every kind, or real endgames only. */
+export type PuzzleMode = 'classic' | 'endgame';
+
 export interface TrainingConfig {
   puzzleCount: PuzzleCountOption;
   totalCycles: CycleCountOption;
+  /** Missing in sessions saved before Classic existed, which were all endgame sets. */
+  puzzleMode?: PuzzleMode;
   difficulty: Difficulty;
 }
 
@@ -50,11 +57,11 @@ export interface TrainingSession {
 export interface DatabaseStats {
   totalPuzzles: number;
   dbSizeBytes: number;
-  byDifficulty: Record<Difficulty, number>;
+  byDifficulty: Record<RatingBand, number>;
   byTheme: Record<string, number>;
 }
 
-export type BoardTheme = 'green' | 'brown' | 'blue' | 'purple' | 'grey' | 'pink';
+export type BoardTheme = 'green' | 'brown' | 'maple' | 'blue' | 'purple' | 'grey' | 'pink';
 
 export type PieceSet = 'merida' | 'cburnett' | 'alpha' | 'staunty' | 'chessnut' | 'neo';
 

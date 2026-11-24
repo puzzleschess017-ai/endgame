@@ -96,6 +96,13 @@ const BOARD_THEME_PALETTES: Record<
     coordLight: '#8a6142',
     coordDark: '#f0d9b5',
   },
+  maple: {
+    light: '#debd91',
+    dark: '#b87541',
+    lastMove: 'rgba(155, 199, 0, 0.42)',
+    coordLight: '#8c5426',
+    coordDark: '#debd91',
+  },
   blue: {
     light: '#dee3e6',
     dark: '#8ca2ad',
