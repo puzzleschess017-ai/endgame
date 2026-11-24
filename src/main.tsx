@@ -16,6 +16,7 @@ const PAGES: Record<string, ComponentType> = {
   '/statistics': lazy(() => import('./pages/StatisticsPage.tsx')),
   '/editor': lazy(() => import('./pages/EditorPage.tsx')),
   '/tablebase': lazy(() => import('./pages/TablebasePage.tsx')),
+  '/login': lazy(() => import('./pages/LoginPage.tsx')),
 };
 
 const path = window.location.pathname.replace(/\/+$/, '') || '/';

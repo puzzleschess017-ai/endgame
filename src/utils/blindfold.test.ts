@@ -88,7 +88,7 @@ test('settings: defaults, saving, junk in storage', () => {
   assert.deepEqual(loadBlindfoldSettings(), { level: 8, memorize: 10 });
   saveBlindfoldSettings({ level: 6, memorize: 20 });
   assert.deepEqual(loadBlindfoldSettings(), { level: 6, memorize: 20 });
-  store.set(BLINDFOLD_SETTINGS_STORAGE_KEY, JSON.stringify({ level: 7, memorize: 3 }));
+  store.set(BLINDFOLD_SETTINGS_STORAGE_KEY, JSON.stringify({ level: 9, memorize: 3 }));
   assert.deepEqual(loadBlindfoldSettings(), { level: 8, memorize: 10 });
   store.set(BLINDFOLD_SETTINGS_STORAGE_KEY, 'not json');
   assert.deepEqual(loadBlindfoldSettings(), { level: 8, memorize: 10 });

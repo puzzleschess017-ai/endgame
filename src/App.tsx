@@ -22,10 +22,9 @@ import {
 import { useAppearance } from './hooks/useAppearance';
 import { playMoveSound } from './utils/sound';
 import { recordFinishedCycles } from './utils/woodpeckerHistory';
+import { INTRO_COMPLETED_STORAGE_KEY, USERNAME_STORAGE_KEY } from './utils/profile';
 
 const PREVIEW_FEN = '1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1';
-const USERNAME_STORAGE_KEY = 'ctg_username_v1';
-const INTRO_COMPLETED_STORAGE_KEY = 'ctg_intro_completed_v1';
 
 const DEFAULT_CONFIG: TrainingConfig = {
   puzzleCount: 50,

@@ -7,11 +7,14 @@ import {
   EyeOff,
   Flame,
   House,
+  LogIn,
+  LogOut,
   PencilLine,
   Repeat,
   Timer,
   type LucideIcon,
 } from 'lucide-react';
+import { auth, useAuth } from '../auth';
 import SoundMenu from './SoundMenu';
 
 export interface NavItem {
@@ -181,6 +184,39 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   );
 }
 
+/** Sign in for a guest; the account link and sign out for someone signed in. */
+function AccountControls({ compact }: { compact?: boolean }) {
+  const { session } = useAuth();
+  const button =
+    'rounded-xl text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 cursor-pointer flex items-center justify-center shrink-0 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[#39ff88]';
+  if (!session) {
+    return (
+      <a
+        href="/login"
+        data-testid="sign-in-link"
+        className={`${button} gap-1.5 min-h-[40px] ${compact ? 'min-w-[40px]' : 'px-3 border-white/15'}`}
+        aria-label="Sign in"
+        title="Sign in or create an account"
+      >
+        <LogIn className="w-4 h-4" aria-hidden="true" />
+        {!compact && 'Sign in'}
+      </a>
+    );
+  }
+  return (
+    <button
+      type="button"
+      data-testid="sign-out-button"
+      onClick={() => void auth.signOut()}
+      className={`${button} min-h-[40px] min-w-[40px]`}
+      aria-label="Sign out"
+      title="Sign out"
+    >
+      <LogOut className="w-4 h-4" aria-hidden="true" />
+    </button>
+  );
+}
+
 interface SidebarProps {
   username?: string;
 }
@@ -189,8 +225,11 @@ interface SidebarProps {
  * The menu: a full-height panel on the left of big screens, with collapsible groups. On smaller
  * screens it is a bar on top of the page and the entries scroll sideways in one row.
  */
-export default function Sidebar({ username }: SidebarProps) {
+export default function Sidebar({ username: savedName }: SidebarProps) {
   const path = currentPath();
+  const { session, name: accountName } = useAuth();
+  // Someone signed in is greeted by the account name; a guest by the name saved in this browser.
+  const username = session ? accountName : savedName;
   const [collapsed, setCollapsed] = useState<string[]>(() => loadCollapsed());
 
   useEffect(() => {
@@ -226,12 +265,13 @@ export default function Sidebar({ username }: SidebarProps) {
               Hello, {username}
             </span>
           )}
+          <AccountControls compact />
           <SoundMenu />
         </div>
 
         <nav
           aria-label="Training modes"
-          className="w-full xl:flex-1 xl:min-h-0 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-x-visible xl:overflow-y-auto pb-3 xl:py-4"
+          className="w-full xl:flex-1 xl:min-h-0 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-x-visible xl:overflow-y-auto pb-3 xl:py-3"
         >
           <NavLink item={HOME_ITEM} active={HOME_ITEM.href === path} />
           {NAV_GROUPS.map((group) => {
@@ -265,7 +305,12 @@ export default function Sidebar({ username }: SidebarProps) {
       </div>
 
       <div className="hidden xl:flex items-center justify-between gap-2 px-4 py-3 border-t border-white/10">
-        <span className="text-sm font-semibold text-white/80 truncate">
+        <a
+          href="/login"
+          data-testid="sidebar-name"
+          title={session ? 'Your account' : 'Sign in or create an account'}
+          className="min-w-0 flex-1 text-sm font-semibold text-white/80 truncate no-underline hover:text-white"
+        >
           {username ? (
             <>
               Hello, <span className="text-[#39ff88]">{username}</span>
@@ -273,7 +318,8 @@ export default function Sidebar({ username }: SidebarProps) {
           ) : (
             'Hello!'
           )}
-        </span>
+        </a>
+        <AccountControls />
         <SoundMenu />
       </div>
     </aside>

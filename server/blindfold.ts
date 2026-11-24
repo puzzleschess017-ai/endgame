@@ -5,7 +5,7 @@ import { boardAfterFirstMove, countPieces } from '../scripts/lib/endgame-rule.mj
 import type { LadderRow } from './ladder.ts';
 
 /** Piece limits offered by the app. 32 means "any". */
-export const BLINDFOLD_MAX_PIECES = [6, 8, 10, 32] as const;
+export const BLINDFOLD_MAX_PIECES = [6, 7, 8, 10, 32] as const;
 
 export interface BlindfoldParams {
   maxPieces: number;
