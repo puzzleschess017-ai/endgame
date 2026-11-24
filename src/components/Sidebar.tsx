@@ -261,8 +261,8 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
 
         <div className="ml-auto xl:hidden flex items-center gap-2 min-w-0">
           {username && (
-            <span className="hidden sm:inline text-xs sm:text-sm font-semibold text-white/85 truncate max-w-[150px]">
-              Hello, {username}
+            <span className="hidden sm:inline text-xs sm:text-sm font-semibold text-[#39ff88] truncate max-w-[150px]" title={username}>
+              {username}
             </span>
           )}
           <AccountControls compact />
@@ -308,16 +308,10 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         <a
           href="/login"
           data-testid="sidebar-name"
-          title={session ? 'Your account' : 'Sign in or create an account'}
-          className="min-w-0 flex-1 text-sm font-semibold text-white/80 truncate no-underline hover:text-white"
+          title={username ? `${username}: ${session ? 'your account' : 'sign in or create an account'}` : 'Sign in or create an account'}
+          className="min-w-0 flex-1 text-sm font-semibold text-[#39ff88] truncate no-underline hover:text-white"
         >
-          {username ? (
-            <>
-              Hello, <span className="text-[#39ff88]">{username}</span>
-            </>
-          ) : (
-            'Hello!'
-          )}
+          {username || 'Guest'}
         </a>
         <AccountControls />
         <SoundMenu />
