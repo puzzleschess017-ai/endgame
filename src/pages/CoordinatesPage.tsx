@@ -43,7 +43,6 @@ const DURATIONS: CoordinateDuration[] = [30, 60];
 const ORIENTATIONS: Array<{ value: CoordinateOrientation; label: string }> = [
   { value: 'white', label: 'White' },
   { value: 'black', label: 'Black' },
-  { value: 'random', label: 'Random' },
 ];
 
 export default function CoordinatesPage() {
@@ -101,8 +100,7 @@ export default function CoordinatesPage() {
 
   const startRun = useCallback(() => {
     const s = settingsRef.current;
-    const side: 'white' | 'black' =
-      s.orientation === 'random' ? (Math.random() < 0.5 ? 'white' : 'black') : s.orientation;
+    const side = s.orientation;
     const first = randomSquare(null);
     window.clearTimeout(flashTimerRef.current);
     targetRef.current = first;
@@ -187,7 +185,7 @@ export default function CoordinatesPage() {
       onAppearanceChange={setAppearance}
       board={
         <CoordinateBoard
-          orientation={phase === 'setup' ? (settings.orientation === 'black' ? 'black' : 'white') : orientation}
+          orientation={phase === 'setup' ? settings.orientation : orientation}
           theme={appearance.boardTheme}
           marks={marks}
           onSquareClick={phase === 'running' ? handleAnswer : undefined}
@@ -223,7 +221,7 @@ export default function CoordinatesPage() {
 
           <div className="space-y-2">
             <span className="text-sm font-semibold text-white">Playing as</span>
-            <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+            <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
               {ORIENTATIONS.map((o) => (
                 <button
                   key={o.value}
