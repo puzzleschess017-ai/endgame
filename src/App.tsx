@@ -29,6 +29,7 @@ import {
   saveSessionToStorage,
 } from './utils/chessHelpers';
 import { playMoveSound } from './utils/sound';
+import { recordFinishedCycles } from './utils/woodpeckerHistory';
 
 const PREVIEW_FEN = '1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1';
 const USERNAME_STORAGE_KEY = 'ctg_username_v1';
@@ -127,6 +128,11 @@ export default function App() {
   useEffect(() => {
     saveSessionToStorage(session);
   }, [session]);
+
+  // Home shows Woodpecker progress, so every finished cycle is also written to the long-term history.
+  useEffect(() => {
+    recordFinishedCycles(session);
+  }, [session?.id, session?.cycleResults.length]);
 
   useEffect(() => {
     const handleUnload = () => {

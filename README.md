@@ -82,7 +82,8 @@ a dependency, run `bun install` and commit `bun.lock` together with
 
 | Path | What it is |
 | --- | --- |
-| `/` | Woodpecker endgame trainer |
+| `/` | Home: the results of every mode (read from the browser), a "Continue" button for the last mode used, and a card per mode. Unknown paths show Home too |
+| `/woodpecker` | Woodpecker endgame trainer (it used to be on `/`) |
 | `/coordinates` | Coordinates trainer: click the named square against the clock (30 or 60 s, white, black or random side). The board has no labels, on purpose |
 | `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
 | `/race` | Puzzle Race: solve as many puzzles as possible in 1, 3 or 5 minutes, easy to hard from the whole database. A wrong move costs 10 seconds and moves on to the next puzzle. Best score per time saved in the browser (a run ended early is not saved) |
@@ -103,10 +104,16 @@ wrong move reported to the page).
 ### Adding a new mode
 
 Every mode must look the same as Woodpecker: build the page with `TrainerLayout`
-(`src/components/TrainerLayout.tsx`, header, board column and right-hand panel in fixed places),
-draw the board inside an element that uses `BOARD_FRAME_CLASS` and whose side comes from
-`snapBoardSize` (both in `src/utils/appearance.ts`), and add the page to `NAV_ITEMS` in
-`SiteHeader.tsx`. That keeps the board size, corners and panel position identical on every page.
+(`src/components/TrainerLayout.tsx`: the menu card on the left, then the board column and the
+right-hand panel in fixed places), draw the board inside an element that uses `BOARD_FRAME_CLASS`
+and whose side comes from `snapBoardSize` (both in `src/utils/appearance.ts`), add the page to
+`MODE_ITEMS` in `src/components/Sidebar.tsx` (menu entry and Home card) and to `PAGES` in
+`src/main.tsx`. That keeps the board size, corners and panel position identical on every page.
+To show the mode's records on Home, add its lines to `collectHomeStats` in `src/utils/stats.ts`.
+
+The menu (`Sidebar.tsx`) is a card on the left from 1280 px width and a card on top of the page on
+smaller screens; every page sits inside `AppShell.tsx`, so it never moves. Finished Woodpecker
+cycles are also kept in `ctg_woodpecker_history_v1` (last 300) for the Home statistics.
 
 ## Saved progress
 

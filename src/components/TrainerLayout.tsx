@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import SiteHeader from './SiteHeader';
+import AppShell from './AppShell';
 
 interface TrainerLayoutProps {
   username?: string;
@@ -18,8 +18,8 @@ interface TrainerLayoutProps {
 }
 
 /**
- * Page frame shared by Woodpecker and every training mode, so the board and the right-hand
- * panel always sit in the same place and have the same width. New modes should use this too.
+ * Page frame shared by Woodpecker and every training mode: the menu on the left, then the board and
+ * the right-hand panel, always in the same place and the same width. New modes should use this too.
  */
 export default function TrainerLayout({
   username,
@@ -32,21 +32,20 @@ export default function TrainerLayout({
   children,
 }: TrainerLayoutProps) {
   return (
-    <div className="min-h-screen bg-[#101b2f] text-white flex flex-col">
-      <SiteHeader username={username} muted={muted} onToggleMute={onToggleMute} />
+    <>
+      <AppShell username={username} muted={muted} onToggleMute={onToggleMute}>
+        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 lg:gap-8 pt-1 xl:pt-0">
+          <section
+            className={`w-full ${boardSizeClass} transition-[max-width] duration-200 ease-out flex flex-col gap-3 shrink-0`}
+          >
+            {board}
+            {belowBoard}
+          </section>
 
-      <main className="flex-1 w-full max-w-[1220px] mx-auto px-4 sm:px-6 py-5 sm:py-7 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 lg:gap-8">
-        <section
-          className={`w-full ${boardSizeClass} transition-[max-width] duration-200 ease-out flex flex-col gap-3 shrink-0`}
-        >
-          {board}
-          {belowBoard}
-        </section>
-
-        <aside className="w-full max-w-[560px] lg:w-[370px] shrink-0">{panel}</aside>
-      </main>
-
+          <aside className="w-full max-w-[560px] lg:w-[370px] shrink-0">{panel}</aside>
+        </div>
+      </AppShell>
       {children}
-    </div>
+    </>
   );
 }
