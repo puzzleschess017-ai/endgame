@@ -26,9 +26,14 @@ export interface CycleResult {
   completedAt: number;
 }
 
+/** Where a Woodpecker set comes from: puzzles of every kind, or real endgames only. */
+export type PuzzleMode = 'classic' | 'endgame';
+
 export interface TrainingConfig {
   puzzleCount: PuzzleCountOption;
   totalCycles: CycleCountOption;
+  /** Missing in sessions saved before Classic existed, which were all endgame sets. */
+  puzzleMode?: PuzzleMode;
   difficulty: Difficulty;
 }
 

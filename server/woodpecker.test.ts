@@ -49,3 +49,16 @@ test('parseSampleQuery rejects bad counts and difficulties', () => {
     assert.equal(parseSampleQuery({ count: '10', difficulty }).ok, false, String(difficulty));
   }
 });
+
+test('parseSampleQuery: mode defaults to endgame, accepts classic and endgame, rejects the rest', () => {
+  const none = parseSampleQuery({ count: '10', difficulty: 'easy' });
+  assert.ok(none.ok && none.mode === 'endgame');
+  for (const mode of ['classic', 'endgame', 'Classic', 'ENDGAME']) {
+    const parsed = parseSampleQuery({ count: '10', difficulty: 'easy', mode });
+    assert.ok(parsed.ok, mode);
+    if (parsed.ok) assert.equal(parsed.mode, mode.toLowerCase());
+  }
+  for (const mode of ['', 'blitz', 'all', 5, null]) {
+    assert.equal(parseSampleQuery({ count: '10', difficulty: 'easy', mode }).ok, false, String(mode));
+  }
+});

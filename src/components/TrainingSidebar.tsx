@@ -218,11 +218,13 @@ export default function TrainingSidebar({
 
       {/* Puzzle Metadata */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-white/75 border-b border-white/10 pb-3">
+        <span className="capitalize text-white font-semibold">{session.config.puzzleMode ?? 'endgame'}</span>
+        <span aria-hidden="true">·</span>
         <span className="capitalize text-white font-semibold">{session.config.difficulty}</span>
         <span aria-hidden="true">·</span>
         <span className="tabular-nums">Rating {currentPuzzle.rating}</span>
         <span aria-hidden="true">·</span>
-        <span>{getEndgameThemeLabel(currentPuzzle.themes)}</span>
+        <span>{getEndgameThemeLabel(currentPuzzle.themes, 'Tactics')}</span>
         <span aria-hidden="true">·</span>
         <span className="tabular-nums">
           {currentPuzzle.numMoves} {currentPuzzle.numMoves === 1 ? 'move' : 'moves'}
