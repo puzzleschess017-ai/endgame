@@ -26,10 +26,21 @@ export const auth = createAuthStore({
 
 if (typeof window !== 'undefined') {
   // A signed-in visitor is greeted by the account name on every page, and is not asked for a name again.
+  // Signing out takes that name away again, so the next visitor of this browser is a guest, not the account.
+  let wasSignedIn = false;
   auth.subscribe(() => {
     const { session, name } = auth.getState();
-    if (!session || !name) return;
     try {
+      if (!session) {
+        if (wasSignedIn) {
+          localStorage.removeItem(USERNAME_STORAGE_KEY);
+          localStorage.removeItem(INTRO_COMPLETED_STORAGE_KEY);
+        }
+        wasSignedIn = false;
+        return;
+      }
+      wasSignedIn = true;
+      if (!name) return;
       if (localStorage.getItem(USERNAME_STORAGE_KEY) !== name) localStorage.setItem(USERNAME_STORAGE_KEY, name);
       localStorage.setItem(INTRO_COMPLETED_STORAGE_KEY, 'true');
     } catch {
