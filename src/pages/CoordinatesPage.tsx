@@ -50,7 +50,6 @@ export default function CoordinatesPage() {
   const [settings, setSettings] = useState<CoordinateSettings>(() => loadCoordinateSettings());
   const [appearance, setAppearance] = useAppearance();
   const [username] = useState(() => readSavedUsername());
-  const [muted, setMuted] = useState(false);
 
   const [phase, setPhase] = useState<Phase>('setup');
   const [orientation, setOrientation] = useState<'white' | 'black'>('white');
@@ -64,8 +63,6 @@ export default function CoordinatesPage() {
   const phaseRef = useRef<Phase>('setup');
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
-  const mutedRef = useRef(muted);
-  mutedRef.current = muted;
   const targetRef = useRef('e4');
   const correctRef = useRef(0);
   const missesRef = useRef(0);
@@ -99,7 +96,7 @@ export default function CoordinatesPage() {
     setTimeLeftMs(0);
     setFlash(null);
     setPhase('finished');
-    playMoveSound('success', mutedRef.current);
+    playMoveSound('success');
   }, []);
 
   const startRun = useCallback(() => {
@@ -151,11 +148,11 @@ export default function CoordinatesPage() {
     if (ok) {
       correctRef.current += 1;
       setCorrect(correctRef.current);
-      playMoveSound('move', mutedRef.current);
+      playMoveSound('move');
     } else {
       missesRef.current += 1;
       setMisses(missesRef.current);
-      playMoveSound('error', mutedRef.current);
+      playMoveSound('error');
     }
     const next = randomSquare(expected);
     targetRef.current = next;
@@ -186,8 +183,6 @@ export default function CoordinatesPage() {
   return (
     <TrainerLayout
       username={username}
-      muted={muted}
-      onToggleMute={() => setMuted((v) => !v)}
       appearance={appearance}
       onAppearanceChange={setAppearance}
       board={

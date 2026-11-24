@@ -11,7 +11,6 @@ const CARD_BASE =
 export default function StatisticsPage() {
   const [stats] = useState(() => collectHomeStats());
   const [username] = useState(() => readSavedUsername());
-  const [muted, setMuted] = useState(false);
 
   useEffect(() => {
     document.title = 'Statistics | Chess Tactics Guide';
@@ -23,7 +22,7 @@ export default function StatisticsPage() {
   const { recentCycles } = stats;
 
   return (
-    <AppShell username={username} muted={muted} onToggleMute={() => setMuted((v) => !v)}>
+    <AppShell username={username}>
       <div className="max-w-[860px] flex flex-col gap-6" data-testid="statistics">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Statistics</h2>

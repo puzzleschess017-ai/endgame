@@ -39,7 +39,7 @@ interface DrillResult {
 
 const TICK_MS = 100;
 
-export default function Drills({ username, muted, onToggleMute, mode, onModeChange }: BlindfoldModeProps) {
+export default function Drills({ username, mode, onModeChange }: BlindfoldModeProps) {
   const [kind, setKind] = useState<DrillKind>(() => loadDrillKind());
   const [appearance, setAppearance] = useAppearance();
   const [phase, setPhase] = useState<Phase>('setup');
@@ -57,8 +57,6 @@ export default function Drills({ username, muted, onToggleMute, mode, onModeChan
   const correctRef = useRef(0);
   const wrongRef = useRef(0);
   const endAtRef = useRef(0);
-  const mutedRef = useRef(muted);
-  mutedRef.current = muted;
 
   const go = (next: Phase) => {
     phaseRef.current = next;
@@ -97,7 +95,7 @@ export default function Drills({ username, muted, onToggleMute, mode, onModeChan
     });
     setMsLeft(0);
     go('finished');
-    playMoveSound('success', mutedRef.current);
+    playMoveSound('success');
   }, []);
 
   useEffect(() => {
@@ -139,7 +137,7 @@ export default function Drills({ username, muted, onToggleMute, mode, onModeChan
       setWrong(wrongRef.current);
       setLast({ ok: false, text: q.explanation });
     }
-    playMoveSound(ok ? 'move' : 'error', mutedRef.current);
+    playMoveSound(ok ? 'move' : 'error');
     const nextQuestion = makeQuestion(kindRef.current, Math.random, q);
     questionRef.current = nextQuestion;
     setQuestion(nextQuestion);
@@ -174,8 +172,6 @@ export default function Drills({ username, muted, onToggleMute, mode, onModeChan
   return (
     <TrainerLayout
       username={username}
-      muted={muted}
-      onToggleMute={onToggleMute}
       appearance={appearance}
       onAppearanceChange={setAppearance}
       board={
