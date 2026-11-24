@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import AccessGate from './AccessGate';
 import Sidebar from './Sidebar';
 
 interface AppShellProps {
@@ -15,6 +16,7 @@ export default function AppShell({ username, children }: AppShellProps) {
     <div className="min-h-screen bg-[#101b2f] text-white xl:flex">
       <Sidebar username={username} />
       <main className="flex-1 min-w-0 px-4 sm:px-6 py-5 xl:py-7">{children}</main>
+      <AccessGate />
     </div>
   );
 }
