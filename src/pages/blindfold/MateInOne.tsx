@@ -266,7 +266,7 @@ export default function MateInOne({ username, mode, onModeChange }: BlindfoldMod
 
               <div className="space-y-2">
                 <span className="text-sm font-semibold text-white">Pieces on the board</span>
-                <div className="grid grid-cols-4 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+                <div className="grid grid-cols-5 gap-1 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
                   {BLINDFOLD_LEVELS.map((level) => (
                     <button
                       key={level}

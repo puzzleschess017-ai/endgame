@@ -24,7 +24,7 @@ describe('page table', () => {
     }
   });
   it('knows every page of the app', () => {
-    for (const path of ['/', '/woodpecker', '/streak', '/race', '/coordinates', '/blindfold', '/statistics', '/editor', '/tablebase']) {
+    for (const path of ['/', '/woodpecker', '/streak', '/race', '/coordinates', '/blindfold', '/statistics', '/editor', '/tablebase', '/login']) {
       assert.ok(pageFor(path), path);
     }
   });
@@ -86,10 +86,12 @@ describe('renderPage', () => {
     }
   });
   it('asks search engines to skip a personal page and gives it no structured data or sitemap entry', () => {
-    const html = renderPage(TEMPLATE, pageFor('/statistics')!, SITE);
-    assert.ok(html.includes('<meta name="robots" content="noindex, follow" />'));
-    assert.ok(!html.includes('ld+json'));
-    assert.ok(!sitemapXml(SITE).includes('/statistics'));
+    for (const path of ['/statistics', '/login']) {
+      const html = renderPage(TEMPLATE, pageFor(path)!, SITE);
+      assert.ok(html.includes('<meta name="robots" content="noindex, follow" />'));
+      assert.ok(!html.includes('ld+json'));
+      assert.ok(!sitemapXml(SITE).includes(path));
+    }
   });
   it('marks an unknown path noindex and gives it no canonical address', () => {
     const html = renderPage(TEMPLATE, undefined, SITE);

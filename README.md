@@ -95,6 +95,7 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | `/coordinates` | Coordinates trainer: click the named square against the clock (30 or 60 s, white, black or random side). The board has no labels, on purpose |
 | `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
 | `/race` | Puzzle Race: solve as many puzzles as possible in 1, 3 or 5 minutes, easy to hard from the whole database. A wrong move costs 10 seconds and moves on to the next puzzle. Best score per time saved in the browser (a run ended early is not saved) |
+| `/login` | Sign in, create an account or play as a guest; the account page (name, email, plan, Sign out) for someone signed in |
 | `/blindfold` | Blindfold: *Mate in 1* (memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; levels by number of pieces: up to 6, 8, 10 or any; a round is 10 puzzles) and *Drills* (60 s without a board: square color, same diagonal, knight route). Best scores saved in the browser |
 | `/editor` | Board Editor: set up any position by dragging pieces in from the palette (or choosing a piece and tapping squares), moving them, or dragging them off the board; side to move, castling rights and en passant; load or copy a FEN; "Check in the Tablebase" opens it on the Tablebase page. The button is only on when the position is legal (both kings, no pawns on the first or last rank, the side not to move is not in check) |
 | `/tablebase` | Endgame Tablebase: perfect play for any position with 7 pieces or fewer (Syzygy tables, through the public Lichess tablebase). Shows who wins (with the mate distance when known), draws by the 50-move rule, and every legal move marked Wins / Draws / Loses, best first; click a move to play it, hover to see it as an arrow. Play on the board, step through the game (buttons, arrow keys, Home/End), try the example positions (K+Q vs K, K+R vs K, K+P vs K, Lucena), load a FEN, import and copy a PGN. `?fen=...` starts from a position. Positions with more than 7 pieces or with castling rights cannot be looked up and say so |
@@ -176,6 +177,22 @@ serves `/robots.txt` and `/sitemap.xml` (the indexable pages). `/statistics` is 
 `SITE_URL` (default `https://chesstacticsguide.com`) is the address used in canonical links and the
 sitemap. **A new page needs one entry in `PAGES`** (plus its route in `src/main.tsx`). Descriptions
 should stay 50-170 characters and titles under 70; `server/seo.test.ts` checks that.
+
+### Accounts (sign-in)
+
+Sign-in uses [Supabase](https://supabase.com) (project address and public key in `src/auth/index.ts`;
+they are public by design, the data is protected by row level security; `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_PUBLISHABLE_KEY` override them). There is no extra package: `src/auth/client.ts` talks to
+Supabase with `fetch`, `src/auth/store.ts` keeps who is signed in (saved in `ctg_auth_v1`, token refreshed
+before it ends, other tabs follow) and `useAuth()` gives a page `tier`: `guest` (nobody signed in), `free`
+or `premium`. The page `/login` has sign in, create account and "Play as a guest"; for someone signed in it
+shows the account and Sign out. `?next=/streak` sends the visitor back to that page afterwards.
+
+`supabase/schema.sql` is pasted once into Supabase (SQL Editor) and makes the `profiles` table (name and
+plan, one row per account, created by a trigger). People can read their row and change their name only;
+the plan (`free` or `premium`) is changed by hand in the Supabase Table Editor until payments exist.
+`src/utils/access.ts` says what each tier may use (Woodpecker and Blindfold limits); it is not applied to
+the pages yet.
 
 ## Saved progress
 

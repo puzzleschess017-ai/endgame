@@ -87,6 +87,14 @@ export const PAGES: PageMeta[] = [
     priority: 0.6,
   },
   {
+    path: '/login',
+    title: 'Sign in | Chess Tactics Guide',
+    description: 'Sign in or create an account to keep your chess training results on every device, or play as a guest.',
+    indexable: false,
+    kind: 'app',
+    priority: 0.1,
+  },
+  {
     path: '/statistics',
     title: 'Statistics | Chess Tactics Guide',
     description: 'Your personal records in every chess training mode, saved in your browser.',
