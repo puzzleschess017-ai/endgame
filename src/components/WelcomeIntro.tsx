@@ -2,27 +2,9 @@
 // out, when this browser holds no results) it says what the site is and where to begin.
 import type { ReactNode } from 'react';
 import { ArrowRight, Check, Crown } from 'lucide-react';
-import { NAV_ITEMS } from './Sidebar';
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
 
 const CARD = 'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
-
-interface Feature {
-  href: string;
-  text: string;
-}
-
-const FEATURES: Feature[] = [
-  { href: '/woodpecker', text: 'Solve the same set of puzzles again and again, faster with every cycle, until the patterns are automatic.' },
-  { href: '/streak', text: 'Puzzles that get harder one by one. How long can your streak get before the first mistake?' },
-  { href: '/survival', text: 'Three lives, no clock. Climb the ladder of puzzles and see how far you get.' },
-  { href: '/coordinates', text: 'Find the named square as fast as you can, until the board is second nature.' },
-  { href: '/blindfold', text: 'Mate puzzles without seeing the pieces, square-color and knight-route drills, and rebuilding positions from memory.' },
-  { href: '/endgames', text: 'Short lessons on the endgames every player should know, each with a position to try.' },
-  { href: '/openings', text: 'The main ideas of the most common openings, explained in plain words.' },
-  { href: '/analysis', text: 'Set up any position on the board editor and check it with the engine.' },
-  { href: '/ebooks', text: 'Chess books you can download as PDF, from checkmate patterns to a full Caro-Kann repertoire.' },
-];
 
 const STEPS: Array<{ title: string; text: string }> = [
   { title: 'Pick a mode', text: 'Start with Woodpecker or Puzzle Streak. Every mode starts easy.' },
@@ -40,10 +22,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 export default function WelcomeIntro({ signedIn }: { signedIn: boolean }) {
-  const items = FEATURES.flatMap((feature) => {
-    const item = NAV_ITEMS.find((n) => n.href === feature.href);
-    return item ? [{ ...feature, item }] : [];
-  });
   return (
     <div className="flex flex-col gap-8" data-testid="welcome">
       <section className={`${CARD} p-6 sm:p-8 flex flex-col gap-4`}>
@@ -70,29 +48,6 @@ export default function WelcomeIntro({ signedIn }: { signedIn: boolean }) {
           No account is needed to try it. With a free account, your results follow you to every device.
         </p>
       </section>
-
-      <Section title="What you can do here">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" data-testid="welcome-features">
-          {items.map(({ href, text, item }) => {
-            const Icon = item.icon;
-            return (
-              <a
-                key={href}
-                href={href}
-                className={`${CARD} px-5 py-4 flex gap-3.5 no-underline transition-colors hover:border-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#39ff88]`}
-              >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${item.chipClass}`}>
-                  <Icon className={`w-5 h-5 ${item.iconClass}`} aria-hidden="true" />
-                </span>
-                <span className="flex flex-col gap-0.5">
-                  <span className="text-[15px] font-bold text-white">{item.label}</span>
-                  <span className="text-sm font-medium text-white/70 leading-snug">{text}</span>
-                </span>
-              </a>
-            );
-          })}
-        </div>
-      </Section>
 
       <Section title="How it works">
         <ol className="grid grid-cols-1 md:grid-cols-3 gap-3">
