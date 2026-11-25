@@ -25,7 +25,7 @@ describe('page table', () => {
     }
   });
   it('knows every page of the app', () => {
-    for (const path of ['/', '/woodpecker', '/streak', '/race', '/coordinates', '/blindfold', '/statistics', '/editor', '/tablebase', '/login']) {
+    for (const path of ['/', '/woodpecker', '/streak', '/race', '/coordinates', '/blindfold', '/statistics', '/editor', '/analysis', '/login']) {
       assert.ok(pageFor(path), path);
     }
   });
@@ -126,7 +126,7 @@ describe('robots.txt and sitemap.xml', () => {
     assert.equal(locs.length, PAGES.filter((p) => p.indexable).length);
     assert.equal(new Set(locs).size, locs.length);
     assert.ok(locs.includes('https://example.org/'));
-    assert.ok(locs.includes('https://example.org/tablebase'));
+    assert.ok(locs.includes('https://example.org/analysis'));
     assert.ok(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>'));
   });
 });

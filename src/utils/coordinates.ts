@@ -3,7 +3,8 @@
 export const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
 export const RANKS = ['1', '2', '3', '4', '5', '6', '7', '8'] as const;
 
-export type CoordinateDuration = 30 | 60;
+/** A run lasts 30 seconds, or has no clock at all ('infinite': the player ends it). */
+export type CoordinateDuration = 30 | 'infinite';
 export type CoordinateOrientation = 'white' | 'black';
 
 export interface CoordinateSettings {
@@ -43,8 +44,11 @@ export function accuracyPercent(correct: number, misses: number): number {
   return total === 0 ? 0 : Math.round((correct / total) * 100);
 }
 
-/** The key keeps the old "find_" prefix so records saved before the other mode was removed still count. */
-export function bestKey(duration: CoordinateDuration): string {
+/**
+ * The key keeps the old "find_" prefix so records saved before the other mode was removed still count.
+ * Records of the old 60 s option stay in storage (and in the statistics); only 30 s runs make new ones.
+ */
+export function bestKey(duration: number): string {
   return `find_${duration}`;
 }
 
@@ -62,7 +66,8 @@ export function loadCoordinateSettings(): CoordinateSettings {
   const d = DEFAULT_COORDINATE_SETTINGS;
   if (!parsed || typeof parsed !== 'object') return { ...d };
   return {
-    duration: parsed.duration === 60 || parsed.duration === 30 ? parsed.duration : d.duration,
+    // The old 60 s option is gone: a saved 60 becomes the default (30 s).
+    duration: parsed.duration === 30 || parsed.duration === 'infinite' ? parsed.duration : d.duration,
     // Older versions also offered "random"; that (or anything unknown) becomes the default now.
     orientation: parsed.orientation === 'white' || parsed.orientation === 'black' ? parsed.orientation : d.orientation,
   };
@@ -76,7 +81,7 @@ export function saveCoordinateSettings(settings: CoordinateSettings): void {
   }
 }
 
-export function loadBestScore(duration: CoordinateDuration): number {
+export function loadBestScore(duration: number): number {
   const parsed = readJson(BEST_STORAGE_KEY) as Record<string, unknown> | null;
   const value = parsed && typeof parsed === 'object' ? parsed[bestKey(duration)] : 0;
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
@@ -84,7 +89,7 @@ export function loadBestScore(duration: CoordinateDuration): number {
 
 /** Stores `score` if it beats the saved best. A score of 0 never counts as a record. */
 export function saveBestScore(
-  duration: CoordinateDuration,
+  duration: number,
   score: number,
 ): { best: number; isNewBest: boolean } {
   const previous = loadBestScore(duration);

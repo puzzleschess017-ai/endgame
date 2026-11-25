@@ -92,13 +92,13 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | `/` | Home, a dashboard: a *Daily goal* card on top (puzzles solved today out of a goal of 10, 20, 30, 50 or 100, and the days in a row on which the goal was reached; the goal is a setting of the device, `ctg_daily_goal_v1`, and progress comes from the activity log, so it grows when a run or a Woodpecker cycle ends; `src/utils/goal.ts`), then six overview tiles (puzzles solved, total training time and sessions, daily streak, average accuracy, best Puzzle Streak, Woodpecker cycles) and four bar charts (sessions, minutes, puzzles, accuracy per day) with a 7 / 30 / 90 days switch. Everything is read from the browser. Unknown paths show Home too |
 | `/woodpecker` | Woodpecker endgame trainer (it used to be on `/`). When a cycle ends, the next one starts only when the person presses *Start Cycle N* (there is no countdown). After every cycle a *Review* box offers the puzzles that were missed (a wrong move or the arrow) and the slowest ones (at least five in all); "Practise these" starts a two-cycle run of only them (`src/utils/review.ts`). The per-puzzle record (`attempts`) is kept for the latest cycle of the saved session only |
 | `/statistics` | Statistics: personal records of every mode, a *Woodpecker progress* section and the last Woodpecker cycles. Progress shows two line charts (seconds per puzzle and accuracy) for cycle 1, 2, 3... of one set of puzzles, with a selector for the last 20 sets; cycles are grouped by the session id in the history key (`src/utils/progress.ts`, `src/components/LineChart.tsx`) |
-| `/coordinates` | Coordinates trainer: click the named square against the clock (30 or 60 s, playing as White or Black). The board has no labels, on purpose |
+| `/coordinates` | Coordinates trainer: click the named square against the clock (30 s, or Infinite: no clock, you finish the run yourself and it makes no record; playing as White or Black). The board has no labels, on purpose. Records saved for the old 60 s option are kept and still show in the statistics |
 | `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
 | `/race` | Puzzle Race: solve as many puzzles as possible in 1, 3 or 5 minutes, easy to hard from the whole database. A wrong move costs 10 seconds and moves on to the next puzzle. Best score per time saved in the browser (a run ended early is not saved) |
 | `/login` | Sign in, create an account or play as a guest; the account page (name, email, plan, Sign out) for someone signed in |
 | `/blindfold` | Blindfold: *Checkmate* (mate in 1, 2 or 3: memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; in a mate in 2 or 3 you type your moves one at a time, the opponent's reply is shown as text after each right one and the board stays empty; checkmate always counts, other moves must be the puzzle's own; levels by number of pieces: up to 6, 7, 8, 10 or any; a round is 10 puzzles; a best score for each length and level) and *Drills* (without a board, for 60 s or with no time limit: the endless run is practice, "Finish and save" adds the answers to Statistics but keeps no record;  square color, check or not, same diagonal, knight route; and *Rebuild position*: a real position is shown for 10, 20 or 30 s, the board is emptied and you put the pieces back by dragging them in or picking a piece and tapping squares; 5 positions per round, up to 6, 7, 8 or 10 pieces, scored by perfect rebuilds; the positions come from the same mate-in-1 puzzles as Blindfold). Best scores saved in the browser |
-| `/editor` | Board Editor: set up any position by dragging pieces in from the palette (or choosing a piece and tapping squares), moving them, or dragging them off the board; side to move, castling rights and en passant; load or copy a FEN; "Check in the Tablebase" opens it on the Tablebase page. The button is only on when the position is legal (both kings, no pawns on the first or last rank, the side not to move is not in check) |
-| `/tablebase` | Endgame Tablebase: perfect play for any position with 7 pieces or fewer (Syzygy tables, through the public Lichess tablebase). Shows who wins (with the mate distance when known), draws by the 50-move rule, and every legal move marked Wins / Draws / Loses, best first; click a move to play it, hover to see it as an arrow. Play on the board, step through the game (buttons, arrow keys, Home/End), try the example positions (K+Q vs K, K+R vs K, K+P vs K, Lucena), load a FEN, import and copy a PGN. `?fen=...` starts from a position. Positions with more than 7 pieces or with castling rights cannot be looked up and say so. **Check with engine** (Premium): a switch that runs Stockfish in the browser on the position of the board and shows the score for White, a bar, the three best lines (click one to play its first move) and an arrow for the best move; it works for any number of pieces (see *Chess engine* below) |
+| `/editor` | Board Editor: set up any position by dragging pieces in from the palette (or choosing a piece and tapping squares), moving them, or dragging them off the board; side to move, castling rights and en passant; load or copy a FEN; "Check in Board Analysis" opens it on the Board Analysis page. The button is only on when the position is legal (both kings, no pawns on the first or last rank, the side not to move is not in check) |
+| `/analysis` | Board Analysis: play on the board, step through the game (buttons, arrow keys, Home/End), try the example positions (K+Q vs K, K+R vs K, K+P vs K, Lucena), load a FEN, import and copy a PGN. `?fen=...` starts from a position. **Check with engine** (Premium): a switch that runs Stockfish in the browser on the position of the board and shows the score for White, a bar, the three best lines (click one to play its first move) and an arrow for the best move; it works for any number of pieces (see *Chess engine* below). The old address `/tablebase` redirects here (301, the `?fen=` is kept) |
 | `/endgames` | Endgame theory: an index of lessons and one page per lesson (`/endgames/lucena-position`, `philidor-position`, `king-and-pawn-opposition`, `king-and-rook-vs-king`, `king-and-queen-vs-king`, `wrong-colored-bishop`). The text, diagrams (FEN plus arrows) and the "Practise this" position of every lesson are in `src/theory/endgames.ts`; `src/components/DiagramBoard.tsx` draws a diagram as plain SVG with the piece images of `public/pieces`. The pages are public (no welcome window) and article pages in the sitemap. Practise opens the position in the tablebase (`?fen=`) |
 
 Every path is served by the same app (`main.tsx` picks the page from the URL). Logic that can be
@@ -130,7 +130,7 @@ To show the mode's records on the Statistics page, add its lines to `collectHome
 `src/utils/activity.ts` when a run ends (`mode`, time spent in ms, correct and wrong answers, puzzles).
 
 The menu (`Sidebar.tsx`) is a full-height panel on the left from 1280 px width, with the groups
-PUZZLES, TRAINING, TOOLS (Board Editor, Endgame Tablebase) and PROGRESS that can be collapsed (remembered in `ctg_sidebar_collapsed_v1`);
+PUZZLES, TRAINING, TOOLS (Board Editor, Board Analysis) and PROGRESS that can be collapsed (remembered in `ctg_sidebar_collapsed_v1`);
 on smaller screens it is a bar on top of the page with one scrolling row. Every page sits inside
 `AppShell.tsx`, so the menu never moves. Each entry has a coloured icon.
 
@@ -149,10 +149,10 @@ and mute are one setting for the whole site, saved in `ctg_sound_v1` and read wi
 'success')`; nothing needs to pass a muted flag around. In the volume slider 50 % is the loudness
 the site always had and 100 % is twice that.
 
-### Board Editor and Endgame Tablebase
+### Board Editor and Board Analysis
 
 The two tools are for bigger screens: below 640 px (phones) they are not in the top menu, and opening `/editor` or
-`/tablebase` there shows a short note with a link Home (`BigScreenOnly`; the tool code is not even downloaded).
+`/analysis` there shows a short note with a link Home (`BigScreenOnly`; the tool code is not even downloaded).
 On phones the top menu also scrolls so the current page's entry sits in the middle and stays highlighted.
 
 The two tools share the board component with the trainers. `ChessboardPanel` has an optional `edit`
@@ -160,17 +160,14 @@ prop that turns it into an editor (free movement, a piece dragged off the board 
 pieces can be dragged in with chessground's `dragNewPiece`). The logic that needs no browser lives in
 `src/utils/editor.ts` (building, reading and validating FENs: castling rights and en passant are only
 written when they are possible), `src/utils/analysis.ts` (the game being looked at: moves, going
-back and forth, replacing a line, status text, PGN in and out) and `src/utils/tablebase.ts` (what can
-be looked up and how the answer is worded). All are covered by unit tests.
+back and forth, replacing a line, status text, PGN in and out) and `src/utils/tablebase.ts` (the example positions, and what can be looked up in the tablebase and how the
+answer is worded). All are covered by unit tests.
 
-The Tablebase page asks our own server, `GET /api/tablebase?fen=...`, never Lichess directly
-(`server/tablebase.ts`). The server checks the FEN (legal, 7 pieces or fewer, no castling rights),
-asks `https://tablebase.lichess.org/standard`, turns the move results around so they describe the
-player who makes the move, and keeps every answer for a day (the same position is one request, even
-when many people ask at once). Failures are never kept, and there is a ceiling of 240 requests per
-minute to Lichess in total. Set `TABLEBASE_URL` to use another host (the tests use a local fake).
-There is no engine: a chess engine would add a large download and its own licence, so only the
-endgames the tablebase covers are analysed.
+The Board Analysis page used to show Lichess tablebase answers; it now has only the engine. The server part is still
+there, unused by the page: `GET /api/tablebase?fen=...` (`server/tablebase.ts`) checks the FEN (legal, 7 pieces or
+fewer, no castling rights), asks `https://tablebase.lichess.org/standard` (set `TABLEBASE_URL` to use another host) and
+keeps every answer for a day, with a ceiling of 240 requests per minute to Lichess in total. It can be deleted together
+with `server/tablebase.ts` and the tablebase functions of `src/utils/tablebase.ts` if it is not going to be used.
 
 ### Search engines (SEO)
 
@@ -235,7 +232,7 @@ sets the guest choice, so they land on Home as a guest and the window does not c
 | Blindfold mate in 1 | page visible, every choice locked | up to 6 or 7 pieces, 10 s | all levels, 5, 10 and 20 s |
 | Blindfold mate in 2 and 3 | locked | locked | yes |
 | Blindfold drills | page visible, every choice locked | square colours, check or not | all, with Rebuild position |
-| Streak, Race, Coordinates, Board Editor, Tablebase, Statistics | yes | yes | yes |
+| Streak, Race, Coordinates, Board Editor, Board Analysis, Statistics | yes | yes | yes |
 
 Choices a visitor may not use stay visible with a small lock; clicking one says to sign in or that it is
 Premium (`src/components/locks.tsx`). A guest who opens Blindfold sees the same page as everybody, with every choice locked and "Create a free account to play" instead of Start. The server checks the rest: `/api/puzzles/sample` (type, difficulty, number of puzzles) and

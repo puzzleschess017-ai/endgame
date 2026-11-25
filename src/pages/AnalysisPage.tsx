@@ -41,24 +41,10 @@ import { getLegalDests, isPromotionMove } from '../utils/chessHelpers';
 import { buildFen, parseFen, validateFen } from '../utils/editor';
 import { readSavedUsername } from '../utils/profile';
 import { playMoveSound } from '../utils/sound';
-import {
-  EXAMPLES,
-  fetchTablebase,
-  lookupProblem,
-  moveLabel,
-  verdictText,
-  type Tone,
-  type TablebaseResult,
-} from '../utils/tablebase';
+import { EXAMPLES } from '../utils/tablebase';
 
 const NAV_BUTTON_CLASS =
   'py-1.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-[#39ff88] hover:text-[#39ff88] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/20 disabled:hover:text-white text-white flex items-center justify-center cursor-pointer min-h-[36px] focus-visible:outline-2 focus-visible:outline-[#39ff88]';
-
-const TONE_TEXT: Record<Tone, string> = {
-  good: 'text-[#39ff88]',
-  neutral: 'text-amber-300',
-  bad: 'text-[#ff7a7a]',
-};
 
 /** Reads a FEN typed or pasted by the person. Missing fields are filled in; illegal positions are refused with a reason. */
 function readFen(text: string): { ok: true; fen: string } | { ok: false; error: string } {
@@ -84,13 +70,7 @@ function isTyping(target: EventTarget | null): boolean {
   return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
 }
 
-type Lookup =
-  | { state: 'unavailable'; message: string }
-  | { state: 'loading' }
-  | { state: 'error'; message: string }
-  | { state: 'ready'; result: TablebaseResult };
-
-export default function TablebasePage() {
+export default function AnalysisPage() {
   const [appearance, setAppearance] = useAppearance();
   const { tier } = useAuth();
   const [engineOn, setEngineOn] = useState(false);
@@ -106,19 +86,16 @@ export default function TablebasePage() {
   const [pgnDraft, setPgnDraft] = useState('');
   const [pgnError, setPgnError] = useState<string | null>(null);
   const [copied, setCopied] = useState<'fen' | 'pgn' | null>(null);
-  const [lookup, setLookup] = useState<Lookup>({ state: 'loading' });
-  const [retry, setRetry] = useState(0);
 
   const listRef = useRef<HTMLDivElement | null>(null);
-  const answers = useRef(new Map<string, TablebaseResult>());
 
   useEffect(() => {
-    document.title = 'Endgame Tablebase | Chess Tactics Guide';
+    document.title = 'Board Analysis | Chess Tactics Guide';
     document
       .querySelector('meta[name="description"]')
       ?.setAttribute(
         'content',
-        'Endgame tablebase: perfect play for any chess position with 7 pieces or fewer. See who wins and the best move.',
+        'Board analysis: set up or load any chess position, play moves on the board and check them with the Stockfish engine.',
       );
   }, []);
 
@@ -137,35 +114,10 @@ export default function TablebasePage() {
   const atStart = analysis.index === 0;
   const atEnd = analysis.index === analysis.moves.length;
 
-  // Ask the tablebase whenever the position changes (answers already seen are kept for the visit).
+  // A line pointed at in the engine list is only meant for the position it was shown for.
   useEffect(() => {
     setHoverUci(null);
-    const problem = lookupProblem(fen);
-    if (problem) {
-      setLookup({ state: 'unavailable', message: problem });
-      return;
-    }
-    const known = answers.current.get(fen);
-    if (known) {
-      setLookup({ state: 'ready', result: known });
-      return;
-    }
-    setLookup({ state: 'loading' });
-    const controller = new AbortController();
-    fetchTablebase(fen, controller.signal)
-      .then((answer) => {
-        if (answer.ok) {
-          answers.current.set(fen, answer.result);
-          setLookup({ state: 'ready', result: answer.result });
-        } else {
-          setLookup({ state: 'error', message: answer.error });
-        }
-      })
-      .catch(() => {
-        // Aborted: the position changed before the answer came.
-      });
-    return () => controller.abort();
-  }, [fen, retry]);
+  }, [fen]);
 
   const sync = () => setSyncToken((t) => t + 1);
 
@@ -191,7 +143,7 @@ export default function TablebasePage() {
     makeMove(from, to);
   };
 
-  /** Plays a move of the tablebase list ("e7e8q"). */
+  /** Plays a move of the engine list ("e7e8q"). */
   const playUci = (uci: string) => {
     const promotion = uci.length > 4 ? (uci[4] as 'q' | 'r' | 'b' | 'n') : undefined;
     makeMove(uci.slice(0, 2) as Key, uci.slice(2, 4) as Key, promotion);
@@ -302,7 +254,6 @@ export default function TablebasePage() {
     );
   };
 
-  const verdict = lookup.state === 'ready' ? verdictText(lookup.result, turn) : null;
   const arrowUci = hoverUci ?? (engineOn && tier === 'premium' ? bestEngineMove(engine) : null);
   const hintArrow: [Key, Key] | null = arrowUci ? [arrowUci.slice(0, 2) as Key, arrowUci.slice(2, 4) as Key] : null;
   const editorHref = `/editor?fen=${encodeURIComponent(fen)}`;
@@ -335,51 +286,18 @@ export default function TablebasePage() {
         />
       }
       panel={
-        <div className={COMPACT_CARD_CLASS} data-testid="tablebase-panel">
+        <div className={COMPACT_CARD_CLASS} data-testid="analysis-panel">
           <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Endgame Tablebase</h2>
+            <h2 className="text-xl font-bold text-white tracking-tight">Board Analysis</h2>
             <p className="mt-0.5 text-xs font-medium text-white/70">
-              Perfect play for positions with 7 pieces or fewer. Play on the board.
+              Play on the board and check the position with the engine. Any number of pieces.
             </p>
           </div>
 
-          <div className="flex flex-col gap-1" data-testid="tb-verdict" aria-live="polite">
+          <div className="flex flex-col gap-1" aria-live="polite">
             <p data-testid="analysis-status" className="text-xs font-semibold text-white/70">
               {status.text}
             </p>
-            {lookup.state === 'loading' && <p className="text-base font-bold text-white/80">Looking it up…</p>}
-            {lookup.state === 'unavailable' && (
-              <div className="flex flex-col gap-2">
-                <p data-testid="tb-unavailable" className="text-sm font-semibold text-amber-300 leading-relaxed">
-                  {lookup.message}
-                </p>
-                <a href={editorHref} className="text-sm font-bold text-[#39ff88] underline underline-offset-2 w-fit">
-                  Open this position in the Board Editor
-                </a>
-              </div>
-            )}
-            {lookup.state === 'error' && (
-              <div className="flex flex-col gap-2">
-                <p role="alert" data-testid="tb-error" className="text-sm font-semibold text-[#ff7a7a] leading-relaxed">
-                  {lookup.message}
-                </p>
-                <button type="button" data-testid="tb-retry" onClick={() => setRetry((r) => r + 1)} className={`${SECONDARY_BUTTON_CLASS} !w-auto self-start`}>
-                  Try again
-                </button>
-              </div>
-            )}
-            {verdict && (
-              <div>
-                <p data-testid="tb-headline" data-tone={verdict.tone} className={`text-lg font-bold tracking-tight ${TONE_TEXT[verdict.tone]}`}>
-                  {verdict.headline}
-                </p>
-                {verdict.detail && (
-                  <p data-testid="tb-detail" className="text-sm font-medium text-white/75 leading-snug">
-                    {verdict.detail}
-                  </p>
-                )}
-              </div>
-            )}
           </div>
 
           <EnginePanel
@@ -391,35 +309,6 @@ export default function TablebasePage() {
             onHover={setHoverUci}
             onPlay={playUci}
           />
-
-          {lookup.state === 'ready' && lookup.result.moves.length > 0 && (
-            <div className="flex flex-col gap-1.5">
-              <h3 className="text-xs font-bold text-white/80">Moves, best first</h3>
-              <ul data-testid="tb-moves" className="max-h-[132px] overflow-y-auto rounded-xl bg-[#101b2f] border border-white/10 p-1 flex flex-col gap-0.5">
-                {lookup.result.moves.map((move) => {
-                  const label = moveLabel(move);
-                  return (
-                    <li key={move.uci}>
-                      <button
-                        type="button"
-                        data-testid={`tb-move-${move.uci}`}
-                        data-tone={label.tone}
-                        onClick={() => playUci(move.uci)}
-                        onMouseEnter={() => setHoverUci(move.uci)}
-                        onMouseLeave={() => setHoverUci(null)}
-                        onFocus={() => setHoverUci(move.uci)}
-                        onBlur={() => setHoverUci(null)}
-                        className="w-full flex items-center justify-between gap-3 px-2.5 py-1 rounded-lg text-sm cursor-pointer hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
-                      >
-                        <span className="font-bold text-white">{move.san}</span>
-                        <span className={`font-semibold ${TONE_TEXT[label.tone]}`}>{label.text}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
 
           <div className="grid grid-cols-4 gap-2" role="group" aria-label="Move navigation">
             <button type="button" data-testid="nav-start" onClick={() => navigate(toStart)} disabled={atStart} className={NAV_BUTTON_CLASS} aria-label="First position" title="First position (Home)">

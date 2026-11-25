@@ -63,6 +63,6 @@ test('lookups by address', () => {
 test('the practise link carries the position in the address', () => {
   const lesson = LESSONS[0];
   const href = practiceHref(lesson);
-  assert.ok(href.startsWith('/tablebase?fen='));
+  assert.ok(href.startsWith('/analysis?fen='));
   assert.equal(new URLSearchParams(href.split('?')[1]).get('fen'), lesson.practice.fen);
 });

@@ -21,6 +21,9 @@ import { playMoveSound } from '../utils/sound';
 type Phase = 'setup' | 'running' | 'finished';
 
 interface RunResult {
+  /** The run had no clock: it ended when the player finished it, and it makes no record. */
+  infinite: boolean;
+  elapsedMs: number;
   correct: number;
   misses: number;
   accuracy: number;
@@ -38,7 +41,16 @@ interface Flash {
 
 const FLASH_MS = 350;
 
-const DURATIONS: CoordinateDuration[] = [30, 60];
+const DURATIONS: Array<{ value: CoordinateDuration; label: string }> = [
+  { value: 30, label: '30 s' },
+  { value: 'infinite', label: 'Infinite' },
+];
+
+/** 0:07, 1:05, ... (the clock of a run without a time limit). */
+function clockText(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
 
 const ORIENTATIONS: Array<{ value: CoordinateOrientation; label: string }> = [
   { value: 'white', label: 'White' },
@@ -66,6 +78,7 @@ export default function CoordinatesPage() {
   const correctRef = useRef(0);
   const missesRef = useRef(0);
   const endAtRef = useRef(0);
+  const startAtRef = useRef(0);
   const flashTimerRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
@@ -89,9 +102,12 @@ export default function CoordinatesPage() {
     const c = correctRef.current;
     const m = missesRef.current;
     const { duration } = settingsRef.current;
-    const { best, isNewBest } = saveBestScore(duration, c);
-    recordActivity({ mode: 'coordinates', ms: duration * 1000, correct: c, wrong: m });
-    setResult({ correct: c, misses: m, accuracy: accuracyPercent(c, m), best, isNewBest });
+    const infinite = duration === 'infinite';
+    const elapsedMs = infinite ? Math.round(performance.now() - startAtRef.current) : duration * 1000;
+    // A run without a clock cannot be compared with others: it makes no record.
+    const { best, isNewBest } = infinite ? { best: 0, isNewBest: false } : saveBestScore(duration, c);
+    if (!infinite || c + m > 0) recordActivity({ mode: 'coordinates', ms: elapsedMs, correct: c, wrong: m });
+    setResult({ infinite, elapsedMs, correct: c, misses: m, accuracy: accuracyPercent(c, m), best, isNewBest });
     setTimeLeftMs(0);
     setFlash(null);
     setPhase('finished');
@@ -106,13 +122,15 @@ export default function CoordinatesPage() {
     targetRef.current = first;
     correctRef.current = 0;
     missesRef.current = 0;
-    endAtRef.current = performance.now() + s.duration * 1000;
+    startAtRef.current = performance.now();
+    endAtRef.current = s.duration === 'infinite' ? 0 : startAtRef.current + s.duration * 1000;
     phaseRef.current = 'running';
     setOrientation(side);
     setTarget(first);
     setCorrect(0);
     setMisses(0);
-    setTimeLeftMs(s.duration * 1000);
+    // Time left in a timed run, time passed in a run without a clock.
+    setTimeLeftMs(s.duration === 'infinite' ? 0 : s.duration * 1000);
     setFlash(null);
     setResult(null);
     setPhase('running');
@@ -130,6 +148,10 @@ export default function CoordinatesPage() {
   useEffect(() => {
     if (phase !== 'running') return;
     const id = window.setInterval(() => {
+      if (settingsRef.current.duration === 'infinite') {
+        setTimeLeftMs(performance.now() - startAtRef.current);
+        return;
+      }
       const left = endAtRef.current - performance.now();
       if (left <= 0) finishRun();
       else setTimeLeftMs(left);
@@ -173,10 +195,11 @@ export default function CoordinatesPage() {
     return m;
   }, [flash]);
 
-  const best = loadBestScore(settings.duration);
-  const totalMs = settings.duration * 1000;
+  const infinite = settings.duration === 'infinite';
+  const best = settings.duration === 'infinite' ? 0 : loadBestScore(settings.duration);
+  const totalMs = settings.duration === 'infinite' ? 0 : settings.duration * 1000;
   const secondsLeft = Math.max(0, Math.ceil(timeLeftMs / 1000));
-  const barPercent = Math.max(0, Math.min(100, (timeLeftMs / totalMs) * 100));
+  const barPercent = totalMs > 0 ? Math.max(0, Math.min(100, (timeLeftMs / totalMs) * 100)) : 0;
 
   return (
     <TrainerLayout
@@ -207,13 +230,13 @@ export default function CoordinatesPage() {
             <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
               {DURATIONS.map((d) => (
                 <button
-                  key={d}
+                  key={d.value}
                   type="button"
-                  aria-pressed={settings.duration === d}
-                  onClick={() => setSettings({ ...settings, duration: d })}
-                  className={segmentClass(settings.duration === d)}
+                  aria-pressed={settings.duration === d.value}
+                  onClick={() => setSettings({ ...settings, duration: d.value })}
+                  className={segmentClass(settings.duration === d.value)}
                 >
-                  {d} s
+                  {d.label}
                 </button>
               ))}
             </div>
@@ -237,7 +260,11 @@ export default function CoordinatesPage() {
           </div>
 
           <p className="text-sm font-semibold text-white/75 tabular-nums">
-            {best > 0 ? `Your best (${settings.duration} s): ${best}` : 'No record yet for this time.'}
+            {infinite
+              ? 'No clock: practise as long as you like, then finish the run. Infinite runs make no record.'
+              : best > 0
+                ? `Your best (${settings.duration} s): ${best}`
+                : 'No record yet for this time.'}
           </p>
 
           <button
@@ -254,14 +281,16 @@ export default function CoordinatesPage() {
         <div className={CARD_CLASS}>
           <div className="space-y-2">
             <div className="flex items-baseline justify-between">
-              <span className="text-sm font-semibold text-white">Time left</span>
+              <span className="text-sm font-semibold text-white">{infinite ? 'Time' : 'Time left'}</span>
               <span className="text-2xl font-bold tabular-nums" data-testid="seconds-left">
-                {secondsLeft}
+                {infinite ? clockText(timeLeftMs) : secondsLeft}
               </span>
             </div>
-            <div className="h-2 rounded-full bg-[#101b2f] overflow-hidden" aria-hidden="true">
-              <div className="h-full bg-[#39ff88]" style={{ width: `${barPercent}%` }} />
-            </div>
+            {!infinite && (
+              <div className="h-2 rounded-full bg-[#101b2f] overflow-hidden" aria-hidden="true">
+                <div className="h-full bg-[#39ff88]" style={{ width: `${barPercent}%` }} />
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-3 gap-2.5">
@@ -279,10 +308,10 @@ export default function CoordinatesPage() {
 
           <button
             type="button"
-            onClick={quitRun}
+            onClick={infinite ? finishRun : quitRun}
             className="w-full py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
           >
-            End run (not saved)
+            {infinite ? 'Finish run' : 'End run (not saved)'}
           </button>
         </div>
       )}
@@ -290,7 +319,7 @@ export default function CoordinatesPage() {
       {phase === 'finished' && result && (
         <div className={CARD_CLASS} role="status" aria-live="polite">
           <div className="text-center">
-            <h2 className="text-xl font-bold text-white tracking-tight">Time’s up!</h2>
+            <h2 className="text-xl font-bold text-white tracking-tight">{result.infinite ? 'Run finished' : 'Time’s up!'}</h2>
             <div className="text-7xl font-bold text-[#39ff88] leading-none mt-4 tabular-nums" data-testid="final-score">
               {result.correct}
             </div>
@@ -307,7 +336,11 @@ export default function CoordinatesPage() {
           <div className="grid grid-cols-3 gap-2.5">
             <StatTile label="Accuracy" value={`${result.accuracy}%`} />
             <StatTile label="Misses" value={String(result.misses)} tone="bad" />
-            <StatTile label="Best" value={String(result.best)} tone="good" />
+            {result.infinite ? (
+              <StatTile label="Time" value={clockText(result.elapsedMs)} />
+            ) : (
+              <StatTile label="Best" value={String(result.best)} tone="good" />
+            )}
           </div>
 
           <div className="flex flex-col gap-2.5">

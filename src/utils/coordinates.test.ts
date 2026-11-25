@@ -57,22 +57,29 @@ test('settings fall back to defaults for missing or corrupt data', () => {
 });
 
 test('settings round-trip', () => {
-  const s = { duration: 60, orientation: 'black' } as const;
+  const s = { duration: 'infinite', orientation: 'black' } as const;
   c.saveCoordinateSettings(s);
   assert.deepEqual(c.loadCoordinateSettings(), s);
 });
 
 test('a saved "random" side (offered by an older version) becomes white', () => {
-  store.set(c.SETTINGS_STORAGE_KEY, JSON.stringify({ duration: 60, orientation: 'random' }));
-  assert.deepEqual(c.loadCoordinateSettings(), { duration: 60, orientation: 'white' });
+  store.set(c.SETTINGS_STORAGE_KEY, JSON.stringify({ duration: 30, orientation: 'random' }));
+  assert.deepEqual(c.loadCoordinateSettings(), { duration: 30, orientation: 'white' });
 });
 
 test('settings saved by the older version (with mode and showLabels) still load', () => {
   store.set(
     c.SETTINGS_STORAGE_KEY,
-    JSON.stringify({ mode: 'name', duration: 60, orientation: 'black', showLabels: true }),
+    JSON.stringify({ mode: 'name', duration: 30, orientation: 'black', showLabels: true }),
   );
-  assert.deepEqual(c.loadCoordinateSettings(), { duration: 60, orientation: 'black' });
+  assert.deepEqual(c.loadCoordinateSettings(), { duration: 30, orientation: 'black' });
+});
+
+test('the old 60 s option is gone: a saved 60 becomes 30 s, but its record is kept', () => {
+  store.set(c.SETTINGS_STORAGE_KEY, JSON.stringify({ duration: 60, orientation: 'black' }));
+  assert.deepEqual(c.loadCoordinateSettings(), { duration: 30, orientation: 'black' });
+  store.set(c.BEST_STORAGE_KEY, JSON.stringify({ find_60: 41 }));
+  assert.equal(c.loadBestScore(60), 41);
 });
 
 test('best score is kept per duration and only improves', () => {

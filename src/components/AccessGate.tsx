@@ -72,7 +72,7 @@ export default function AccessGate() {
         </div>
         <p className="text-xs font-medium text-white/55 leading-relaxed">
           Guests can use Woodpecker (Classic puzzles, easy and medium), Puzzle Streak, Puzzle Race, Coordinate
-          Training, the Board Editor and the Endgame Tablebase. Results stay in this browser.
+          Training, the Board Editor and Board Analysis. Results stay in this browser.
         </p>
       </div>
     </div>

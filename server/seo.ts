@@ -70,10 +70,10 @@ export const PAGES: PageMeta[] = [
     priority: 0.8,
   },
   {
-    path: '/tablebase',
-    title: 'Endgame Tablebase | Chess Tactics Guide',
+    path: '/analysis',
+    title: 'Board Analysis | Chess Tactics Guide',
     description:
-      'Endgame tablebase: perfect play for any chess position with 7 pieces or fewer. See who wins and the best move.',
+      'Board analysis: set up or load any chess position, play moves on the board and check them with the Stockfish engine.',
     indexable: true,
     kind: 'app',
     priority: 0.8,
@@ -81,7 +81,7 @@ export const PAGES: PageMeta[] = [
   {
     path: '/editor',
     title: 'Board Editor | Chess Tactics Guide',
-    description: 'Free chess board editor: set up any position, then copy the FEN or check it in the endgame tablebase.',
+    description: 'Free chess board editor: set up any position, then copy the FEN or check it in Board Analysis.',
     indexable: true,
     kind: 'app',
     priority: 0.6,
@@ -153,7 +153,7 @@ export const PAGES: PageMeta[] = [
     path: '/about',
     title: 'About | Chess Tactics Guide',
     description:
-      'About Chess Tactics Guide: free chess training with the Woodpecker method, puzzles from the open Lichess database, blindfold drills and an endgame tablebase.',
+      'About Chess Tactics Guide: free chess training with the Woodpecker method, puzzles from the open Lichess database, blindfold drills and an engine for board analysis.',
     indexable: true,
     kind: 'info',
     priority: 0.5,

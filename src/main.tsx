@@ -10,7 +10,7 @@ import { initConsent } from './utils/consent';
 // One page per path. Home (statistics) is the landing page and the fallback for unknown paths, so it
 // is in the main bundle; every other page is loaded when it is opened, so the boards, chess rules and
 // the like are not downloaded by someone who only looks at the dashboard.
-/** Board Editor and Endgame Tablebase are not for phones: there they show a short note and load nothing else. */
+/** Board Editor and Board Analysis are not for phones: there they show a short note and load nothing else. */
 function bigScreenOnly(title: string, Page: ComponentType): ComponentType {
   return function BigScreenPage() {
     return (
@@ -29,7 +29,9 @@ const PAGES: Record<string, ComponentType> = {
   '/blindfold': lazy(() => import('./pages/BlindfoldPage.tsx')),
   '/statistics': lazy(() => import('./pages/StatisticsPage.tsx')),
   '/editor': bigScreenOnly('Board Editor', lazy(() => import('./pages/EditorPage.tsx'))),
-  '/tablebase': bigScreenOnly('Endgame Tablebase', lazy(() => import('./pages/TablebasePage.tsx'))),
+  '/analysis': bigScreenOnly('Board Analysis', lazy(() => import('./pages/AnalysisPage.tsx'))),
+  // The old address of the page (the server also redirects it; this keeps an old link working in the dev server).
+  '/tablebase': bigScreenOnly('Board Analysis', lazy(() => import('./pages/AnalysisPage.tsx'))),
   '/login': lazy(() => import('./pages/LoginPage.tsx')),
   '/endgames': lazy(() => import('./pages/theory/EndgameTheoryPage.tsx')),
   '/about': lazy(() => import('./pages/legal/AboutPage.tsx')),
