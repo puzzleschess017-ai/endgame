@@ -55,9 +55,6 @@ export default function App() {
     message: string;
   }>({ type: 'idle', message: 'Find the best move' });
 
-  const [autoAdvanceSeconds, setAutoAdvanceSeconds] = useState<number | null>(null);
-  const [autoAdvancePaused, setAutoAdvancePaused] = useState(false);
-
   const [boardState, setBoardState] = useState<BoardState>({
     fen: PREVIEW_FEN,
     playerColor: 'white',
@@ -226,8 +223,6 @@ export default function App() {
 
   const startNextCycle = useCallback(() => {
     clearScheduledTimeouts();
-    setAutoAdvanceSeconds(null);
-    setAutoAdvancePaused(false);
     setSession((prev) => {
       if (!prev) return prev;
       return {
@@ -244,27 +239,6 @@ export default function App() {
       };
     });
   }, [clearScheduledTimeouts]);
-
-  // Handle auto-advance countdown between cycles
-  useEffect(() => {
-    if (!session || session.status !== 'cycle_complete') {
-      setAutoAdvanceSeconds(null);
-      return;
-    }
-    if (autoAdvanceSeconds === null) {
-      setAutoAdvanceSeconds(4);
-      return;
-    }
-    if (autoAdvancePaused) return;
-    if (autoAdvanceSeconds <= 0) {
-      startNextCycle();
-      return;
-    }
-    const id = window.setTimeout(() => {
-      setAutoAdvanceSeconds((s) => (s !== null ? s - 1 : null));
-    }, 1000);
-    return () => window.clearTimeout(id);
-  }, [session?.status, autoAdvanceSeconds, autoAdvancePaused, startNextCycle]);
 
   const advanceToNextPuzzle = useCallback(
     (overrideCounts?: { correct: number; incorrect: number }) => {
@@ -568,8 +542,6 @@ export default function App() {
         cycleResults: [],
         cycleAttempts: [],
       };
-      setAutoAdvancePaused(false);
-      setAutoAdvanceSeconds(null);
       setSession(newSession);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Unable to start training');
@@ -582,16 +554,12 @@ export default function App() {
     clearScheduledTimeouts();
     setPendingPromotion(null);
     setHintArrow(null);
-    setAutoAdvanceSeconds(null);
-    setAutoAdvancePaused(false);
     setSession(null);
     saveSessionToStorage(null);
   }, [clearScheduledTimeouts]);
 
   const handleRepeatSameSet = useCallback(() => {
     clearScheduledTimeouts();
-    setAutoAdvanceSeconds(null);
-    setAutoAdvancePaused(false);
     setSession((prev) => {
       if (!prev) return prev;
       return {
@@ -619,8 +587,6 @@ export default function App() {
     (items: ReviewItem[]) => {
       if (!session || items.length === 0) return;
       clearScheduledTimeouts();
-      setAutoAdvanceSeconds(null);
-      setAutoAdvancePaused(false);
       const id =
         typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
       setSession(reviewSession(session, items, id));
@@ -676,9 +642,6 @@ export default function App() {
               onNextPuzzle={() => advanceToNextPuzzle()}
               onResetSession={handleResetSession}
               onStartNextCycleNow={startNextCycle}
-              autoAdvanceSeconds={autoAdvanceSeconds}
-              autoAdvancePaused={autoAdvancePaused}
-              onToggleAutoAdvancePause={() => setAutoAdvancePaused((p) => !p)}
               onRepeatSameSet={handleRepeatSameSet}
               onStartReview={handleStartReview}
             />
