@@ -15,8 +15,14 @@ export const LEGAL_LINKS = [
 /** Paths of the pages every visitor may read without the welcome window being in the way. */
 export const INFO_PATHS: readonly string[] = LEGAL_LINKS.map((link) => link.href);
 
-/** The endgame theory lessons are public pages too: a visitor from a search engine reads them straight away. */
+/** The endgame and opening theory lessons are public pages too: a visitor from a search engine reads them straight away. */
 export function isInfoPath(pathname: string): boolean {
   const path = pathname.replace(/\/+$/, '') || '/';
-  return INFO_PATHS.includes(path) || path === '/endgames' || path.startsWith('/endgames/');
+  return (
+    INFO_PATHS.includes(path) ||
+    path === '/endgames' ||
+    path.startsWith('/endgames/') ||
+    path === '/openings' ||
+    path.startsWith('/openings/')
+  );
 }

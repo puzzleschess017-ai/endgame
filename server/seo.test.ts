@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import fs from 'node:fs';
 import { LESSONS, lessonPath } from '../src/theory/endgames.ts';
+import { OPENING_LESSONS, openingPath } from '../src/theory/openings.ts';
 import {
   PAGES,
   cleanSiteUrl,
@@ -131,24 +132,30 @@ describe('robots.txt and sitemap.xml', () => {
   });
 });
 
-describe('endgame theory lessons', () => {
-  it('the title of a page is the title of the lesson and the site name', () => {
-    for (const lesson of LESSONS) assert.equal(pageFor(lessonPath(lesson.slug))!.title, `${lesson.title} | Chess Tactics Guide`);
-  });
-  it('every lesson has a page entry with its address, and every lesson page has a lesson', () => {
-    for (const lesson of LESSONS) {
-      const page = pageFor(lessonPath(lesson.slug));
-      assert.ok(page, lesson.slug);
-      assert.equal(page.kind, 'article');
-      assert.ok(page.indexable);
-    }
-    const articles = PAGES.filter((p) => p.kind === 'article');
-    assert.equal(articles.length, LESSONS.length);
-    assert.ok(pageFor('/endgames'));
-  });
-  it('descriptions are long enough to be useful in a search result', () => {
-    for (const page of PAGES.filter((p) => p.path.startsWith('/endgames'))) {
-      assert.ok(page.description.length >= 100, `${page.path} description is ${page.description.length} characters`);
-    }
-  });
+describe('theory lessons', () => {
+  const collections = [
+    { name: 'endgame', base: '/endgames', lessons: LESSONS, pathFor: lessonPath },
+    { name: 'opening', base: '/openings', lessons: OPENING_LESSONS, pathFor: openingPath },
+  ];
+  for (const { name, base, lessons, pathFor } of collections) {
+    it(`the title of a ${name} page is the title of the lesson and the site name`, () => {
+      for (const lesson of lessons) assert.equal(pageFor(pathFor(lesson.slug))!.title, `${lesson.title} | Chess Tactics Guide`);
+    });
+    it(`every ${name} lesson has a page entry with its address, and every ${name} page has a lesson`, () => {
+      for (const lesson of lessons) {
+        const page = pageFor(pathFor(lesson.slug));
+        assert.ok(page, lesson.slug);
+        assert.equal(page.kind, 'article');
+        assert.ok(page.indexable);
+      }
+      const articles = PAGES.filter((p) => p.kind === 'article' && p.path.startsWith(`${base}/`));
+      assert.equal(articles.length, lessons.length);
+      assert.ok(pageFor(base));
+    });
+    it(`${name} descriptions are long enough to be useful in a search result`, () => {
+      for (const page of PAGES.filter((p) => p.path === base || p.path.startsWith(`${base}/`))) {
+        assert.ok(page.description.length >= 100, `${page.path} description is ${page.description.length} characters`);
+      }
+    });
+  }
 });

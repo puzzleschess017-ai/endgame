@@ -26,6 +26,10 @@ export default function AboutPage() {
           <a href="/coordinates">Coordinate Training</a>, the <a href="/editor">Board Editor</a> and the{' '}
           <a href="/analysis">Board Analysis</a> (check any position with the Stockfish engine).
         </li>
+        <li>
+          Short lessons with diagrams: <a href="/endgames">endgame theory</a> and{' '}
+          <a href="/openings">opening theory</a>, each with a button that opens the position in Board Analysis.
+        </li>
       </ul>
       <h2>Where the puzzles come from</h2>
       <p>
