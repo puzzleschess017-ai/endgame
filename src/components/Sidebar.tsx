@@ -23,7 +23,6 @@ import { useAuth } from '../auth';
 import ProfileMenu from './ProfileMenu';
 import { signOutAndSync } from '../sync';
 import SoundMenu from './SoundMenu';
-import SiteLinks from './SiteLinks';
 
 export interface NavItem {
   id: string;
@@ -370,7 +369,6 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         </nav>
       </div>
 
-      <SiteLinks className="hidden xl:flex flex-nowrap pb-1 -mt-1" />
     </aside>
   );
 }
