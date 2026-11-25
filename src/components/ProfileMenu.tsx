@@ -53,28 +53,25 @@ export default function ProfileMenu({ guestName, align, className = '', testId =
     };
   }, [open]);
 
-  const rowClass =
-    'min-w-0 flex items-center gap-3 px-3 py-1.5 rounded-xl border border-transparent text-sm font-semibold text-white/85 hover:text-white hover:bg-white/5';
-  const chip = (
-    <span className="w-7 h-7 rounded-lg bg-[#39ff88]/15 flex items-center justify-center shrink-0">
-      <UserRound className="w-[17px] h-[17px] text-[#39ff88]" aria-hidden="true" />
-    </span>
-  );
+  // Only the person icon, like the sign-out and volume buttons next to it.
+  const buttonClass =
+    'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]';
+  const icon = <UserRound className="w-4 h-4" aria-hidden="true" />;
 
   if (!session) {
     return (
-      <div ref={box} className={`relative min-w-0 ${className}`}>
+      <div ref={box} className={`relative shrink-0 ${className}`}>
         <button
           type="button"
           data-testid={testId}
           aria-haspopup="menu"
           aria-expanded={open}
-          title={guestName ? `${guestName}: sign in or create an account` : 'Sign in or create an account'}
+          title="Sign in or create an account"
           onClick={() => setOpen((v) => !v)}
-          className={`${rowClass} w-full cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]`}
+          aria-label={guestName || 'Guest'}
+          className={buttonClass}
         >
-          {chip}
-          <span className="truncate">{guestName || 'Guest'}</span>
+          {icon}
         </button>
         {open && (
           <div
@@ -116,19 +113,18 @@ export default function ProfileMenu({ guestName, align, className = '', testId =
   };
 
   return (
-    <div ref={box} className={`relative min-w-0 ${className}`}>
+    <div ref={box} className={`relative shrink-0 ${className}`}>
       <button
         type="button"
         data-testid={testId}
         aria-haspopup="menu"
         aria-expanded={open}
-        title={`${name}: your account`}
+        title="My profile"
         onClick={() => setOpen((v) => !v)}
-        className={`${rowClass} w-full cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]`}
+        aria-label="My profile"
+        className={buttonClass}
       >
-        {chip}
-        <span className="truncate">My profile</span>
-        {premium && <PremiumCrown />}
+        {icon}
       </button>
 
       {open && (

@@ -233,7 +233,7 @@ function NavLink({ item, active, hideOnPhone }: { item: NavItem; active: boolean
 }
 
 /** Sign in for a guest; the account link and sign out for someone signed in. */
-function AccountControls({ compact }: { compact?: boolean }) {
+export function AccountControls({ compact }: { compact?: boolean }) {
   const { session } = useAuth();
   const button =
     'rounded-xl text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 cursor-pointer flex items-center justify-center shrink-0 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[#39ff88]';
@@ -325,12 +325,10 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         </a>
 
         <div className="ml-auto xl:hidden flex items-center gap-2 min-w-0">
-          <ProfileMenu guestName={savedName} align="right" testId="topbar-name" className="hidden sm:block max-w-[170px]" />
+          <ProfileMenu guestName={savedName} align="right" testId="topbar-name" />
           <AccountControls compact />
           <SoundMenu />
         </div>
-
-        <ProfileMenu guestName={savedName} align="left" className="hidden xl:block pt-2" />
 
         <nav
           ref={navRef}
@@ -368,10 +366,6 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         </nav>
       </div>
 
-      <div className="hidden xl:flex items-center justify-between gap-2 px-4 py-2.5 border-t border-white/10">
-        <AccountControls />
-        <SoundMenu />
-      </div>
       <SiteLinks className="hidden xl:flex flex-nowrap pb-1 -mt-1" />
     </aside>
   );

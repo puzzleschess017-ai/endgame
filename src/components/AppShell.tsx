@@ -2,7 +2,9 @@ import type { ReactNode } from 'react';
 import AccessGate, { useGateOpen } from './AccessGate';
 import CookieBanner from './CookieBanner';
 import SiteLinks from './SiteLinks';
-import Sidebar from './Sidebar';
+import Sidebar, { AccountControls } from './Sidebar';
+import ProfileMenu from './ProfileMenu';
+import SoundMenu from './SoundMenu';
 
 interface AppShellProps {
   username?: string;
@@ -19,6 +21,12 @@ export default function AppShell({ username, children }: AppShellProps) {
     <div className="min-h-screen bg-[#101b2f] text-white xl:flex">
       <Sidebar username={username} />
       <main className="flex-1 min-w-0 px-4 sm:px-6 py-5 xl:py-7">
+        {/* On big screens the account buttons sit at the top right of the page (on small screens they are in the top bar). */}
+        <div className="hidden xl:flex items-center justify-end gap-1 mb-4" data-testid="topright">
+          <ProfileMenu guestName={username} align="right" />
+          <AccountControls compact />
+          <SoundMenu />
+        </div>
         {children}
         <SiteLinks className="flex mt-8 xl:hidden" />
       </main>
