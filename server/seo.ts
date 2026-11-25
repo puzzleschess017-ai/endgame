@@ -356,6 +356,22 @@ export const PAGES: PageMeta[] = [
     priority: 0.3,
   },
   {
+    path: '/terms',
+    title: 'Terms of Service | Chess Tactics Guide',
+    description: 'The terms for using Chess Tactics Guide and for the Premium subscription: what you get, billing, cancelling and fair use.',
+    indexable: true,
+    kind: 'info',
+    priority: 0.3,
+  },
+  {
+    path: '/refunds',
+    title: 'Refund and Cancellation Policy | Chess Tactics Guide',
+    description: 'How to cancel a Chess Tactics Guide Premium subscription and how to ask for a refund.',
+    indexable: true,
+    kind: 'info',
+    priority: 0.3,
+  },
+  {
     path: '/contact',
     title: 'Contact | Chess Tactics Guide',
     description: 'Contact Chess Tactics Guide: report a bug, suggest an idea or ask about your account data.',
