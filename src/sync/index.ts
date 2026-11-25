@@ -19,6 +19,8 @@ export const sync = createSyncEngine({
   client: createSyncClient(supabaseConfig),
   storage: typeof window === 'undefined' ? noStorage : browserStorage(),
   getSession: () => auth.getState().session,
+  // Tabs of the same browser share the results, so only one of them syncs at a time.
+  lock: (fn) => (typeof navigator !== 'undefined' && navigator.locks ? navigator.locks.request('ctg-results-sync', fn) : fn()),
 });
 
 const CHECK_MS = 5_000;

@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import type { AuthSession } from '../auth/client.ts';
 import { createSyncClient, type RemoteData, type SyncClient } from './client.ts';
 import { SYNCED_KEYS, fingerprint, mergeData, serialize } from './data.ts';
-import { createSyncEngine, type StorageLike } from './engine.ts';
+import { SYNC_ASIDE_KEY, createSyncEngine, type StorageLike } from './engine.ts';
 
 const ACTIVITY = 'ctg_activity_v1';
 const HISTORY = 'ctg_woodpecker_history_v1';
@@ -236,7 +236,7 @@ describe('the sync engine', () => {
     assert.equal(t.rows.get('u1')?.[STREAK], 9);
   });
 
-  it('signing out with results that could not be saved keeps them as the guest\'s own, and the next account gets them', async () => {
+  it('signing out with results that could not be saved keeps them for that account, and another account does not get them', async () => {
     const t = setup({ [STREAK]: 9 });
     await t.engine.syncNow();
     t.map.set(STREAK, '20'); // a new record that was not saved
@@ -245,12 +245,45 @@ describe('the sync engine', () => {
     t.engine.becomeGuest();
     assert.equal(read(t.map, STREAK), 20, 'unsaved result kept');
     assert.equal(read(t.map, RACE)['60'], 3);
-    // someone else signs in on this browser
+    // someone else signs in on this browser: they get nothing of it
+    t.rows.set('u2', { [STREAK]: 4 });
     t.signIn(user('u2'));
     await t.engine.syncNow();
-    assert.equal(t.rows.get('u2')?.[STREAK], 20);
-    assert.deepEqual(t.rows.get('u2')?.[RACE], { '60': 3 });
-    assert.equal(t.rows.get('u1')?.[STREAK], 9, 'the first account is not touched');
+    assert.equal(t.rows.get('u2')?.[STREAK], 4);
+    assert.equal(t.rows.get('u2')?.[RACE], undefined);
+    assert.equal(read(t.map, STREAK), 4, 'this browser shows the second account\'s own result');
+    assert.equal(t.rows.get('u1')?.[STREAK], 9, 'the first account is not touched yet');
+    // the first account signs in again and gets its results back
+    t.signIn(null);
+    t.engine.becomeGuest();
+    t.signIn(user('u1'));
+    await t.engine.syncNow();
+    assert.equal(t.rows.get('u1')?.[STREAK], 20);
+    assert.deepEqual(t.rows.get('u1')?.[RACE], { '60': 3 });
+    assert.equal(read(t.map, STREAK), 20);
+    assert.equal(t.map.get(SYNC_ASIDE_KEY), undefined, 'nothing is left aside');
+  });
+
+  it('changing the account does not add the first account\'s activity to the second one, however often it is done', async () => {
+    const t = setup();
+    t.rows.set('u1', { [ACTIVITY]: { '2026-11-01': day(3, 30) } });
+    t.rows.set('u2', { [ACTIVITY]: { '2026-11-01': day(2, 20) } });
+    await t.engine.syncNow();
+    for (let round = 0; round < 3; round++) {
+      // the first account plays one more run, and signs out before it could be saved (a slow account)
+      t.map.set(ACTIVITY, JSON.stringify({ '2026-11-01': day(4 + round, 40 + round) }));
+      t.signIn(null);
+      t.engine.becomeGuest();
+      t.signIn(user('u2'));
+      await t.engine.syncNow();
+      assert.deepEqual(read(t.map, ACTIVITY), { '2026-11-01': day(2, 20) }, `second account, round ${round}`);
+      assert.deepEqual(t.rows.get('u2')?.[ACTIVITY], { '2026-11-01': day(2, 20) });
+      t.signIn(null);
+      t.engine.becomeGuest();
+      t.signIn(user('u1'));
+      await t.engine.syncNow();
+      assert.deepEqual(t.rows.get('u1')?.[ACTIVITY], { '2026-11-01': day(4 + round, 40 + round) }, `first account, round ${round}`);
+    }
   });
 
   it('signing out with unsaved results and signing in to the SAME account again does not count anything twice', async () => {
@@ -326,6 +359,56 @@ describe('the sync engine', () => {
     await t.engine.syncNow();
     assert.equal(t.rows.get('u1')?.[STREAK], 11);
     assert.equal(t.engine.hasUnsaved(), false);
+  });
+
+  // Two tabs of the same browser share the storage (and each has its own engine). Both hear about a sign-in a moment apart.
+  describe('two tabs at the same time', () => {
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    /** A mutex like the browser's Web Locks: one holder at a time, the others wait their turn. */
+    function mutex() {
+      let tail: Promise<unknown> = Promise.resolve();
+      return <T>(fn: () => Promise<T>): Promise<T> => {
+        const run = tail.then(fn, fn);
+        tail = run.catch(() => undefined);
+        return run;
+      };
+    }
+    function twoTabs(local: Record<string, unknown>, remote: RemoteData, withLock: boolean) {
+      const store = fakeStorage(Object.fromEntries(Object.entries(local).map(([k, v]) => [k, JSON.stringify(v)])));
+      const rows: RemoteData = JSON.parse(JSON.stringify(remote));
+      const client = {
+        async fetchAll() { await sleep(4); return { ok: true as const, value: JSON.parse(JSON.stringify(rows)) }; },
+        async save(_s: AuthSession, values: RemoteData) { await sleep(4); Object.assign(rows, JSON.parse(JSON.stringify(values))); return { ok: true as const, value: true as const }; },
+      } as unknown as SyncClient;
+      const lock = withLock ? mutex() : undefined;
+      const tabs = [0, 1].map(() => createSyncEngine({ client, storage: store.storage, getSession: () => user('u1'), lock }));
+      return { ...store, rows, tabs };
+    }
+    const sessionsOf = (value: unknown) => (value as Record<string, { sessions: number }>)['2026-11-01'].sessions;
+
+    for (const gap of [0, 1, 2, 3, 5, 8, 12]) {
+      it(`signing in again (nothing in this browser, results on the account) counts them once, second tab ${gap} ms later`, async () => {
+        for (const withLock of [false, true]) {
+          const t = twoTabs({}, { [ACTIVITY]: { '2026-11-01': day(4, 30) } }, withLock);
+          const first = t.tabs[0].syncNow();
+          await sleep(gap);
+          const second = t.tabs[1].syncNow();
+          await Promise.all([first, second]);
+          await t.tabs[0].syncNow();
+          assert.equal(sessionsOf(t.rows[ACTIVITY]), 4, `account (lock: ${withLock})`);
+          assert.equal(sessionsOf(read(t.map, ACTIVITY)), 4, `this browser (lock: ${withLock})`);
+        }
+      });
+      it(`results made as a guest are added to the account once, however the two tabs overlap (${gap} ms)`, async () => {
+        const t = twoTabs({ [ACTIVITY]: { '2026-11-01': day(2, 7) } }, { [ACTIVITY]: { '2026-11-01': day(3, 1) } }, true);
+        const first = t.tabs[0].syncNow();
+        await sleep(gap);
+        const second = t.tabs[1].syncNow();
+        await Promise.all([first, second]);
+        assert.equal(sessionsOf(t.rows[ACTIVITY]), 5);
+        assert.equal(sessionsOf(read(t.map, ACTIVITY)), 5);
+      });
+    }
   });
 
   it('nothing happens without a signed-in visitor', async () => {

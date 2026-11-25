@@ -5,13 +5,18 @@
 //    (results made as a guest are added to the account the first time);
 //  - when a result changes, the account is updated a few seconds later;
 //  - when someone signs out, whatever is saved on the account is removed from this browser, so the next
-//    visitor is a guest. Results that could not be saved are kept and count as the guest's own.
+//    visitor is a guest. Results that could not be saved yet stay, and they still belong to that account: if the
+//    same account signs in again they are put back on it, and if ANOTHER account signs in they are put aside
+//    (never added to the other account, which would count every puzzle of the first one again).
 // All merging is in data.ts; nothing here is specific to the browser, so it is tested with fakes.
 import type { AuthSession } from '../auth/client';
 import type { SyncClient } from './client';
 import { SYNCED, fingerprint, isEmptyData, mergeData, parse, serialize, type DataKind, type MergeMode } from './data.ts';
 
 export const SYNC_STATE_KEY = 'ctg_sync_v1';
+/** Unsaved results of an account that signed out while another account signed in: { accountId: { key: text } }. */
+export const SYNC_ASIDE_KEY = 'ctg_sync_aside_v1';
+const ASIDE_ACCOUNTS_KEPT = 5;
 
 export interface StorageLike {
   getItem(key: string): string | null;
@@ -40,10 +45,16 @@ export interface SyncEngineParts {
   client: SyncClient;
   storage: StorageLike;
   getSession: () => AuthSession | null;
+  /**
+   * Runs `fn` while no other tab of this browser is syncing (they share the same storage). Without it two tabs can sync
+   * at the same moment, and the second one would put the results the first one just wrote together with the account's
+   * once more. The page passes the browser's Web Locks; tests may pass none.
+   */
+  lock?: <T>(fn: () => Promise<T>) => Promise<T>;
 }
 
 export function createSyncEngine(parts: SyncEngineParts) {
-  const { client, storage, getSession } = parts;
+  const { client, storage, getSession, lock } = parts;
   let state: SyncState = { status: 'off', error: '', version: 0 };
   const listeners = new Set<() => void>();
   let running: Promise<void> | null = null;
@@ -73,6 +84,59 @@ export function createSyncEngine(parts: SyncEngineParts) {
     } catch {
       // storage blocked: nothing can be remembered, results simply stay where they are
     }
+  }
+
+  function readAside(): Record<string, Record<string, string>> {
+    try {
+      const parsed = JSON.parse(storage.getItem(SYNC_ASIDE_KEY) ?? 'null');
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+      const out: Record<string, Record<string, string>> = {};
+      for (const [owner, values] of Object.entries(parsed as Record<string, unknown>)) {
+        if (!values || typeof values !== 'object' || Array.isArray(values)) continue;
+        const clean: Record<string, string> = {};
+        for (const [key, raw] of Object.entries(values as Record<string, unknown>)) if (typeof raw === 'string') clean[key] = raw;
+        if (Object.keys(clean).length > 0) out[owner] = clean;
+      }
+      return out;
+    } catch {
+      return {};
+    }
+  }
+
+  function writeAside(aside: Record<string, Record<string, string>>): void {
+    try {
+      const owners = Object.keys(aside);
+      for (const old of owners.slice(0, Math.max(0, owners.length - ASIDE_ACCOUNTS_KEPT))) delete aside[old];
+      if (Object.keys(aside).length === 0) storage.removeItem(SYNC_ASIDE_KEY);
+      else storage.setItem(SYNC_ASIDE_KEY, JSON.stringify(aside));
+    } catch {
+      // storage full or blocked: the results that were put aside may be lost, nothing else is affected
+    }
+  }
+
+  /**
+   * The results in this browser belong to another account than the one signing in (it was signed out here with results
+   * that were not on it yet). What is on that account is removed; what is not is put aside for it, so that its owner gets
+   * it back at the next sign-in. Nothing of it goes to the account that signs in now.
+   */
+  function leaveOwner(saved: Saved): void {
+    const aside = readAside();
+    let removed = false;
+    for (const { key, kind } of SYNCED) {
+      const raw = storage.getItem(key);
+      if (raw === null) continue;
+      if (fingerprint(raw) !== (saved.synced[key] ?? '')) {
+        const mine = { ...(aside[saved.owner] ?? {}) };
+        mine[key] = key in mine ? serialize(mergeData(kind, parse(mine[key]), parse(raw), 'reconcile')) : raw;
+        delete aside[saved.owner];
+        aside[saved.owner] = mine; // most recent last
+      }
+      storage.removeItem(key);
+      removed = true;
+    }
+    writeAside(aside);
+    writeSaved(null);
+    setState({ status: 'off', error: '', version: removed ? state.version + 1 : state.version });
   }
 
   /** Results in this browser that were never put on an account (or changed since). */
@@ -117,14 +181,11 @@ export function createSyncEngine(parts: SyncEngineParts) {
   }
 
   async function runOnce(session: AuthSession): Promise<void> {
-    let saved = readSaved();
-    if (saved && saved.owner !== session.userId) {
-      // Left over from another account (it was never signed out cleanly): clear what is on that account.
-      becomeGuest();
-      saved = null;
+    const before = readSaved();
+    if (before && before.owner !== session.userId) {
+      // Left over from another account (it signed out before everything was saved): its results are put aside.
+      leaveOwner(before);
     }
-    // "reconcile" when this browser already holds this account's results, "combine" for a guest's results.
-    const mode: MergeMode = saved ? 'reconcile' : 'combine';
 
     const remote = await client.fetchAll(session);
     if (!remote.ok) {
@@ -133,18 +194,32 @@ export function createSyncEngine(parts: SyncEngineParts) {
     }
     if (getSession()?.userId !== session.userId) return; // signed out or switched while waiting
 
+    // Whose results are in this browser is read NOW, together with the results themselves, and not before the account
+    // was read: another tab may have synced while this one waited, and deciding from the earlier look would count the
+    // same results twice ("combine" them with the account's again).
+    let saved = readSaved();
+    if (saved && saved.owner !== session.userId) {
+      leaveOwner(saved);
+      saved = null;
+    }
+    // "reconcile" when this browser already holds this account's results, "combine" for a guest's results.
+    const mode: MergeMode = saved ? 'reconcile' : 'combine';
+
     // The merge itself does not wait, so no result written meanwhile is lost.
     const plan: Array<{ key: string; kind: DataKind; value: unknown; raw: string; localRaw: string | null; empty: boolean }> = [];
     const toSave: Record<string, unknown> = {};
+    // Results of this account that were put aside while another account was signed in come back now.
+    const aside = readAside()[session.userId];
     for (const { key, kind } of SYNCED) {
       const localRaw = storage.getItem(key);
-      const theirs = remote.value[key];
+      const onAccount = remote.value[key];
+      const theirs = aside && key in aside ? mergeData(kind, onAccount, parse(aside[key]), 'reconcile') : onAccount;
       const value = mergeData(kind, parse(localRaw), theirs, mode);
       const raw = serialize(value);
       const empty = isEmptyData(kind, value);
       plan.push({ key, kind, value, raw, localRaw, empty });
       // Saved when the account does not have exactly this yet.
-      if (!empty && serialize(mergeData(kind, theirs, theirs, 'reconcile')) !== raw) toSave[key] = value;
+      if (!empty && serialize(mergeData(kind, onAccount, onAccount, 'reconcile')) !== raw) toSave[key] = value;
     }
 
     // The account is written first: if that fails nothing here changes, so trying again is safe.
@@ -155,6 +230,13 @@ export function createSyncEngine(parts: SyncEngineParts) {
         return;
       }
       if (getSession()?.userId !== session.userId) return;
+    }
+
+    // The results that were put aside are on the account now.
+    if (aside) {
+      const left = readAside();
+      delete left[session.userId];
+      writeAside(left);
     }
 
     // Now the browser gets the same results. A result written while waiting is kept (and saved next time).
@@ -201,7 +283,13 @@ export function createSyncEngine(parts: SyncEngineParts) {
           again = false;
           const current = getSession();
           if (!current) break;
-          await runOnce(current);
+          // One tab at a time: the session is read again once it is this tab's turn.
+          await (lock
+            ? lock(async () => {
+                const turn = getSession();
+                if (turn) await runOnce(turn);
+              })
+            : runOnce(current));
         } while (again);
       } finally {
         running = null;
