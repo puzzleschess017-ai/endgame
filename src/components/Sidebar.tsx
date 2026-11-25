@@ -12,6 +12,7 @@ import {
   Flame,
   Heart,
   House,
+  LayoutDashboard,
   LogIn,
   LogOut,
   PencilLine,
@@ -50,6 +51,9 @@ export const HOME_ITEM: NavItem = {
   iconClass: 'text-[#39ff88]',
   chipClass: 'bg-[#39ff88]/15',
 };
+
+/** The same page is "Home" for a guest and the "Dashboard" of someone signed in. */
+export const DASHBOARD_ITEM: NavItem = { ...HOME_ITEM, label: 'Dashboard', icon: LayoutDashboard };
 
 export const NAV_GROUPS: NavGroup[] = [
   {
@@ -335,7 +339,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
           aria-label="Training modes"
           className="w-full xl:flex-1 xl:min-h-0 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-x-visible xl:overflow-y-auto pb-3 xl:py-2"
         >
-          <NavLink item={HOME_ITEM} active={HOME_ITEM.href === path} />
+          <NavLink item={session ? DASHBOARD_ITEM : HOME_ITEM} active={HOME_ITEM.href === path} />
           {NAV_GROUPS.map((group) => {
             const hasActive = group.items.some((item) => isActive(item, path));
             // The group of the current page stays open, so the current entry is never hidden.
