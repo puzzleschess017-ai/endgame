@@ -259,8 +259,9 @@ colours and sound stay on the device. On the server they are one row per key in 
   tab comes back, after reconnecting and every 5 minutes, so results from another device show up (Home and
   Statistics redraw by themselves).
 - **Signing out:** the results are saved first (waits 4 seconds at most), then removed from this browser, so the
-  next visitor is a guest. Results that could not be saved are kept and count as the guest's own, and go to
-  the next account that signs in.
+  next visitor is a guest. Results that could not be saved are kept. They hold the account's earlier results too,
+  so the browser remembers whose they are: the same account signing in again puts them together with its own
+  (the larger number of each day wins, nothing is counted twice); another account gets them as a guest's.
 - **When saving fails** (offline, or the table is missing) nothing in the browser changes; the account page
   says so and the sync tries again after a minute.
 - Known limit: two devices that train on the same day while offline both count that day; when they meet, the
