@@ -112,12 +112,18 @@ function LessonView({ lesson }: { lesson: Lesson }) {
             <BookOpen className="h-4 w-4" aria-hidden="true" />
             {lesson.practice.label}
           </a>
-          <a href="/woodpecker" className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2 no-underline sm:w-auto`} data-testid="practise-woodpecker">
+          <a href="/woodpecker" className={`${SECONDARY_BUTTON_CLASS} relative flex items-center justify-center gap-2 no-underline sm:w-auto`} data-testid="practise-woodpecker">
             <Repeat className="h-4 w-4" aria-hidden="true" />
             Woodpecker endgames
+            <span
+              data-testid="premium-badge"
+              className="pointer-events-none absolute -top-2 right-2 rounded-[4px] bg-red-600 px-1.5 py-px text-[10px] font-extrabold uppercase leading-none tracking-wide text-white shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
+            >
+              Premium
+            </span>
           </a>
         </div>
-        <p className="text-xs font-medium text-white/50">The Endgame Tablebase is made for larger screens.</p>
+        <p className="text-xs font-medium text-white/50">The Endgame Tablebase is made for larger screens. Woodpecker endgame puzzles are part of Premium.</p>
       </section>
 
       <section aria-label="Read next" data-testid="related">
