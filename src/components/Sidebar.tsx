@@ -219,7 +219,7 @@ function NavLink({ item, active, hideOnPhone }: { item: NavItem; active: boolean
     <a
       href={item.href}
       aria-current={active ? 'page' : undefined}
-      className={`flex items-center gap-3 px-3 py-1.5 xl:py-1 rounded-xl text-sm font-semibold whitespace-nowrap border transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+      className={`nav-item flex items-center gap-3 px-3 py-1.5 xl:py-1 rounded-xl text-sm font-semibold whitespace-nowrap border transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
         hideOnPhone ? 'max-sm:hidden' : ''
       } ${
         active
@@ -227,7 +227,7 @@ function NavLink({ item, active, hideOnPhone }: { item: NavItem; active: boolean
           : 'border-transparent text-white/80 hover:text-white hover:bg-white/5'
       }`}
     >
-      <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${item.chipClass}`}>
+      <span className={`nav-chip w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${item.chipClass}`}>
         <Icon className={`w-[17px] h-[17px] ${item.iconClass}`} aria-hidden="true" />
       </span>
       {item.label}
@@ -312,7 +312,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
       <div className="flex flex-wrap xl:flex-col items-center xl:items-stretch gap-x-3 gap-y-2 px-4 pt-3 xl:pt-0 xl:flex-1 xl:min-h-0">
         <a
           href="/"
-          className="flex items-center gap-3 shrink-0 xl:py-4 xl:border-b xl:border-white/10"
+          className="side-logo flex items-center gap-3 shrink-0 xl:py-4 xl:border-b xl:border-white/10"
           aria-label="Chess Tactics Guide home"
         >
           <img
@@ -336,7 +336,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         <nav
           ref={navRef}
           aria-label="Training modes"
-          className="w-full xl:flex-1 xl:min-h-0 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-x-visible xl:overflow-y-auto pb-3 xl:py-2"
+          className="side-nav w-full xl:flex-1 xl:min-h-0 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-x-visible xl:overflow-y-auto pb-3 xl:py-2"
         >
           <NavLink item={session ? DASHBOARD_ITEM : HOME_ITEM} active={HOME_ITEM.href === path} />
           {NAV_GROUPS.map((group) => {
@@ -344,13 +344,13 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
             // The group of the current page stays open, so the current entry is never hidden.
             const open = hasActive || !collapsed.includes(group.id);
             return (
-              <div key={group.id} className="contents xl:flex xl:flex-col xl:gap-1 xl:mt-2">
+              <div key={group.id} className="nav-group contents xl:flex xl:flex-col xl:gap-1 xl:mt-2">
                 <button
                   type="button"
                   onClick={() => toggle(group.id)}
                   aria-expanded={open}
                   aria-controls={`nav-group-${group.id}`}
-                  className="hidden xl:flex items-center justify-between px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white/50 hover:text-white/80 cursor-pointer"
+                  className="nav-group-btn hidden xl:flex items-center justify-between px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white/50 hover:text-white/80 cursor-pointer"
                 >
                   {group.label}
                   <ChevronDown
