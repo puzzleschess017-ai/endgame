@@ -213,9 +213,6 @@ export default function ProfileMenu({ guestName, align, className = '', testId =
           <a role="menuitem" href="/statistics" className={ITEM}>
             <ChartColumn className="w-4 h-4 text-emerald-400" aria-hidden="true" /> My statistics
           </a>
-          <a role="menuitem" href="/login" className={ITEM}>
-            <UserRound className="w-4 h-4 text-white/60" aria-hidden="true" /> Account
-          </a>
           <div className="h-px bg-white/10 my-1" />
           <button
             type="button"
