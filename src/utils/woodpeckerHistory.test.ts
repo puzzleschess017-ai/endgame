@@ -107,3 +107,15 @@ test('a cycle is not counted again after the history was removed (signing out) w
   const more = { ...session, cycleResults: [...session.cycleResults, cycle(3, 30, 0, 400_000)] };
   assert.equal(recordFinishedCycles(more), 1);
 });
+
+test('a review run is practice time, but not a finished cycle of a set', () => {
+  const review = { id: 'rev', config: { ...config, puzzleCount: 5 as unknown as 50, totalCycles: 1 as unknown as 4 }, cycleResults: [cycle(1, 4, 1, 60_000)], review: true };
+  assert.equal(recordFinishedCycles(review), 1);
+  assert.equal(loadWoodpeckerHistory().length, 0, 'not in the history');
+  assert.equal(summarizeWoodpecker(loadWoodpeckerHistory()).cycles, 0);
+  // the time and the puzzles still count as training of the day, once
+  assert.equal(recordFinishedCycles(review), 0);
+  const today = Object.values(loadActivity())[0];
+  assert.equal(today.puzzles, 4);
+  assert.equal(today.ms, 60_000);
+});

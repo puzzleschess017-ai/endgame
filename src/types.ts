@@ -65,6 +65,11 @@ export interface TrainingSession {
   cycleAttempts?: PuzzleAttempt[];
   /** A run made of puzzles picked by "Practise these". */
   review?: boolean;
+  /**
+   * For a review: the run it was started from. That run waits here, untouched, and comes back when the review
+   * ends, so a review is never part of its cycles.
+   */
+  resume?: TrainingSession;
 }
 
 export interface DatabaseStats {

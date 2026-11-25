@@ -52,7 +52,7 @@ function loadCounted(): string[] {
 
 /** Adds the cycles of `session` that are not in the history yet. Returns how many were new. */
 export function recordFinishedCycles(
-  session: Pick<TrainingSession, 'id' | 'config' | 'cycleResults'> | null,
+  session: Pick<TrainingSession, 'id' | 'config' | 'cycleResults' | 'review'> | null,
 ): number {
   if (!session || session.cycleResults.length === 0) return 0;
   const history = loadWoodpeckerHistory();
@@ -92,6 +92,9 @@ export function recordFinishedCycles(
       now: r.completedAt,
     });
   }
+  // A review run (a few missed or slow puzzles) is practice time, but it is not a cycle of a Woodpecker set:
+  // it stays out of the history, so it does not count as a finished cycle.
+  if (session.review) return added.length;
   try {
     const next = [...history, ...added].slice(-WOODPECKER_HISTORY_LIMIT);
     localStorage.setItem(WOODPECKER_HISTORY_STORAGE_KEY, JSON.stringify(next));
