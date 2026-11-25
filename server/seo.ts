@@ -207,19 +207,10 @@ export const PAGES: PageMeta[] = [
     path: '/openings',
     title: 'Chess Opening Theory and Lessons | Chess Tactics Guide',
     description:
-      'Free chess opening lessons with diagrams: opening principles, the Italian, Ruy Lopez, Scotch, Sicilian, French, Caro-Kann, Queen\'s Gambit, London and more.',
+      'Free chess opening lessons with diagrams: the Italian, Ruy Lopez, Scotch, Sicilian, French, Caro-Kann, Queen\'s Gambit, London and more.',
     indexable: true,
     kind: 'info',
     priority: 0.8,
-  },
-  {
-    path: '/openings/opening-principles',
-    title: 'Opening Principles Every Player Should Know | Chess Tactics Guide',
-    description:
-      'The basic opening principles with diagrams: control the center, develop your pieces, castle early and keep your queen at home in the first moves.',
-    indexable: true,
-    kind: 'article',
-    priority: 0.7,
   },
   {
     path: '/openings/italian-game',
