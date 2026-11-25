@@ -34,7 +34,7 @@ import {
   type DrillQuestion,
   type QuestionKind,
 } from '../../utils/drills';
-import { formatClock } from '../../utils/race';
+import { formatClock } from '../../utils/clock';
 import { recordActivity } from '../../utils/activity';
 import { playMoveSound } from '../../utils/sound';
 import Reconstruct from './Reconstruct';

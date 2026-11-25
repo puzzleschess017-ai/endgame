@@ -29,7 +29,7 @@ test('dayKey uses the local calendar day', () => {
 });
 
 test('recordActivity adds runs to the day and keeps totals', () => {
-  recordActivity({ mode: 'race', ms: 180_000, correct: 12, wrong: 3, puzzles: 12, now: at(2026, 11, 24, 9) });
+  recordActivity({ mode: 'survival', ms: 180_000, correct: 12, wrong: 3, puzzles: 12, now: at(2026, 11, 24, 9) });
   recordActivity({ mode: 'coordinates', ms: 30_000, correct: 20, wrong: 5, now: at(2026, 11, 24, 18) });
   recordActivity({ mode: 'streak', ms: 90_000, correct: 7, wrong: 1, puzzles: 7, now: at(2026, 11, 25, 10) });
   const log = loadActivity();
@@ -49,13 +49,13 @@ test('junk in storage is ignored and negative numbers do not count', () => {
   assert.deepEqual(loadActivity(), {});
   store.set(ACTIVITY_STORAGE_KEY, JSON.stringify({ 'bad-key': { sessions: 1 }, '2026-11-01': { sessions: -4, ms: 'x', correct: 3 } }));
   assert.deepEqual(loadActivity(), { '2026-11-01': { sessions: 0, ms: 0, puzzles: 0, correct: 3, wrong: 0 } });
-  recordActivity({ mode: 'race', ms: -5, correct: -1, wrong: -1, puzzles: -1, now: at(2026, 11, 2) });
+  recordActivity({ mode: 'survival', ms: -5, correct: -1, wrong: -1, puzzles: -1, now: at(2026, 11, 2) });
   assert.deepEqual(loadActivity()['2026-11-02'], { sessions: 1, ms: 0, puzzles: 0, correct: 0, wrong: 0 });
 });
 
 test('only the last 400 days are kept', () => {
   for (let i = 0; i < ACTIVITY_DAYS_KEPT + 30; i++) {
-    recordActivity({ mode: 'race', ms: 1000, correct: 1, wrong: 0, now: at(2024, 1, 1) + i * 86_400_000 });
+    recordActivity({ mode: 'survival', ms: 1000, correct: 1, wrong: 0, now: at(2024, 1, 1) + i * 86_400_000 });
   }
   const keys = Object.keys(loadActivity()).sort();
   assert.equal(keys.length, ACTIVITY_DAYS_KEPT);
@@ -70,7 +70,7 @@ test('lastDays: oldest first, ends today, crosses month and year', () => {
 });
 
 test('dailySeries: one point per day with minutes and accuracy', () => {
-  recordActivity({ mode: 'race', ms: 90_000, correct: 3, wrong: 1, puzzles: 3, now: at(2026, 11, 24) });
+  recordActivity({ mode: 'survival', ms: 90_000, correct: 3, wrong: 1, puzzles: 3, now: at(2026, 11, 24) });
   const series = dailySeries(loadActivity(), 3, at(2026, 11, 24));
   assert.deepEqual(series.map((p) => p.day), ['2026-11-22', '2026-11-23', '2026-11-24']);
   assert.deepEqual(series[0], { day: '2026-11-22', sessions: 0, minutes: 0, puzzles: 0, accuracy: null });

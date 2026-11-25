@@ -5,7 +5,6 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   StatTile,
-  segmentClass,
 } from '../components/panelUi';
 import TrainerLayout from '../components/TrainerLayout';
 import { usePuzzleSolver, type FailedInfo } from '../hooks/usePuzzleSolver';
@@ -16,18 +15,13 @@ import { readSavedUsername } from '../utils/profile';
 import { playMoveSound } from '../utils/sound';
 import { recordActivity } from '../utils/activity';
 import {
-  RACE_DURATIONS,
-  RACE_LADDER,
-  WRONG_MOVE_PENALTY_MS,
-  durationLabel,
-  formatClock,
-  loadRaceBest,
-  loadRaceSettings,
-  raceAccuracy,
-  saveRaceBest,
-  saveRaceSettings,
-  type RaceSettings,
-} from '../utils/race';
+  SURVIVAL_LADDER,
+  SURVIVAL_STRIKES,
+  loadSurvivalBest,
+  saveSurvivalBest,
+  strikesLeft,
+  survivalAccuracy,
+} from '../utils/survival';
 
 type Phase = 'setup' | 'loading' | 'running' | 'finished';
 
@@ -42,36 +36,27 @@ interface RunResult {
 /** Pause after a solved puzzle, and after a wrong one (long enough to see the right move). */
 const NEXT_AFTER_SOLVED_MS = 250;
 const NEXT_AFTER_WRONG_MS = 1000;
-const PENALTY_FLASH_MS = 1000;
-const TICK_MS = 100;
 
-export default function RacePage() {
-  const [settings, setSettings] = useState<RaceSettings>(() => loadRaceSettings());
+export default function SurvivalPage() {
   const [appearance, setAppearance] = useAppearance();
   const [username] = useState(() => readSavedUsername());
 
   const [phase, setPhase] = useState<Phase>('setup');
   const [solved, setSolved] = useState(0);
   const [wrong, setWrong] = useState(0);
-  const [timeLeftMs, setTimeLeftMs] = useState(0);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [note, setNote] = useState<{ kind: 'solved' | 'wrong'; text: string } | null>(null);
-  const [penaltyVisible, setPenaltyVisible] = useState(false);
   const [result, setResult] = useState<RunResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [needsRetry, setNeedsRetry] = useState(false);
 
   const phaseRef = useRef<Phase>('setup');
-  const settingsRef = useRef(settings);
-  settingsRef.current = settings;
   const runIdRef = useRef(0);
   const feedRef = useRef<LadderFeed | null>(null);
   const solvedRef = useRef(0);
   const wrongRef = useRef(0);
-  const endAtRef = useRef(0);
   const runStartedAtRef = useRef(Date.now());
   const nextTimerRef = useRef<number | undefined>(undefined);
-  const penaltyTimerRef = useRef<number | undefined>(undefined);
 
   const setPhaseBoth = (next: Phase) => {
     phaseRef.current = next;
@@ -79,22 +64,17 @@ export default function RacePage() {
   };
 
   useEffect(() => {
-    document.title = 'Puzzle Race | Chess Tactics Guide';
+    document.title = 'Puzzle Survival | Chess Tactics Guide';
     document
       .querySelector('meta[name="description"]')
       ?.setAttribute(
         'content',
-        'Puzzle Race: solve as many chess puzzles as you can in 1, 3 or 5 minutes. A wrong move costs 10 seconds.',
+        'Puzzle Survival: solve chess puzzles that get harder one by one. You can make 2 mistakes; the third one ends the run.',
       );
   }, []);
 
-  useEffect(() => {
-    saveRaceSettings(settings);
-  }, [settings]);
-
   const clearTimers = useCallback(() => {
     window.clearTimeout(nextTimerRef.current);
-    window.clearTimeout(penaltyTimerRef.current);
   }, []);
 
   useEffect(() => clearTimers, [clearTimers]);
@@ -109,13 +89,12 @@ export default function RacePage() {
     clearTimers();
     runIdRef.current += 1; // anything still loading belongs to a finished run
     solver.lock();
-    const { duration } = settingsRef.current;
     const solvedCount = solvedRef.current;
     const wrongCount = wrongRef.current;
-    const { best, isNewBest } = saveRaceBest(duration, solvedCount);
+    const { best, isNewBest } = saveSurvivalBest(solvedCount);
     recordActivity({
-      mode: 'race',
-      ms: Math.min(duration * 1000, Date.now() - runStartedAtRef.current),
+      mode: 'survival',
+      ms: Math.max(0, Date.now() - runStartedAtRef.current),
       correct: solvedCount,
       wrong: wrongCount,
       puzzles: solvedCount,
@@ -123,12 +102,10 @@ export default function RacePage() {
     setResult({
       solved: solvedCount,
       wrong: wrongCount,
-      accuracy: raceAccuracy(solvedCount, wrongCount),
+      accuracy: survivalAccuracy(solvedCount, wrongCount),
       best,
       isNewBest,
     });
-    setTimeLeftMs(0);
-    setPenaltyVisible(false);
     setPhaseBoth('finished');
     playMoveSound('success');
   }, [clearTimers, solver]);
@@ -181,37 +158,20 @@ export default function RacePage() {
     if (phaseRef.current !== 'running') return;
     wrongRef.current += 1;
     setWrong(wrongRef.current);
-    endAtRef.current -= WRONG_MOVE_PENALTY_MS;
-    const left = endAtRef.current - performance.now();
-    setNote({ kind: 'wrong', text: `Wrong move. The best move was ${info.expectedSan}.` });
-    setPenaltyVisible(true);
-    window.clearTimeout(penaltyTimerRef.current);
-    penaltyTimerRef.current = window.setTimeout(() => setPenaltyVisible(false), PENALTY_FLASH_MS);
-    if (left <= 0) {
+    if (strikesLeft(wrongRef.current) <= 0) {
       finishRun();
       return;
     }
-    setTimeLeftMs(left);
+    setNote({ kind: 'wrong', text: `Wrong move. The best move was ${info.expectedSan}.` });
     scheduleNext(NEXT_AFTER_WRONG_MS);
   };
-
-  // Countdown. Uses the wall clock so a slow tab cannot stretch the race.
-  useEffect(() => {
-    if (phase !== 'running') return;
-    const id = window.setInterval(() => {
-      const left = endAtRef.current - performance.now();
-      if (left <= 0) finishRun();
-      else setTimeLeftMs(left);
-    }, TICK_MS);
-    return () => window.clearInterval(id);
-  }, [phase, finishRun]);
 
   const startRun = useCallback(async () => {
     if (phaseRef.current === 'loading') return;
     clearTimers();
     runIdRef.current += 1;
     const runId = runIdRef.current;
-    const feed = new LadderFeed({ ...RACE_LADDER });
+    const feed = new LadderFeed({ ...SURVIVAL_LADDER });
     feedRef.current = feed;
     solvedRef.current = 0;
     wrongRef.current = 0;
@@ -221,12 +181,11 @@ export default function RacePage() {
     setError(null);
     setNeedsRetry(false);
     setNote(null);
-    setPenaltyVisible(false);
     setPuzzle(null);
     solver.reset();
     setPhaseBoth('loading');
     try {
-      await feed.prepare(); // the clock only starts once the first puzzles are here
+      await feed.prepare(); // the run only starts once the first puzzles are here
     } catch (err) {
       if (runId !== runIdRef.current) return;
       setError(err instanceof Error ? err.message : 'Could not load puzzles. Check your connection.');
@@ -234,10 +193,7 @@ export default function RacePage() {
       return;
     }
     if (runId !== runIdRef.current) return;
-    const totalMs = settingsRef.current.duration * 1000;
-    endAtRef.current = performance.now() + totalMs;
     runStartedAtRef.current = Date.now();
-    setTimeLeftMs(totalMs);
     setPhaseBoth('running');
     void showNextPuzzleRef.current();
   }, [clearTimers, solver]);
@@ -250,14 +206,11 @@ export default function RacePage() {
     setResult(null);
     setError(null);
     setNote(null);
-    setPenaltyVisible(false);
     setPhaseBoth('setup');
   }, [clearTimers, solver]);
 
-  const best = loadRaceBest(settings.duration);
-  const totalMs = settings.duration * 1000;
-  const barPercent = Math.max(0, Math.min(100, (timeLeftMs / totalMs) * 100));
-  const lowTime = timeLeftMs > 0 && timeLeftMs <= 10_000;
+  const best = loadSurvivalBest();
+  const left = strikesLeft(wrong);
   const sideName = solver.playerColor === 'white' ? 'White' : 'Black';
   const status = error
     ? ''
@@ -284,34 +237,16 @@ export default function RacePage() {
           {(phase === 'setup' || phase === 'loading') && (
             <div className={CARD_CLASS}>
               <div>
-                <h2 className="text-xl font-bold text-white tracking-tight">Puzzle Race</h2>
+                <h2 className="text-xl font-bold text-white tracking-tight">Puzzle Survival</h2>
                 <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
-                  Solve as many puzzles as you can before the clock runs out. They start easy and get
-                  harder.
+                  Solve puzzles for as long as you can. They start easy and get harder one by one. There is no clock, so
+                  take your time.
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <span className="text-sm font-semibold text-white">Time</span>
-                <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
-                  {RACE_DURATIONS.map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      aria-pressed={settings.duration === d}
-                      disabled={phase === 'loading'}
-                      onClick={() => setSettings({ ...settings, duration: d })}
-                      className={segmentClass(settings.duration === d)}
-                    >
-                      {durationLabel(d)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <p className="text-sm font-medium text-white/80 leading-relaxed">
-                A wrong move costs <span className="font-bold text-[#ff7a7a]">10 seconds</span> and you
-                move on to the next puzzle.
+                You have <span className="font-bold text-[#ff7a7a]">{SURVIVAL_STRIKES} lives</span>. Every wrong move costs
+                one, and the run ends when the last one is gone. Your score is the number of puzzles you solved.
               </p>
 
               {error && (
@@ -324,9 +259,7 @@ export default function RacePage() {
               )}
 
               <p className="text-sm font-semibold text-white/75 tabular-nums">
-                {best > 0
-                  ? `Your best (${durationLabel(settings.duration)}): ${best}`
-                  : 'No record yet for this time.'}
+                {best > 0 ? `Your best: ${best}` : 'No record yet.'}
               </p>
 
               <button
@@ -342,29 +275,20 @@ export default function RacePage() {
 
           {phase === 'running' && (
             <div className={CARD_CLASS}>
-              <div className="space-y-2">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-semibold text-white">Time left</span>
-                  <span className="flex items-baseline gap-2">
-                    {penaltyVisible && (
-                      <span className="text-sm font-bold text-[#ff7a7a]" data-testid="penalty">
-                        −{WRONG_MOVE_PENALTY_MS / 1000} s
-                      </span>
-                    )}
-                    <span
-                      className={`text-2xl font-bold tabular-nums ${lowTime ? 'text-[#ff7a7a]' : 'text-white'}`}
-                      data-testid="clock"
-                    >
-                      {formatClock(timeLeftMs)}
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-white">Lives</span>
+                <span
+                  className="flex items-center gap-1.5 text-2xl leading-none"
+                  data-testid="lives"
+                  role="img"
+                  aria-label={`${left} of ${SURVIVAL_STRIKES} lives left`}
+                >
+                  {Array.from({ length: SURVIVAL_STRIKES }, (_, i) => (
+                    <span key={i} aria-hidden="true" className={i < left ? 'text-[#ff5c7a]' : 'text-white/20'}>
+                      {i < left ? '♥' : '♡'}
                     </span>
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-[#101b2f] overflow-hidden" aria-hidden="true">
-                  <div
-                    className={`h-full ${lowTime ? 'bg-[#ff7a7a]' : 'bg-[#39ff88]'}`}
-                    style={{ width: `${barPercent}%` }}
-                  />
-                </div>
+                  ))}
+                </span>
               </div>
 
               <div className="grid grid-cols-3 gap-2.5">
@@ -406,7 +330,7 @@ export default function RacePage() {
           {phase === 'finished' && result && (
             <div className={CARD_CLASS} role="status" aria-live="polite">
               <div className="text-center">
-                <h2 className="text-xl font-bold text-white tracking-tight">Time’s up!</h2>
+                <h2 className="text-xl font-bold text-white tracking-tight">Run over</h2>
                 <div
                   className="text-7xl font-bold text-[#39ff88] leading-none mt-4 tabular-nums"
                   data-testid="final-solved"
@@ -426,17 +350,12 @@ export default function RacePage() {
               <div className="grid grid-cols-3 gap-2.5">
                 <StatTile label="Accuracy" value={`${result.accuracy}%`} />
                 <StatTile label="Wrong" value={String(result.wrong)} tone="bad" />
-                <StatTile label={`Best (${durationLabel(settings.duration)})`} value={String(result.best)} tone="good" />
+                <StatTile label="Best" value={String(result.best)} tone="good" />
               </div>
 
-              <div className="flex flex-col gap-2.5">
-                <button type="button" onClick={() => void startRun()} className={PRIMARY_BUTTON_CLASS}>
-                  Play again
-                </button>
-                <button type="button" onClick={backToSetup} className={SECONDARY_BUTTON_CLASS}>
-                  Change settings
-                </button>
-              </div>
+              <button type="button" onClick={() => void startRun()} className={PRIMARY_BUTTON_CLASS}>
+                Play again
+              </button>
             </div>
           )}
         </>

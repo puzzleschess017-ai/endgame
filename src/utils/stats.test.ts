@@ -13,15 +13,15 @@ beforeEach(() => store.clear());
 
 test('fresh browser: no results anywhere', () => {
   const stats = collectHomeStats();
-  for (const id of ['woodpecker', 'coordinates', 'streak', 'race', 'blindfold']) {
+  for (const id of ['woodpecker', 'coordinates', 'streak', 'survival', 'blindfold']) {
     assert.deepEqual(stats.modes[id], [], id);
   }
-  assert.deepEqual(stats.summary, { records: 0, woodpeckerCycles: 0, bestStreak: 0, bestRace3: 0 });
+  assert.deepEqual(stats.summary, { records: 0, woodpeckerCycles: 0, bestStreak: 0, bestSurvival: 0 });
 });
 
 test('results of every mode show up', () => {
   store.set('ctg_streak_best_v1', '14');
-  store.set('ctg_race_best_v1', '{"60":9,"180":21}');
+  store.set('ctg_survival_best_v1', '17');
   store.set('ctg_blindfold_best_v1', '{"6":8,"32":3}');
   store.set('ctg_drills_best_v1', '{"color":31,"knight":12}');
   store.set('ctg_coordinates_best_v1', '{"find_30":22,"find_60":41}');
@@ -31,10 +31,7 @@ test('results of every mode show up', () => {
   );
   const { modes, summary } = collectHomeStats();
   assert.deepEqual(modes.streak, [{ label: 'Best streak', value: '14' }]);
-  assert.deepEqual(modes.race, [
-    { label: '1 min race', value: '9 solved' },
-    { label: '3 min race', value: '21 solved' },
-  ]);
+  assert.deepEqual(modes.survival, [{ label: 'Best run', value: '17 solved' }]);
   assert.deepEqual(modes.coordinates.map((l) => l.value), ['22', '41']);
   assert.deepEqual(
     modes.blindfold.map((l) => `${l.label}=${l.value}`),
@@ -42,7 +39,7 @@ test('results of every mode show up', () => {
   );
   assert.deepEqual(modes.woodpecker.map((l) => l.label), ['Cycles finished', 'Puzzles solved', 'Best accuracy', 'Fastest perfect cycle']);
   assert.equal(modes.woodpecker[3].value, '08:00');
-  assert.deepEqual(summary, { records: 10, woodpeckerCycles: 1, bestStreak: 14, bestRace3: 21 });
+  assert.deepEqual(summary, { records: 9, woodpeckerCycles: 1, bestStreak: 14, bestSurvival: 17 });
 });
 
 test('an unfinished Woodpecker session is shown as in progress', () => {
@@ -65,11 +62,11 @@ test('an unfinished Woodpecker session is shown as in progress', () => {
 
 test('junk in storage does not break Home', () => {
   store.set('ctg_streak_best_v1', 'abc');
-  store.set('ctg_race_best_v1', '[1,2');
+  store.set('ctg_survival_best_v1', '[1,2');
   store.set('ctg_blindfold_best_v1', '"x"');
   store.set('endgame_woodpecker_session_v1', '{{{');
   const { summary } = collectHomeStats();
-  assert.deepEqual(summary, { records: 0, woodpeckerCycles: 0, bestStreak: 0, bestRace3: 0 });
+  assert.deepEqual(summary, { records: 0, woodpeckerCycles: 0, bestStreak: 0, bestSurvival: 0 });
 });
 
 test('recent Woodpecker cycles: newest first, at most five', () => {
@@ -114,7 +111,7 @@ test('overview of a fresh browser: zeros and dashes', () => {
 test('overview tiles reflect the activity log', () => {
   const now = new Date(2026, 10, 24, 15).getTime();
   const day = 86_400_000;
-  recordActivity({ mode: 'race', ms: 180_000, correct: 12, wrong: 3, puzzles: 12, now: now - day });
+  recordActivity({ mode: 'survival', ms: 180_000, correct: 12, wrong: 3, puzzles: 12, now: now - day });
   recordActivity({ mode: 'streak', ms: 60_000, correct: 5, wrong: 1, puzzles: 5, now });
   recordActivity({ mode: 'drills', ms: 60_000, correct: 20, wrong: 0, now });
   store.set('ctg_streak_best_v1', '9');
@@ -130,6 +127,6 @@ test('overview tiles reflect the activity log', () => {
 });
 
 test('a single session is not plural', () => {
-  recordActivity({ mode: 'race', ms: 1000, correct: 1, wrong: 0, puzzles: 1 });
+  recordActivity({ mode: 'survival', ms: 1000, correct: 1, wrong: 0, puzzles: 1 });
   assert.equal(collectOverview().tiles.find((t) => t.id === 'time')!.sub, '1 total session');
 });

@@ -6,8 +6,8 @@ import { formatDuration, loadSessionFromStorage } from './chessHelpers';
 import { loadBestScore } from './coordinates';
 import { QUESTION_KINDS, drillLabel, loadDrillBest } from './drills';
 import { RECONSTRUCT_LEVELS, RECONSTRUCT_ROUND, loadReconstructBest } from './reconstruct';
-import { RACE_DURATIONS, durationLabel, loadRaceBest } from './race';
 import { loadBestStreak } from './streak';
+import { loadSurvivalBest } from './survival';
 import { loadWoodpeckerHistory, summarizeWoodpecker } from './woodpeckerHistory';
 
 export interface StatLine {
@@ -27,7 +27,7 @@ export interface HomeStats {
   /** Lines per mode id (see MODE_ITEMS). Empty means "no results yet". */
   modes: Record<string, StatLine[]>;
   /** The four numbers at the top of Home. */
-  summary: { records: number; woodpeckerCycles: number; bestStreak: number; bestRace3: number };
+  summary: { records: number; woodpeckerCycles: number; bestStreak: number; bestSurvival: number };
   /** The last finished Woodpecker cycles, newest first. */
   recentCycles: RecentCycle[];
 }
@@ -67,10 +67,8 @@ export function collectHomeStats(): HomeStats {
   const bestStreak = loadBestStreak();
   const streakLines: StatLine[] = bestStreak > 0 ? [{ label: 'Best streak', value: String(bestStreak) }] : [];
 
-  const raceBests = RACE_DURATIONS.map((d) => ({ d, best: loadRaceBest(d) }));
-  const raceLines: StatLine[] = raceBests
-    .filter((r) => r.best > 0)
-    .map((r) => ({ label: `${durationLabel(r.d)} race`, value: `${r.best} solved` }));
+  const bestSurvival = loadSurvivalBest();
+  const survivalLines: StatLine[] = bestSurvival > 0 ? [{ label: 'Best run', value: `${bestSurvival} solved` }] : [];
 
   const blindfoldBests = MATE_IN_OPTIONS.flatMap((mateIn) =>
     BLINDFOLD_LEVELS.map((level) => ({ mateIn, level, best: loadBlindfoldBest(level, mateIn) })),
@@ -89,7 +87,7 @@ export function collectHomeStats(): HomeStats {
   const records =
     coordinateLines.length +
     streakLines.length +
-    raceLines.length +
+    survivalLines.length +
     blindfoldLines.length +
     (wood.cycles > 0 ? 1 : 0);
 
@@ -108,14 +106,14 @@ export function collectHomeStats(): HomeStats {
       woodpecker: woodLines,
       coordinates: coordinateLines,
       streak: streakLines,
-      race: raceLines,
+      survival: survivalLines,
       blindfold: blindfoldLines,
     },
     summary: {
       records,
       woodpeckerCycles: wood.cycles,
       bestStreak,
-      bestRace3: raceBests.find((r) => r.d === 180)?.best ?? 0,
+      bestSurvival,
     },
     recentCycles,
   };

@@ -8,7 +8,7 @@ import { SYNC_ASIDE_KEY, createSyncEngine, type StorageLike } from './engine.ts'
 const ACTIVITY = 'ctg_activity_v1';
 const HISTORY = 'ctg_woodpecker_history_v1';
 const STREAK = 'ctg_streak_best_v1';
-const RACE = 'ctg_race_best_v1';
+const RACE = 'ctg_coordinates_best_v1';
 
 const day = (sessions: number, correct = 0) => ({ sessions, ms: sessions * 1000, puzzles: correct, correct, wrong: 0 });
 const cycle = (key: string, completedAt: number) => ({ key, completedAt, correct: 5, incorrect: 0, accuracy: 100, timeMs: 1000, puzzleCount: 10, difficulty: 'easy' });

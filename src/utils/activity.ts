@@ -2,7 +2,7 @@
 // Every finished run of every mode adds one session to its day. Only day totals are stored, so the
 // record stays small: about 100 bytes per day that was trained, the last 400 days.
 
-export type ActivityMode = 'woodpecker' | 'coordinates' | 'streak' | 'race' | 'blindfold' | 'drills';
+export type ActivityMode = 'woodpecker' | 'coordinates' | 'streak' | 'survival' | 'blindfold' | 'drills';
 
 export const ACTIVITY_STORAGE_KEY = 'ctg_activity_v1';
 export const ACTIVITY_DAYS_KEPT = 400;

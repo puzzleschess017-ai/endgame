@@ -32,7 +32,7 @@ that exposes the puzzle API and serves the Vite dev server as middleware). Runni
 | --- | --- |
 | `src/` | React frontend (`App.tsx` is the Woodpecker trainer, `pages/` has one component per extra page such as `/coordinates` or `/editor`, plus `components/` and `utils/`) |
 | `server.ts` | Express server: `/api/puzzles/sample`, `/api/puzzles/ladder`, `/api/puzzles`, `/api/stats`, `/api/health` |
-| `server/ladder.ts` | Builds the easy-to-hard puzzle ladder for Streak and Race |
+| `server/ladder.ts` | Builds the easy-to-hard puzzle ladder for Streak and Survival |
 | `endgame.db` | SQLite database with about 80,000 Lichess puzzles, 18.6 MB (read-only at runtime) |
 | `scripts/build-endgame-db.mjs` | Original build of the database from the Lichess CSV dump |
 | `scripts/extend-db.mjs` | Adds more puzzles to the existing database (see "What is in the database") |
@@ -60,7 +60,7 @@ If the database has no `is_endgame` column, the server falls back to the tag.
 | Rows | What |
 | --- | --- |
 | 47,851 with `is_endgame = 1` | Real endgames. The only puzzles in the Endgame type of Woodpecker (Classic uses all rows) |
-| about 32,000 with `is_endgame = 0` | Puzzles of every other kind (opening, middlegame, tactics) plus endgame-tagged puzzles with too much material. Used by Classic Woodpecker, Streak, Race and Blindfold, which use every row |
+| about 32,000 with `is_endgame = 0` | Puzzles of every other kind (opening, middlegame, tactics) plus endgame-tagged puzzles with too much material. Used by Classic Woodpecker, Streak, Survival and Blindfold, which use every row |
 | 10,445 one-move mates | Puzzles with exactly two moves (mate in 1); 4,419 of them have at most 10 pieces, for Blindfold |
 
 The database is kept small on purpose because the site runs on free hosting (about 230 bytes
@@ -94,7 +94,7 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | `/statistics` | Statistics: personal records of every mode, a *Woodpecker progress* section and the last Woodpecker cycles. Progress shows two line charts (seconds per puzzle and accuracy) for cycle 1, 2, 3... of one set of puzzles, with a selector for the last 20 sets; cycles are grouped by the session id in the history key (`src/utils/progress.ts`, `src/components/LineChart.tsx`) |
 | `/coordinates` | Coordinates trainer: click the named square against the clock (30 s, or Infinite: no clock, you finish the run yourself and it makes no record; playing as White or Black). The board has no labels, on purpose. Records saved for the old 60 s option are kept and still show in the statistics |
 | `/streak` | Puzzle Streak: puzzles from the whole database, easy to hard, one wrong move ends the run, one skip allowed, best streak saved in the browser |
-| `/race` | Puzzle Race: solve as many puzzles as possible in 1, 3 or 5 minutes, easy to hard from the whole database. A wrong move costs 10 seconds and moves on to the next puzzle. Best score per time saved in the browser (a run ended early is not saved) |
+| `/survival` | Puzzle Survival: solve puzzles that get harder one by one, with 3 lives and no clock. A wrong move costs a life and moves on to the next puzzle; the third one ends the run. Best score saved in the browser (a run ended early is not saved). The old `/race` address redirects here |
 | `/login` | Sign in, create an account or play as a guest; the account page (name, email, plan, Sign out) for someone signed in |
 | `/blindfold` | Blindfold: *Checkmate* (mate in 1, 2 or 3: memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; in a mate in 2 or 3 you type your moves one at a time, the opponent's reply is shown as text after each right one and the board stays empty; checkmate always counts, other moves must be the puzzle's own; levels by number of pieces: up to 6, 7, 8, 10 or any; a round is 10 puzzles; a best score for each length and level) and *Drills* (without a board, for 60 s or with no time limit (Premium): the endless run is practice, "Finish and save" adds the answers to Statistics but keeps no record;  square color, check or not, attacked or not (a piece and a square, or two squares at once, sometimes with a piece in the way), same diagonal, knight route, moves needed (king, rook or bishop; a bishop trip to the other colour is "impossible"), count the squares (how many a piece attacks on an empty board, or how many lie between two squares: a typed number), square and opposition (the rule of the square for a lone pawn, and who has the opposition), follow the moves (the moves are given as text: say what is on a square, where a piece that started on a square went, typed as a square such as f3, or whether it is check); and *Rebuild position*: a real position is shown for 10, 20 or 30 s, the board is emptied and you put the pieces back by dragging them in or picking a piece and tapping squares; 5 positions per round, up to 6, 7, 8 or 10 pieces, scored by perfect rebuilds; the positions come from the same mate-in-1 puzzles as Blindfold). Best scores saved in the browser |
 | `/editor` | Board Editor: set up any position by dragging pieces in from the palette (or choosing a piece and tapping squares), moving them, or dragging them off the board; side to move, castling rights and en passant; load or copy a FEN; "Check in Board Analysis" opens it on the Board Analysis page. The button is only on when the position is legal (both kings, no pawns on the first or last rank, the side not to move is not in check) |
@@ -108,7 +108,7 @@ tested without a browser lives in `src/utils/`; run all its tests with
 
 Blindfold gets random mate puzzles from `GET /api/puzzles/blindfold?maxPieces=8&count=10&mateIn=2` (`mateIn` is 1, 2 or 3 and 1 when missing: a mate in N is a puzzle with 2N moves, and for 2 and 3 also with Lichess's `mateInN` tag, about 9,200 and 3,300 puzzles, no new data; `maxPieces` is 6, 7, 8, 10 or 32 = any; pieces are counted after the opponent's first move; the list of eligible ids is built once in memory by `server/blindfold.ts`). Run its tests with `npx tsx --test server/*.test.ts`.
 
-Streak and Race get their puzzles from `GET /api/puzzles/ladder?start=500&step=40&count=30` (Race asks for `step=25`): one
+Streak and Survival get their puzzles from `GET /api/puzzles/ladder?start=500&step=40&count=30` (Survival asks for `step=25`): one
 random puzzle per rating step (start, start + step, ...), easy first, from every puzzle in the
 database. `src/utils/ladderFeed.ts` asks for the next batch before the current one runs out, and
 `src/hooks/usePuzzleSolver.ts` plays a puzzle on the board (opponent's replies, promotion, first
@@ -239,7 +239,7 @@ sets the guest choice, so they land on Home as a guest and the window does not c
 | Blindfold drills | page visible, every choice locked | square colours | all ten: also Check or not, Attacked or not, diagonals, knight routes, Moves needed, Count the squares, Square and opposition, Follow the moves and Rebuild position |
 | Blindfold drills, no time limit | locked | locked | yes |
 | Board Analysis, Check with engine | locked (sign in to unlock) | yes | yes |
-| Streak, Race, Coordinates, Board Editor, Board Analysis (without the engine), Statistics | yes | yes | yes |
+| Streak, Survival, Coordinates, Board Editor, Board Analysis (without the engine), Statistics | yes | yes | yes |
 
 Choices a visitor may not use stay visible with a small lock; clicking one says to sign in or that it is
 Premium (`src/components/locks.tsx`). A guest who opens Blindfold sees the same page as everybody, with every choice locked and "Create a free account to play" instead of Start. The server checks the rest: `/api/puzzles/sample` (type, difficulty, number of puzzles) and
@@ -254,7 +254,7 @@ can override the project on the server too.
 
 Results follow the account to every device (`src/sync/`). The pages still write their results to
 `localStorage` as before; the sync watches only the keys in `src/sync/data.ts` (daily activity, finished
-Woodpecker cycles, personal bests of Streak, Race, Coordinates, Blindfold and Drills). Settings such as board
+Woodpecker cycles, personal bests of Streak, Survival, Coordinates, Blindfold and Drills). Settings such as board
 colours and sound stay on the device. On the server they are one row per key in the table `user_data`
 (created by `supabase/schema.sql`, protected so everybody sees only their own rows).
 

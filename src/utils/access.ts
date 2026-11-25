@@ -2,7 +2,7 @@
 //   guest   - not signed in ("Play as a guest")
 //   free    - signed in, no premium
 //   premium - signed in and paid (until payment exists, the tier is set by hand in the database)
-// Board Editor, Board Analysis, Puzzle Streak, Puzzle Race, Coordinate Training and Statistics are for
+// Board Editor, Board Analysis, Puzzle Streak, Puzzle Survival, Coordinate Training and Statistics are for
 // everybody, except that "Check with engine" in Board Analysis needs an account (ENGINE_TIER). The limits
 // below are for Woodpecker and Blindfold. The same rules are used in the browser (to
 // grey out choices) and on the server (to refuse a request that asks for more than the visitor may have).
