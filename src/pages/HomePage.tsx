@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AppShell from '../components/AppShell';
 import BarChart, { type BarDatum } from '../components/BarChart';
+import DailyGoalCard from '../components/DailyGoalCard';
 import { segmentClass } from '../components/panelUi';
 import { dailySeries } from '../utils/activity';
 import { useSyncVersion } from '../sync';
@@ -56,6 +57,8 @@ export default function HomePage() {
         <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
           {username ? `Hello, ${username}!` : 'Hello!'}
         </h2>
+
+        <DailyGoalCard log={overview.log} />
 
         <section className="flex flex-col gap-4" aria-label="Training overview">
           <h3 className="text-xl font-bold text-white tracking-tight">Training Overview</h3>
