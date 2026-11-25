@@ -77,6 +77,14 @@ export function canUseEngine(tier: Tier): boolean {
   return TIERS.indexOf(tier) >= TIERS.indexOf(ENGINE_TIER);
 }
 
+/** The lowest plan that may download the e-books (a monthly or yearly subscription is Premium). The server checks this too. */
+export const EBOOK_TIER: Tier = 'premium';
+
+/** True when the tier may download the e-books. */
+export function canDownloadEbooks(tier: Tier): boolean {
+  return TIERS.indexOf(tier) >= TIERS.indexOf(EBOOK_TIER);
+}
+
 export const TIER_NAME: Record<Tier, string> = { guest: 'guest', free: 'a signed-in account', premium: 'Premium' };
 
 /** What the person must do to get a choice: sign in, or go Premium. Empty when they already have it. */

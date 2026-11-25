@@ -8,6 +8,7 @@ import {
   ALL_LEVELS,
   ALL_MATE_IN,
   ALL_MEMORIZE,
+  canDownloadEbooks,
   canOpenBlindfold,
   canUseEngine,
   checkBlindfoldDrill,
@@ -17,6 +18,7 @@ import {
   clampBlindfold,
   clampDrill,
   clampDrillLimit,
+  EBOOK_TIER,
   ENGINE_TIER,
   checkBlindfoldMate,
   checkWoodpecker,
@@ -94,6 +96,12 @@ describe('the three tiers', () => {
     assert.equal(canUseEngine('premium'), true);
     assert.equal(unlockHint('guest', ENGINE_TIER), 'Sign in to unlock');
     assert.equal(unlockHint('free', ENGINE_TIER), '');
+  });
+  it('the e-books are for Premium only', () => {
+    assert.equal(EBOOK_TIER, 'premium');
+    assert.equal(canDownloadEbooks('guest'), false);
+    assert.equal(canDownloadEbooks('free'), false);
+    assert.equal(canDownloadEbooks('premium'), true);
   });
   it('signed in: the 1 minute drill only; no time limit is Premium', () => {
     assert.ok(ok(checkBlindfoldDrillLimit('free', 'minute')));

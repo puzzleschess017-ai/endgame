@@ -4,10 +4,11 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
 import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
+import { ebookPath, findEbook } from './server/ebooks.ts';
 import { createTablebase } from './server/tablebase.ts';
 import { createTierLookup } from './server/tier.ts';
 import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './src/auth/project.ts';
-import { checkBlindfoldLevel, checkBlindfoldMateIn, checkWoodpecker } from './src/utils/access.ts';
+import { canDownloadEbooks, checkBlindfoldLevel, checkBlindfoldMateIn, checkWoodpecker } from './src/utils/access.ts';
 import type { BlindfoldLevel, MateIn } from './src/utils/blindfold.ts';
 import type { PuzzleCountOption } from './src/types.ts';
 import { cleanSiteUrl, pageFor, renderPage, robotsTxt, sitemapXml } from './server/seo.ts';
@@ -458,6 +459,34 @@ async function startServer() {
   const tierOf = createTierLookup({
     url: process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL,
     key: process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_KEY,
+  });
+
+  // The e-books come with Premium (a monthly or yearly subscription). The files are not in public/ or dist/,
+  // so this is the only way to get one: the browser sends the sign-in token and the plan is checked here.
+  app.get('/api/ebooks/:slug', async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    const book = findEbook(req.params.slug);
+    if (!book) {
+      res.status(404).json({ error: 'There is no such e-book.' });
+      return;
+    }
+    const visitor = await tierOf(req.headers.authorization);
+    if (!visitor.ok) {
+      res.status(visitor.status).json({ error: visitor.error });
+      return;
+    }
+    if (!canDownloadEbooks(visitor.tier)) {
+      res.status(403).json({
+        error: visitor.tier === 'guest' ? 'Sign in with a Premium account to download the e-book.' : 'The e-book is part of Premium.',
+      });
+      return;
+    }
+    const file = ebookPath(book);
+    if (!file) {
+      res.status(404).json({ error: 'The e-book is not on the server yet.' });
+      return;
+    }
+    res.download(file, book.downloadName);
   });
 
   app.get('/api/puzzles/sample', async (req, res) => {
