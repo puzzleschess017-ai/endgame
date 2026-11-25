@@ -28,6 +28,7 @@ import {
   saveDrillKind,
   saveDrillLimit,
   secondsPerAnswer,
+  typedInput,
   type DrillKind,
   type DrillLimit,
   type DrillQuestion,
@@ -67,6 +68,9 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
   const [msLeft, setMsLeft] = useState(DRILL_DURATION_MS);
   const [last, setLast] = useState<{ ok: boolean; text: string } | null>(null);
   const [result, setResult] = useState<DrillResult | null>(null);
+  /** What is typed in the answer box (the drills with a typed answer). */
+  const [typed, setTyped] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const phaseRef = useRef<Phase>('setup');
   const kindRef = useRef(kind);
@@ -90,7 +94,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
       .querySelector('meta[name="description"]')
       ?.setAttribute(
         'content',
-        'Chess visualization drills: square colors, check or not, diagonals and knight routes, with no board to look at.',
+        'Chess visualization drills with no board to look at: square colors, check and attack questions, diagonals, knight routes, piece distances, counting squares, king and pawn endgames and following moves.',
       );
   }, []);
 
@@ -170,6 +174,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
     const first = makeQuestion(kindRef.current as QuestionKind);
     questionRef.current = first;
     setQuestion(first);
+    setTyped('');
     go('running');
   }, [tier]);
 
@@ -177,7 +182,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
     const q = questionRef.current;
     if (phaseRef.current !== 'running' || !q) return;
     if (endAtRef.current - performance.now() <= 0) return;
-    const ok = value === q.answer;
+    const ok = (q.entry ? typedInput(q.entry, value) : value) === q.answer;
     if (ok) {
       correctRef.current += 1;
       setCorrect(correctRef.current);
@@ -191,13 +196,32 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
     const nextQuestion = makeQuestion(kindRef.current as QuestionKind, Math.random, q);
     questionRef.current = nextQuestion;
     setQuestion(nextQuestion);
+    setTyped('');
   }, []);
+
+  // A typed answer: a square is sent as soon as it is complete, a number with Enter (or the OK button).
+  const onType = useCallback(
+    (raw: string) => {
+      const entry = questionRef.current?.entry;
+      if (!entry) return;
+      const value = typedInput(entry, raw);
+      if (entry === 'square' && value.length === 2) answer(value);
+      else setTyped(value);
+    },
+    [answer],
+  );
+
+  // The cursor goes to the answer box with every typed question, so the keyboard is all you need.
+  useEffect(() => {
+    if (phase === 'running' && question?.entry) inputRef.current?.focus();
+  }, [phase, question]);
 
   // Keyboard: L/D, Y/N or 1-6, whatever the current question offers.
   useEffect(() => {
     if (phase !== 'running') return;
     const onKey = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.target instanceof HTMLInputElement) return;
       const option = questionRef.current?.options.find((o) => o.key === event.key.toLowerCase());
       if (option) {
         event.preventDefault();
@@ -213,6 +237,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
     setQuestion(null);
     setResult(null);
     setLast(null);
+    setTyped('');
     go('setup');
   }, []);
 
@@ -235,6 +260,11 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
           {phase === 'running' && question ? (
             <>
               <p className="text-white/60 text-sm font-semibold">{drillLabel(question.kind)}</p>
+              {question.lead && (
+                <p className="text-xl sm:text-2xl font-semibold text-white/85 tracking-tight leading-snug" data-testid="lead">
+                  {question.lead}
+                </p>
+              )}
               <p
                 className={`${question.prompt.length > 48 ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-4xl'} font-bold text-white tracking-tight`}
                 data-testid="question"
@@ -329,30 +359,72 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
                 <StatTile label="Wrong" value={String(wrong)} tone="bad" />
               </div>
 
-              <div
-                className={`grid gap-2.5 ${question.options.length > 2 ? 'grid-cols-3' : 'grid-cols-2'}`}
-                role="group"
-                aria-label="Answers"
-              >
-                {question.options.map((option) => (
+              {question.entry ? (
+                <form
+                  className="flex gap-2.5"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (typed !== '') answer(typed);
+                  }}
+                >
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={typed}
+                    onChange={(event) => onType(event.target.value)}
+                    inputMode={question.entry === 'number' ? 'numeric' : 'text'}
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    maxLength={question.entry === 'number' ? 3 : 4}
+                    placeholder={question.entry === 'number' ? 'Number' : 'Square, e.g. f3'}
+                    aria-label={question.entry === 'number' ? 'Your answer (a number)' : 'Your answer (a square, such as f3)'}
+                    data-testid="answer-input"
+                    className="flex-1 min-w-0 rounded-xl bg-[#101b2f] border border-white/20 focus:border-[#39ff88] text-white text-2xl font-bold text-center px-3 min-h-[56px] outline-none placeholder:text-white/35 placeholder:text-base placeholder:font-semibold"
+                  />
                   <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => answer(option.value)}
-                    className="py-4 rounded-xl bg-[#101b2f] border border-white/20 hover:border-[#39ff88] text-white text-lg font-bold cursor-pointer min-h-[56px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+                    type="submit"
+                    data-testid="answer-submit"
+                    className="px-6 rounded-xl bg-[#101b2f] border border-white/20 hover:border-[#39ff88] text-white text-lg font-bold cursor-pointer min-h-[56px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
                   >
-                    {option.label}
-                    <span className="sr-only"> (key {option.key.toUpperCase()})</span>
+                    OK
                   </button>
-                ))}
-              </div>
+                </form>
+              ) : (
+                <div
+                  className={`grid gap-2.5 ${question.options.length > 2 ? 'grid-cols-3' : 'grid-cols-2'}`}
+                  role="group"
+                  aria-label="Answers"
+                >
+                  {question.options.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => answer(option.value)}
+                      className="py-4 rounded-xl bg-[#101b2f] border border-white/20 hover:border-[#39ff88] text-white text-lg font-bold cursor-pointer min-h-[56px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+                    >
+                      {option.label}
+                      <span className="sr-only"> (key {option.key.toUpperCase()})</span>
+                    </button>
+                  ))}
+                </div>
+              )}
 
               <p
                 className={`text-center text-sm font-semibold min-h-[20px] ${last && !last.ok ? 'text-[#ff7a7a]' : 'text-[#39ff88]'}`}
                 aria-live="polite"
                 data-testid="last"
               >
-                {last ? (last.ok ? '✓ Correct' : `✗ ${last.text}`) : 'Keys: ' + question.options.map((o) => o.key.toUpperCase()).join(' / ')}
+                {last
+                  ? last.ok
+                    ? '✓ Correct'
+                    : `✗ ${last.text}`
+                  : question.entry === 'number'
+                    ? 'Type the number, then press Enter'
+                    : question.entry === 'square'
+                      ? 'Type the square, for example f3'
+                      : 'Keys: ' + question.options.map((o) => o.key.toUpperCase()).join(' / ')}
               </p>
 
               {endless && (
