@@ -21,6 +21,7 @@ import {
   onSameDiagonal,
   saveDrillBest,
   saveDrillKind,
+  typedInput,
 } from './drills.ts';
 
 const store = new Map<string, string>();
@@ -77,10 +78,11 @@ test('questions are well formed and the answer is one of the options', () => {
     for (let i = 0; i < 300; i++) {
       const q = makeQuestion(kind);
       assert.equal(q.kind, kind);
-      assert.ok(q.options.some((o) => o.value === q.answer), `${q.prompt} -> ${q.answer}`);
+      // A typed answer (the newer drills) has no buttons; the rest must have their answer among them.
+      if (!q.entry) assert.ok(q.options.some((o) => o.value === q.answer), `${q.prompt} -> ${q.answer}`);
       assert.ok(q.explanation.length > 0);
       assert.equal(new Set(q.options.map((o) => o.key)).size, q.options.length);
-      if (kind !== 'color') assert.notEqual(q.squares[0], q.squares[1]);
+      if (kind === 'diagonal' || kind === 'knight') assert.notEqual(q.squares[0], q.squares[1]);
     }
   }
 });
@@ -226,7 +228,8 @@ test('the rebuild drill is a drill kind but has no questions', () => {
   assert.ok(DRILL_KINDS.includes('reconstruct'));
   assert.ok(!(QUESTION_KINDS as string[]).includes('reconstruct'));
   assert.equal(drillLabel('reconstruct'), 'Rebuild position');
-  assert.deepEqual(QUESTION_KINDS, ['color', 'check', 'diagonal', 'knight']);
+  assert.deepEqual(QUESTION_KINDS, ['color', 'check', 'attack', 'diagonal', 'knight', 'distance', 'count', 'endgame', 'follow']);
+  assert.deepEqual(DRILL_KINDS, [...QUESTION_KINDS, 'reconstruct']);
   saveDrillKind('reconstruct');
   assert.equal(loadDrillKind(), 'reconstruct');
 });
@@ -257,4 +260,23 @@ test('seconds per answer', () => {
   assert.equal(secondsPerAnswer(10_000, 4), 2.5);
   assert.equal(secondsPerAnswer(12_345, 7), 1.8);
   assert.equal(secondsPerAnswer(5000, 0), 0);
+});
+
+test('typed answers are cleaned up: numbers keep digits, squares keep a file and a rank', () => {
+  assert.equal(typedInput('number', '7'), '7');
+  assert.equal(typedInput('number', ' 13 '), '13');
+  assert.equal(typedInput('number', '07'), '7');
+  assert.equal(typedInput('number', '0'), '0');
+  assert.equal(typedInput('number', 'a'), '');
+  assert.equal(typedInput('number', '123'), '12');
+  assert.equal(typedInput('number', ''), '');
+  assert.equal(typedInput('square', 'f3'), 'f3');
+  assert.equal(typedInput('square', 'F3'), 'f3');
+  assert.equal(typedInput('square', ' f 3 '), 'f3');
+  assert.equal(typedInput('square', 'f'), 'f');
+  assert.equal(typedInput('square', '3'), '');
+  assert.equal(typedInput('square', 'z3'), '');
+  assert.equal(typedInput('square', 'f9'), 'f');
+  assert.equal(typedInput('square', 'f33'), 'f3');
+  assert.equal(typedInput('square', 'e4x'), 'e4');
 });

@@ -1,12 +1,51 @@
 // Pure helpers for the Blindfold visualization drills (no React): question making, saved
 // settings and best scores. The drills train what blindfold play needs: knowing the board by heart.
 
-export type DrillKind = 'color' | 'check' | 'diagonal' | 'knight' | 'reconstruct';
-export const DRILL_KINDS: DrillKind[] = ['color', 'check', 'diagonal', 'knight', 'reconstruct'];
+import {
+  buildAttackQuestion,
+  buildCountQuestion,
+  buildDistanceQuestion,
+  buildEndgameQuestion,
+  buildFollowQuestion,
+} from './drillsMore.ts';
+
+export type DrillKind =
+  | 'color'
+  | 'check'
+  | 'attack'
+  | 'diagonal'
+  | 'knight'
+  | 'distance'
+  | 'count'
+  | 'endgame'
+  | 'follow'
+  | 'reconstruct';
+export const DRILL_KINDS: DrillKind[] = [
+  'color',
+  'check',
+  'attack',
+  'diagonal',
+  'knight',
+  'distance',
+  'count',
+  'endgame',
+  'follow',
+  'reconstruct',
+];
 
 /** The drills made of quick questions against the clock ("reconstruct" is a different kind of exercise). */
 export type QuestionKind = Exclude<DrillKind, 'reconstruct'>;
-export const QUESTION_KINDS: QuestionKind[] = ['color', 'check', 'diagonal', 'knight'];
+export const QUESTION_KINDS: QuestionKind[] = [
+  'color',
+  'check',
+  'attack',
+  'diagonal',
+  'knight',
+  'distance',
+  'count',
+  'endgame',
+  'follow',
+];
 
 /** Every drill is a run against the clock. */
 export const DRILL_DURATION_MS = 60_000;
@@ -17,7 +56,7 @@ export const DRILLS_BEST_STORAGE_KEY = 'ctg_drills_best_v1';
 export const FILES = 'abcdefgh';
 
 export function isDrillKind(value: unknown): value is DrillKind {
-  return value === 'color' || value === 'check' || value === 'diagonal' || value === 'knight' || value === 'reconstruct';
+  return typeof value === 'string' && (DRILL_KINDS as string[]).includes(value);
 }
 
 export function drillLabel(kind: DrillKind): string {
@@ -26,10 +65,20 @@ export function drillLabel(kind: DrillKind): string {
       return 'Square color';
     case 'check':
       return 'Check or not';
+    case 'attack':
+      return 'Attacked or not';
     case 'diagonal':
       return 'Same diagonal';
     case 'knight':
       return 'Knight route';
+    case 'distance':
+      return 'Moves needed';
+    case 'count':
+      return 'Count the squares';
+    case 'endgame':
+      return 'Square and opposition';
+    case 'follow':
+      return 'Follow the moves';
     case 'reconstruct':
       return 'Rebuild position';
   }
@@ -41,10 +90,20 @@ export function drillDescription(kind: DrillKind): string {
       return 'Is the square light or dark? a1 is dark.';
     case 'check':
       return 'A piece and a king are named, sometimes with a piece in the way. Is the king in check?';
+    case 'attack':
+      return 'Does a piece attack a square, or two squares at once? Sometimes another piece stands in the way.';
     case 'diagonal':
       return 'Do two squares lie on the same diagonal? Think of a bishop.';
     case 'knight':
       return 'How many moves does a knight need to get from one square to the other?';
+    case 'distance':
+      return 'How many moves does a king, rook or bishop need to get from one square to the other? A bishop can never reach a square of the other colour.';
+    case 'count':
+      return 'Count squares on an empty board: how many a piece attacks, or how many lie between two squares. Type the number.';
+    case 'endgame':
+      return 'King and pawn endgames: does the king catch the pawn (the rule of the square), and who has the opposition?';
+    case 'follow':
+      return 'The moves are given as text, there is no board. Say what stands on a square, where a piece went, or whether it is check.';
     case 'reconstruct':
       return 'Memorize a real position, then rebuild it from memory on an empty board.';
   }
@@ -113,11 +172,16 @@ export interface DrillOption {
 
 export interface DrillQuestion {
   kind: QuestionKind;
+  /** A line shown above the question when it needs one (the moves of "Follow the moves"). */
+  lead?: string;
   /** The question line shown to the player. */
   prompt: string;
-  /** The squares the question is about (one or two). */
+  /** The squares the question is about (none, one, two or more). */
   squares: string[];
+  /** The answer buttons. Empty when the answer is typed (see `entry`). */
   options: DrillOption[];
+  /** Set when the answer is typed, not picked: a number, or a square such as "f3". */
+  entry?: 'number' | 'square';
   answer: string;
   /** Short explanation shown after a wrong answer. */
   explanation: string;
@@ -302,13 +366,22 @@ function buildCheckQuestion(rng: Rng): DrillQuestion {
 export function makeQuestion(kind: QuestionKind, rng: Rng = Math.random, previous?: DrillQuestion): DrillQuestion {
   for (let attempt = 0; attempt < 20; attempt++) {
     const q = buildQuestion(kind, rng);
-    if (!previous || previous.prompt !== q.prompt) return q;
+    if (!previous || questionId(previous) !== questionId(q)) return q;
   }
   return buildQuestion(kind, rng);
 }
 
+function questionId(q: DrillQuestion): string {
+  return `${q.lead ?? ''}|${q.prompt}`;
+}
+
 function buildQuestion(kind: QuestionKind, rng: Rng): DrillQuestion {
   if (kind === 'check') return buildCheckQuestion(rng);
+  if (kind === 'attack') return buildAttackQuestion(rng);
+  if (kind === 'distance') return buildDistanceQuestion(rng);
+  if (kind === 'count') return buildCountQuestion(rng);
+  if (kind === 'endgame') return buildEndgameQuestion(rng);
+  if (kind === 'follow') return buildFollowQuestion(rng);
   if (kind === 'color') {
     const square = randomSquare(rng);
     const light = isLightSquare(square);
@@ -360,6 +433,21 @@ function buildQuestion(kind: QuestionKind, rng: Rng): DrillQuestion {
     answer: String(moves),
     explanation: `A knight needs ${moves} ${moves === 1 ? 'move' : 'moves'} from ${from} to ${to}.`,
   };
+}
+
+/**
+ * What a typed answer box keeps of what was typed: a number keeps its digits (two at most, no leading zeros), a square
+ * keeps a file letter and then a rank digit ("F3" and "f 3" both become "f3").
+ */
+export function typedInput(entry: 'number' | 'square', raw: string): string {
+  const text = raw.toLowerCase();
+  if (entry === 'number') return text.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 2);
+  let out = '';
+  for (const ch of text) {
+    if (out.length === 0 && /[a-h]/.test(ch)) out = ch;
+    else if (out.length === 1 && /[1-8]/.test(ch)) return out + ch;
+  }
+  return out;
 }
 
 export function drillAccuracy(correct: number, wrong: number): number {

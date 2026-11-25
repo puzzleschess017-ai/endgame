@@ -34,7 +34,7 @@ export interface BlindfoldAccess {
   memorize: MemorizeSeconds[];
   /** How long the mate may be: in 1, 2 or 3 moves. */
   mateIn: MateIn[];
-  /** Which drills (square colours, check or not, diagonals, knight routes, rebuild position) may be played. */
+  /** Which drills may be played: square colours are free with an account, every other drill is Premium. */
   drills: DrillKind[];
   /** How long a timed drill may run: the 1 minute run, or "No time limit" (practice, no record). */
   drillLimits: DrillLimit[];
@@ -168,8 +168,13 @@ export function clampDrill(tier: Tier, kind: DrillKind): DrillKind {
 const DRILL_NAME: Record<DrillKind, string> = {
   color: 'Square colours',
   check: 'Check or not',
+  attack: 'Attacked or not',
   diagonal: 'Diagonals',
   knight: 'Knight routes',
+  distance: 'Moves needed',
+  count: 'Count the squares',
+  endgame: 'Square and opposition',
+  follow: 'Follow the moves',
   reconstruct: 'Rebuild position',
 };
 

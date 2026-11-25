@@ -101,7 +101,7 @@ export function DrillPicker({ kind, onChange }: { kind: DrillKind; onChange: (ki
               aria-pressed={kind === k}
               aria-disabled={locked || undefined}
               title={locked ? unlockHint(tier, needs) : undefined}
-              onClick={locks.choose(`The ${drillLabel(k).toLowerCase()} drill`, needs, () => onChange(k))}
+              onClick={locks.choose(`The “${drillLabel(k)}” drill`, needs, () => onChange(k))}
               className={`${segmentClass(kind === k, true)} ${locked ? LOCKED_CLASS : ''} !whitespace-normal leading-tight`}
             >
               {drillLabel(k)}
