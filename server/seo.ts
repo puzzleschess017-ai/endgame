@@ -12,8 +12,8 @@ export interface PageMeta {
   description: string;
   /** false: asks search engines not to list the page (personal pages) and keeps it out of the sitemap. */
   indexable: boolean;
-  /** Page type for structured data: the home page is the website itself, the rest are free web apps. */
-  kind: 'website' | 'app' | 'info';
+  /** Page type for structured data: the home page is the website itself, the rest are free web apps, text pages or lessons. */
+  kind: 'website' | 'app' | 'info' | 'article';
   priority: number;
 }
 
@@ -87,6 +87,69 @@ export const PAGES: PageMeta[] = [
     priority: 0.6,
   },
   {
+    path: '/endgames',
+    title: 'Chess Endgame Theory and Lessons | Chess Tactics Guide',
+    description:
+      'Free chess endgame lessons with diagrams: the Lucena and Philidor positions, the opposition, king and rook mate, king and queen mate and the wrong-colored bishop.',
+    indexable: true,
+    kind: 'info',
+    priority: 0.8,
+  },
+  {
+    path: '/endgames/king-and-pawn-opposition',
+    title: 'Opposition and Key Squares in Pawn Endings | Chess Tactics Guide',
+    description:
+      'Learn the opposition and key squares in king and pawn endgames, and see why the same position is a win or a draw depending on who is to move.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/endgames/king-and-rook-vs-king',
+    title: 'King and Rook vs King: The Box Method | Chess Tactics Guide',
+    description:
+      'How to checkmate with a king and rook against a lone king in at most 16 moves: cut the king off, shrink the box and give mate on the edge.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/endgames/king-and-queen-vs-king',
+    title: 'King and Queen vs King: Mate Without Stalemate | Chess Tactics Guide',
+    description:
+      'How to checkmate with a king and queen against a lone king in at most 10 moves, and how to avoid the stalemate trap.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/endgames/lucena-position',
+    title: 'The Lucena Position: How to Win a Rook Endgame | Chess Tactics Guide',
+    description:
+      'The Lucena position explained with diagrams: how to build the bridge with your rook and win a rook endgame with an extra pawn on the seventh rank.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/endgames/philidor-position',
+    title: 'The Philidor Position: Draw a Rook Endgame | Chess Tactics Guide',
+    description:
+      'The Philidor position explained with diagrams: keep your rook on the sixth rank, then check from behind to hold a rook endgame a pawn down.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/endgames/wrong-colored-bishop',
+    title: 'Wrong-Colored Bishop: A Draw With an Extra Piece | Chess Tactics Guide',
+    description:
+      'Why a bishop and a rook pawn can only draw when the bishop is the wrong color, and how the right bishop wins the same position.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
     path: '/about',
     title: 'About | Chess Tactics Guide',
     description:
@@ -155,6 +218,19 @@ function jsonLd(page: PageMeta, siteUrl: string): string {
   const data =
     page.kind === 'website'
       ? { '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url, description: page.description }
+      : page.kind === 'article'
+        ? {
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            headline: page.title.split(' | ')[0],
+            url,
+            mainEntityOfPage: url,
+            description: page.description,
+            inLanguage: 'en',
+            author: { '@type': 'Organization', name: SITE_NAME, url: siteUrl },
+            publisher: { '@type': 'Organization', name: SITE_NAME, url: siteUrl },
+            isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: siteUrl },
+          }
       : page.kind === 'info'
         ? {
             '@context': 'https://schema.org',
