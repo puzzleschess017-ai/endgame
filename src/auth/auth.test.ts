@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { createAuthClient, describeAuthError, validateCredentials, type AuthSession } from './client.ts';
+import { createAuthClient, describeAuthError, validateCredentials, type AuthClient, type AuthSession } from './client.ts';
+import { isLichessEmail, lichessErrorText, lichessStartUrl, readLichessSession } from './lichess.ts';
 import { AUTH_STORAGE_KEY, createAuthStore, nameFor } from './store.ts';
 
 type Call = { url: string; method: string; headers: Record<string, string>; body: unknown };
@@ -236,5 +237,56 @@ describe('store', () => {
     assert.equal(nameFor(s, null), 'ana.k');
     assert.equal(nameFor(s, { name: '  ', plan: 'free' }), 'ana.k');
     assert.equal(nameFor(null, null), '');
+  });
+});
+
+describe('Sign in with Lichess (browser side)', () => {
+  it('lichessStartUrl keeps the page to return to', () => {
+    assert.equal(lichessStartUrl('/streak'), '/api/auth/lichess/start?next=%2Fstreak');
+  });
+  it('reads the session the server puts in the address, and nothing else', () => {
+    const hash = '#access_token=AT&refresh_token=RT&expires_at=2000&expires_in=3600&user_id=u1&email=lichess-0123456789abcdef01234567%40x.test';
+    assert.deepEqual(readLichessSession(hash, 1000), {
+      accessToken: 'AT',
+      refreshToken: 'RT',
+      userId: 'u1',
+      expiresAt: 2000,
+      email: 'lichess-0123456789abcdef01234567@x.test',
+    });
+    assert.equal(readLichessSession('#access_token=AT&refresh_token=RT&user_id=u1&expires_in=60', 1000)!.expiresAt, 1060);
+    for (const bad of ['', '#', '#access_token=AT', '#refresh_token=RT&user_id=u1', '#foo=bar']) assert.equal(readLichessSession(bad, 1000), null);
+  });
+  it('the made-up address of a Lichess account is recognised, a real one is not', () => {
+    assert.ok(isLichessEmail('lichess-0123456789abcdef01234567@lichess.example.com'));
+    assert.ok(!isLichessEmail('lichess-magnus@gmail.com'));
+    assert.ok(!isLichessEmail('someone@example.com'));
+    assert.ok(!isLichessEmail(''));
+  });
+  it('turns ?lichess_error into a sentence', () => {
+    assert.match(lichessErrorText('?lichess_error=cancelled')!, /did not allow/);
+    assert.match(lichessErrorText('?lichess_error=whatever')!, /did not work/);
+    assert.equal(lichessErrorText('?next=/streak'), null);
+    assert.equal(lichessErrorText(''), null);
+  });
+  it('the store can adopt a session made elsewhere and reads the profile for it', async () => {
+    const session = { accessToken: 'AT', refreshToken: 'RT', expiresAt: 5000, userId: 'u1', email: 'lichess-0123456789abcdef01234567@x.test' };
+    const client = {
+      fetchProfile: async () => ({ ok: true as const, value: { name: 'Magnus', plan: 'free' as const } }),
+      refresh: async () => ({ ok: false as const, error: 'x', rejected: true }),
+      signOut: async () => {},
+    } as unknown as AuthClient;
+    const saved = new Map<string, string>();
+    const store = createAuthStore({
+      client,
+      storage: { getItem: (k) => saved.get(k) ?? null, setItem: (k, v) => void saved.set(k, v), removeItem: (k) => void saved.delete(k) },
+      now: () => 1000,
+      setTimer: () => 0,
+      clearTimer: () => {},
+    });
+    await store.adopt(session);
+    assert.equal(store.getState().session?.userId, 'u1');
+    assert.equal(store.getState().name, 'Magnus');
+    assert.equal(store.getState().tier, 'free');
+    assert.ok(saved.has(AUTH_STORAGE_KEY));
   });
 });

@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { LogOut, UserRound } from 'lucide-react';
+import { Crown, LogOut, UserRound } from 'lucide-react';
 import AppShell from '../components/AppShell';
 import { CARD_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, segmentClass } from '../components/panelUi';
 import { auth, useAuth } from '../auth';
 import { chooseGuest } from '../auth/guest';
+import { isLichessEmail, lichessErrorText, lichessStartUrl, readLichessSession, useLichessEnabled } from '../auth/lichess';
 import { signOutAndSync, useSyncState } from '../sync';
 import { readSavedUsername } from '../utils/profile';
 
@@ -31,12 +32,25 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const lichessOn = useLichessEnabled();
+  const [lichessError] = useState(() => lichessErrorText(window.location.search));
 
   useEffect(() => {
     document.title = 'Sign in | Chess Tactics Guide';
   }, []);
 
   const goNext = () => window.location.assign(nextPath(window.location.search));
+
+  // Back from "Sign in with Lichess": the server put the new session in the address (after the #). Save it, clear the
+  // address so the tokens do not stay in the history, and carry on.
+  useEffect(() => {
+    const session = readLichessSession(window.location.hash, Math.floor(Date.now() / 1000));
+    if (!session) return;
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    setBusy(true);
+    void auth.adopt(session).then(goNext);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -84,7 +98,7 @@ export default function LoginPage() {
                   {state.name}
                 </h2>
                 <p className="text-sm font-medium text-white/70 truncate" data-testid="account-email">
-                  {state.session?.email}
+                  {isLichessEmail(state.session?.email ?? '') ? 'Signed in with Lichess' : state.session?.email}
                 </p>
               </div>
             </div>
@@ -188,9 +202,9 @@ export default function LoginPage() {
                 />
               </div>
 
-              {error && (
+              {(error ?? lichessError) && (
                 <p role="alert" data-testid="auth-error" className="text-sm font-semibold text-[#ffd2cc] bg-[#401a22] border border-[#8f3848] rounded-xl px-3.5 py-2.5">
-                  {error}
+                  {error ?? lichessError}
                 </p>
               )}
               {notice && (
@@ -209,6 +223,16 @@ export default function LoginPage() {
             </div>
 
             <div className="flex flex-col gap-2">
+              {lichessOn && (
+                <a
+                  href={lichessStartUrl(nextPath(window.location.search))}
+                  data-testid="lichess-sign-in"
+                  className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2 no-underline`}
+                >
+                  <Crown className="w-4 h-4" aria-hidden="true" />
+                  {mode === 'signup' ? 'Create an account with Lichess' : 'Continue with Lichess'}
+                </a>
+              )}
               <a href="/" data-testid="play-as-guest" onClick={chooseGuest} className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center no-underline`}>
                 Play as a guest
               </a>

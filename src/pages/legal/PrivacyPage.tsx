@@ -25,13 +25,19 @@ export default function PrivacyPage() {
         <li>Your plan (Free or Premium) and your training results, so they follow you to other devices.</li>
       </ul>
       <p>
+        If you sign in with Lichess, Lichess asks you to allow it and tells us only your Lichess username. We do not
+        get your Lichess password, your e-mail address or your games, and we do not keep the access token Lichess
+        gives us for this: we use it once to read the username and hand it back. We keep the username as the name of
+        your account, with a made-up address that is never used to send anything.
+      </p>
+      <p>
         Accounts and results are stored with our service provider Supabase. The site is hosted on Render. Both
         process data on our behalf to run the site.
       </p>
 
       <h2>Cookies and analytics</h2>
       <p>
-        The site itself works without cookies. If you accept, we load Google Analytics (through Google Tag Manager)
+        The site itself works without cookies, apart from one short-lived cookie that is only used while you sign in with Lichess and is removed when you are back (it cannot be used to recognise you later). If you accept, we load Google Analytics (through Google Tag Manager)
         to count visits and see which pages are used. Google then sets cookies in your browser and receives
         technical information such as your approximate location and device, according to Google&apos;s own privacy
         policy. If you decline, nothing from Google is loaded, and if you change your mind later, its cookies are

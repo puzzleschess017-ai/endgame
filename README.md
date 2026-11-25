@@ -207,6 +207,31 @@ before it ends, other tabs follow) and `useAuth()` gives a page `tier`: `guest` 
 or `premium`. The page `/login` has sign in, create account and "Play as a guest"; for someone signed in it
 shows the account and Sign out. `?next=/streak` sends the visitor back to that page afterwards.
 
+#### Sign in with Lichess
+
+Supabase has no Lichess provider, so `server/lichess.ts` does the OAuth steps (authorization code flow with PKCE;
+Lichess needs no registered app, any client id works and no client secret exists):
+
+1. `/api/auth/lichess/start?next=/streak` sends the visitor to `lichess.org/oauth` and keeps the PKCE verifier,
+   the state and the page to return to in a signed, `HttpOnly` cookie (`ctg_lichess`, 10 minutes, only for
+   `/api/auth/lichess`).
+2. Lichess sends the visitor to `/api/auth/lichess/callback`. The server checks the state, swaps the code for a token,
+   reads the account name from `/api/account`, gives the token back (`DELETE /api/token`) and asks Supabase (Auth
+   admin API, with the secret key) to find or create the account of that Lichess user and to hand out a session
+   (`admin/users`, `admin/generate_link`, then `verify` with the public key).
+3. The visitor is redirected to `/login` with the session in the address fragment (`#access_token=...`; a fragment is
+   never sent to a server). `LoginPage` saves it with `auth.adopt()`, removes the fragment and continues to `?next=`.
+
+The account has no real email: its address is `lichess-<24 hex>@<domain>`, made from the Lichess id with a key derived
+from the secret key, so nobody else can guess it and nothing is ever sent to it. The profile name is the Lichess
+username. People who sign up with Lichess and with email are two separate accounts (there is no linking).
+
+To switch it on, set **`SUPABASE_SERVICE_ROLE_KEY`** on the server (Render > Environment): Supabase > Project Settings >
+API Keys > the *secret* key (or the legacy `service_role` key). It is a secret: never put it in the page or in git.
+Without it `/api/auth/config` says `{"lichess": false}` and the buttons are not shown. Optional: `SITE_URL` (the public
+address, used for the callback address; otherwise it is taken from the request) and `LICHESS_EMAIL_DOMAIN` (the domain of
+the made-up addresses, default `lichess.<host of SITE_URL>`; it must be a domain Supabase accepts as an email domain).
+
 `supabase/schema.sql` is pasted once into Supabase (SQL Editor) and makes the `profiles` table (name and
 plan, one row per account, created by a trigger). People can read their row and change their name only;
 the plan (`free` or `premium`) is changed by hand in the Supabase Table Editor until payments exist.

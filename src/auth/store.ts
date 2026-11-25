@@ -181,6 +181,12 @@ export function createAuthStore(parts: AuthStoreParts) {
       return result;
     },
 
+    /** Signs in with a session that was made elsewhere (the server, after "Sign in with Lichess"). */
+    async adopt(session: AuthSession): Promise<void> {
+      set(session, null);
+      await loadProfile();
+    },
+
     async signOut(): Promise<void> {
       const session = state.session;
       set(null, null);

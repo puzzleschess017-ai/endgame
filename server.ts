@@ -4,6 +4,7 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
 import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
+import { callbackUrl, COOKIE_NAME, createLichessLogin, readCookieHeader } from './server/lichess.ts';
 import { createTablebase } from './server/tablebase.ts';
 import { createTierLookup } from './server/tier.ts';
 import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './src/auth/project.ts';
@@ -458,6 +459,48 @@ async function startServer() {
   const tierOf = createTierLookup({
     url: process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL,
     key: process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_KEY,
+  });
+
+  // "Sign in with Lichess" (server/lichess.ts). It needs the secret key of the Supabase project in
+  // SUPABASE_SERVICE_ROLE_KEY; without it the button is not shown and the routes answer "unavailable".
+  const supabaseUrl = process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
+  const lichessEmailDomain = process.env.LICHESS_EMAIL_DOMAIN?.trim() || `lichess.${new URL(cleanSiteUrl(process.env.SITE_URL)).hostname}`;
+  const lichessLogin = createLichessLogin({
+    supabaseUrl,
+    supabaseKey: process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_KEY,
+    serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    emailDomain: lichessEmailDomain,
+  });
+  /** The address of this site as the visitor sees it: SITE_URL when it is set, else from the request (behind Render's proxy too). */
+  const originOf = (req: express.Request): string => {
+    if (process.env.SITE_URL?.trim()) return cleanSiteUrl(process.env.SITE_URL);
+    const proto = String(req.headers['x-forwarded-proto'] ?? req.protocol).split(',')[0].trim() === 'http' ? 'http' : 'https';
+    return `${proto}://${req.headers.host ?? 'localhost'}`;
+  };
+  const isHttps = (req: express.Request): boolean => originOf(req).startsWith('https://');
+  const COOKIE_PATH = '/api/auth/lichess';
+
+  app.get('/api/auth/config', (_req, res) => {
+    res.set('Cache-Control', 'no-store').json({ lichess: lichessLogin.enabled });
+  });
+  app.get('/api/auth/lichess/start', (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const start = lichessLogin.start(req.query.next, callbackUrl(originOf(req)));
+    if (!start.ok) {
+      res.redirect(302, '/login?lichess_error=unavailable');
+      return;
+    }
+    res.append('Set-Cookie', `${COOKIE_NAME}=${start.cookie}; Path=${COOKIE_PATH}; Max-Age=${start.maxAge}; HttpOnly; SameSite=Lax${isHttps(req) ? '; Secure' : ''}`);
+    res.redirect(302, start.url);
+  });
+  app.get('/api/auth/lichess/callback', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const result = await lichessLogin.finish(
+      { code: req.query.code, state: req.query.state, error: req.query.error, cookie: readCookieHeader(req.headers.cookie, COOKIE_NAME) },
+      callbackUrl(originOf(req)),
+    );
+    res.append('Set-Cookie', `${COOKIE_NAME}=; Path=${COOKIE_PATH}; Max-Age=0; HttpOnly; SameSite=Lax${isHttps(req) ? '; Secure' : ''}`);
+    res.redirect(302, result.redirect);
   });
 
   app.get('/api/puzzles/sample', async (req, res) => {

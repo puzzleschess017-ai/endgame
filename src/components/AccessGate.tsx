@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { LogIn, UserPlus } from 'lucide-react';
+import { Crown, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '../auth';
 import { chooseGuest, useGuestChoice } from '../auth/guest';
+import { lichessStartUrl, useLichessEnabled } from '../auth/lichess';
 import { isInfoPath } from '../site';
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
 
@@ -20,6 +21,7 @@ export function useGateOpen(): boolean {
 export default function AccessGate() {
   const firstButton = useRef<HTMLAnchorElement | null>(null);
   const open = useGateOpen();
+  const lichessOn = useLichessEnabled();
 
   useEffect(() => {
     if (open) firstButton.current?.focus();
@@ -61,6 +63,15 @@ export default function AccessGate() {
           >
             <LogIn className="w-4 h-4" aria-hidden="true" /> I already have an account
           </a>
+          {lichessOn && (
+            <a
+              href={lichessStartUrl(window.location.pathname || '/')}
+              data-testid="gate-lichess"
+              className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2 no-underline`}
+            >
+              <Crown className="w-4 h-4" aria-hidden="true" /> Continue with Lichess
+            </a>
+          )}
           <button
             type="button"
             data-testid="gate-guest"
