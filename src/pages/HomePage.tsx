@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import AppShell from '../components/AppShell';
 import BarChart, { type BarDatum } from '../components/BarChart';
 import DailyGoalCard from '../components/DailyGoalCard';
+import { PremiumCrown } from '../components/ProfileMenu';
 import WelcomeIntro from '../components/WelcomeIntro';
 import { useAuth } from '../auth';
 import { segmentClass } from '../components/panelUi';
@@ -36,7 +37,7 @@ export default function HomePage() {
   const overview = useMemo(() => collectOverview(), [syncVersion]);
   const [username] = useState(() => readSavedUsername());
   const [range, setRange] = useState<Range>(7);
-  const { session } = useAuth();
+  const { session, tier } = useAuth();
   // Nothing trained in this browser yet (a first visit, or right after signing out): tell about the site, not zeros.
   const hasTrained = Object.keys(overview.log).length > 0;
 
@@ -59,12 +60,13 @@ export default function HomePage() {
   return (
     <AppShell username={username}>
       <div className="max-w-[1100px] flex flex-col gap-8" data-testid="home">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+        <h2 className="flex items-center gap-2.5 text-2xl sm:text-3xl font-bold text-white tracking-tight">
           {username ? `Hello, ${username}!` : 'Hello!'}
+          {tier === 'premium' && <PremiumCrown className="w-6 h-6 sm:w-7 sm:h-7" />}
         </h2>
 
         {!hasTrained ? (
-          <WelcomeIntro signedIn={session !== null} />
+          <WelcomeIntro signedIn={session !== null} premium={tier === 'premium'} />
         ) : (
           <>
             <DailyGoalCard log={overview.log} />

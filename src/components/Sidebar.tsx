@@ -19,6 +19,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../auth';
+import ProfileMenu from './ProfileMenu';
 import { signOutAndSync } from '../sync';
 import SoundMenu from './SoundMenu';
 import SiteLinks from './SiteLinks';
@@ -338,11 +339,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         </a>
 
         <div className="ml-auto xl:hidden flex items-center gap-2 min-w-0">
-          {username && (
-            <span className="hidden sm:inline text-xs sm:text-sm font-semibold text-[#39ff88] truncate max-w-[150px]" title={username}>
-              {username}
-            </span>
-          )}
+          {(session || username) && <ProfileMenu guestName={savedName} opens="down" testId="topbar-name" className="hidden sm:block max-w-[150px]" />}
           <AccountControls compact />
           <SoundMenu />
         </div>
@@ -384,14 +381,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
       </div>
 
       <div className="hidden xl:flex items-center justify-between gap-2 px-4 py-2.5 border-t border-white/10">
-        <a
-          href="/login"
-          data-testid="sidebar-name"
-          title={username ? `${username}: ${session ? 'your account' : 'sign in or create an account'}` : 'Sign in or create an account'}
-          className="min-w-0 flex-1 text-sm font-semibold text-[#39ff88] truncate no-underline hover:text-white"
-        >
-          {username || 'Guest'}
-        </a>
+        <ProfileMenu guestName={savedName} opens="up" className="flex-1" />
         <AccountControls />
         <SoundMenu />
       </div>
