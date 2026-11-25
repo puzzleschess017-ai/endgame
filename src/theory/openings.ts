@@ -26,64 +26,6 @@ function practise(pgn: string, label: string): Lesson['practice'] {
 
 export const OPENING_LESSONS: Lesson[] = [
   {
-    slug: 'opening-principles',
-    title: 'Opening Principles Every Player Should Know',
-    summary: 'Control the centre, develop your pieces, castle early and do not rush your queen: the ideas behind every opening.',
-    group: 'The basics',
-    kind: 'Principles',
-    intro: [
-      'You do not need to memorise long lines to play a good opening. A handful of principles tell you what to do in almost every position of the first ten moves, and they also explain why the famous openings look the way they do.',
-    ],
-    sections: [
-      {
-        heading: 'Fight for the centre',
-        paragraphs: [
-          'The four squares e4, d4, e5 and d5 are the centre. Pieces placed there reach both wings quickly, so a pawn on e4 or d4 on the first move is the most natural start. You can also control the centre from a distance with pieces, as many modern openings do.',
-        ],
-      },
-      {
-        heading: 'Develop your pieces',
-        paragraphs: [
-          'Bring out the knights and bishops, usually the knights first, and place them on squares where they point at the centre. Every move in the opening should add a piece to the game, or make room for one.',
-        ],
-        diagram: board(
-          '1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d3 d6 6. O-O O-O',
-          'Both sides have developed their knights and bishops, castled, and kept a pawn in the centre.',
-        ),
-      },
-      {
-        heading: 'Castle early',
-        paragraphs: [
-          'Castling puts your king behind a wall of pawns and brings a rook towards the centre in one move. A king left in the middle is an easy target as soon as the files open.',
-        ],
-      },
-      {
-        heading: 'Do not bring the queen out too early',
-        paragraphs: [
-          'The queen is your most valuable piece, so every piece that attacks her gains a move. After 1.e4 e5 2.Qh5 Nc6 3.Bc4 g6 4.Qf3 Nf6, Black has developed with tempo while White has only moved the queen around.',
-        ],
-        diagram: board(
-          '1. e4 e5 2. Qh5 Nc6 3. Bc4 g6 4. Qf3 Nf6',
-          'Black is ahead in development. The early queen move has cost White time.',
-        ),
-      },
-      {
-        heading: 'A short checklist',
-        bullets: [
-          'Do not move the same piece twice in the opening without a reason.',
-          'Do not make many pawn moves on the wing while your pieces are still at home.',
-          'Before every move, ask what your opponent\'s last move threatens.',
-          'Connect your rooks: when the minor pieces are out and you have castled, the rooks see each other.',
-        ],
-      },
-    ],
-    practice: practise(
-      '1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d3 d6 6. O-O O-O',
-      'Step through a well-developed opening in Board Analysis',
-    ),
-    related: ['italian-game', 'queens-gambit'],
-  },
-  {
     slug: 'italian-game',
     title: 'The Italian Game: Quick Development and Attack',
     summary: 'Develop with 1.e4 e5 2.Nf3 Nc6 3.Bc4, aim at f7 and choose between a calm Giuoco Piano and sharper tries.',
@@ -705,7 +647,7 @@ export const OPENINGS: TheoryCollection = {
   name: 'Opening theory',
   allLabel: 'All opening lessons',
   lessons: OPENING_LESSONS,
-  groups: ['The basics', 'Open games: 1.e4 e5', 'Answers to 1.e4', '1.d4 and flank openings'],
+  groups: ['Open games: 1.e4 e5', 'Answers to 1.e4', '1.d4 and flank openings'],
   bySlug: openingBySlug,
   forPath: openingForPath,
   pathFor: openingPath,
