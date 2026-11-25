@@ -4,11 +4,11 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
 import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
-import { ebookPath, findEbook } from './server/ebooks.ts';
+import { createPurchaseLookup, EBOOKS, ebookPath, findEbook } from './server/ebooks.ts';
 import { createTablebase } from './server/tablebase.ts';
 import { createTierLookup } from './server/tier.ts';
 import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './src/auth/project.ts';
-import { canDownloadEbooks, checkBlindfoldLevel, checkBlindfoldMateIn, checkWoodpecker } from './src/utils/access.ts';
+import { checkBlindfoldLevel, checkBlindfoldMateIn, checkWoodpecker, getsEbooksFree, mayDownloadEbook } from './src/utils/access.ts';
 import type { BlindfoldLevel, MateIn } from './src/utils/blindfold.ts';
 import type { PuzzleCountOption } from './src/types.ts';
 import { cleanSiteUrl, pageFor, renderPage, robotsTxt, sitemapXml } from './server/seo.ts';
@@ -461,8 +461,28 @@ async function startServer() {
     key: process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_KEY,
   });
 
-  // The e-books come with Premium (a monthly or yearly subscription). The files are not in public/ or dist/,
-  // so this is the only way to get one: the browser sends the sign-in token and the plan is checked here.
+  // The e-books: Premium has every one for free, everybody else downloads the ones they bought (the table
+  // ebook_purchases). The files are not in public/ or dist/, so these routes are the only way to get one:
+  // the browser sends the sign-in token and the plan and the purchases are checked here, on the server.
+  const purchasedBy = createPurchaseLookup({
+    url: process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL,
+    key: process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_KEY,
+  });
+
+  // Which books this visitor may download (the eBooks page shows a Download or a Buy button from this).
+  app.get('/api/ebooks', async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    const visitor = await tierOf(req.headers.authorization);
+    if (!visitor.ok) {
+      res.status(visitor.status).json({ error: visitor.error });
+      return;
+    }
+    const bought = visitor.tier === 'free' ? await purchasedBy(req.headers.authorization) : new Set<string>();
+    res.json({
+      books: EBOOKS.map((book) => ({ slug: book.slug, owned: mayDownloadEbook(visitor.tier, bought.has(book.slug)) })),
+    });
+  });
+
   app.get('/api/ebooks/:slug', async (req, res) => {
     res.set('Cache-Control', 'private, no-store');
     const book = findEbook(req.params.slug);
@@ -475,9 +495,10 @@ async function startServer() {
       res.status(visitor.status).json({ error: visitor.error });
       return;
     }
-    if (!canDownloadEbooks(visitor.tier)) {
+    const bought = !getsEbooksFree(visitor.tier) && visitor.tier !== 'guest' ? (await purchasedBy(req.headers.authorization)).has(book.slug) : false;
+    if (!mayDownloadEbook(visitor.tier, bought)) {
       res.status(403).json({
-        error: visitor.tier === 'guest' ? 'Sign in with a Premium account to download the e-book.' : 'The e-book is part of Premium.',
+        error: visitor.tier === 'guest' ? 'Sign in to download your e-books.' : 'Buy this e-book, or get Premium, to download it.',
       });
       return;
     }

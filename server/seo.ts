@@ -321,6 +321,15 @@ export const PAGES: PageMeta[] = [
     priority: 0.7,
   },
   {
+    path: '/ebooks',
+    title: 'Chess eBooks: The Queen’s Gambit and more | Chess Tactics Guide',
+    description:
+      'Chess e-books with diagrams, plans, traps and exercises, every line checked by computer. $1.99 each, free with Premium.',
+    indexable: true,
+    kind: 'info',
+    priority: 0.6,
+  },
+  {
     path: '/about',
     title: 'About | Chess Tactics Guide',
     description:

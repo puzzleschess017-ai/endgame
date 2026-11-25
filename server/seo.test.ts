@@ -26,7 +26,7 @@ describe('page table', () => {
     }
   });
   it('knows every page of the app', () => {
-    for (const path of ['/', '/woodpecker', '/streak', '/race', '/coordinates', '/blindfold', '/statistics', '/editor', '/analysis', '/login']) {
+    for (const path of ['/', '/woodpecker', '/streak', '/race', '/coordinates', '/blindfold', '/statistics', '/editor', '/analysis', '/ebooks', '/login']) {
       assert.ok(pageFor(path), path);
     }
   });
