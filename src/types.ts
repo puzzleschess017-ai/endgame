@@ -17,6 +17,13 @@ export interface Puzzle {
   numMoves: number;
 }
 
+/** How one puzzle went in one cycle: missed (a wrong move or the arrow) and the time it took. */
+export interface PuzzleAttempt {
+  id: string;
+  failed: boolean;
+  ms: number;
+}
+
 export interface CycleResult {
   cycleNumber: number;
   correct: number;
@@ -24,6 +31,8 @@ export interface CycleResult {
   totalTimeMs: number;
   accuracy: number;
   completedAt: number;
+  /** Per puzzle, kept for the latest cycle only (sessions saved earlier have none). */
+  attempts?: PuzzleAttempt[];
 }
 
 /** Where a Woodpecker set comes from: puzzles of every kind, or real endgames only. */
@@ -52,6 +61,10 @@ export interface TrainingSession {
   currentPuzzleFailed: boolean;
   status: SessionStatus;
   cycleResults: CycleResult[];
+  /** The puzzles of the running cycle that are done. */
+  cycleAttempts?: PuzzleAttempt[];
+  /** A run made of puzzles picked by "Practise these". */
+  review?: boolean;
 }
 
 export interface DatabaseStats {

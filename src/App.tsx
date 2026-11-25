@@ -23,6 +23,7 @@ import { authHeaders, useAuth } from './auth';
 import { checkWoodpecker, defaultWoodpecker } from './utils/access';
 import { playMoveSound } from './utils/sound';
 import { recordFinishedCycles } from './utils/woodpeckerHistory';
+import { reviewSession, trimOldAttempts, type ReviewItem } from './utils/review';
 import { readSavedUsername } from './utils/profile';
 
 const PREVIEW_FEN = '1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1';
@@ -233,6 +234,7 @@ export default function App() {
         ...prev,
         currentCycle: prev.currentCycle + 1,
         currentPuzzleIndex: 0,
+        cycleAttempts: [],
         cycleCorrect: 0,
         cycleIncorrect: 0,
         cycleElapsedMs: 0,
@@ -272,10 +274,18 @@ export default function App() {
         const correct = overrideCounts ? overrideCounts.correct : prev.cycleCorrect;
         const incorrect = overrideCounts ? overrideCounts.incorrect : prev.cycleIncorrect;
         const nextIndex = prev.currentPuzzleIndex + 1;
+        const done = prev.puzzles[prev.currentPuzzleIndex];
+        const attempts = done
+          ? [
+              ...(prev.cycleAttempts ?? []),
+              { id: done.puzzleId, failed: prev.currentPuzzleFailed, ms: Math.max(0, Math.round(prev.puzzleElapsedMs)) },
+            ]
+          : (prev.cycleAttempts ?? []);
 
         if (nextIndex < prev.puzzles.length) {
           return {
             ...prev,
+            cycleAttempts: attempts,
             currentPuzzleIndex: nextIndex,
             puzzleElapsedMs: 0,
             currentPuzzleFailed: false,
@@ -291,8 +301,9 @@ export default function App() {
           totalTimeMs: prev.cycleElapsedMs,
           accuracy,
           completedAt: Date.now(),
+          attempts,
         };
-        const updatedResults = [...prev.cycleResults, cycleResult];
+        const updatedResults = trimOldAttempts([...prev.cycleResults, cycleResult]);
         const isFinalCycle = prev.currentCycle >= prev.config.totalCycles;
 
         return {
@@ -300,6 +311,7 @@ export default function App() {
           cycleCorrect: correct,
           cycleIncorrect: incorrect,
           cycleResults: updatedResults,
+          cycleAttempts: [],
           status: isFinalCycle ? 'all_complete' : 'cycle_complete',
         };
       });
@@ -554,6 +566,7 @@ export default function App() {
         currentPuzzleFailed: false,
         status: 'training',
         cycleResults: [],
+        cycleAttempts: [],
       };
       setAutoAdvancePaused(false);
       setAutoAdvanceSeconds(null);
@@ -596,9 +609,24 @@ export default function App() {
         currentPuzzleFailed: false,
         status: 'training',
         cycleResults: [],
+        cycleAttempts: [],
       };
     });
   }, [clearScheduledTimeouts]);
+
+  /** "Practise these": a new run with only the missed and the slowest puzzles of the cycle that just ended. */
+  const handleStartReview = useCallback(
+    (items: ReviewItem[]) => {
+      if (!session || items.length === 0) return;
+      clearScheduledTimeouts();
+      setAutoAdvanceSeconds(null);
+      setAutoAdvancePaused(false);
+      const id =
+        typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+      setSession(reviewSession(session, items, id));
+    },
+    [session, clearScheduledTimeouts],
+  );
 
   return (
     <TrainerLayout
@@ -652,6 +680,7 @@ export default function App() {
               autoAdvancePaused={autoAdvancePaused}
               onToggleAutoAdvancePause={() => setAutoAdvancePaused((p) => !p)}
               onRepeatSameSet={handleRepeatSameSet}
+              onStartReview={handleStartReview}
             />
           )}
         </>
