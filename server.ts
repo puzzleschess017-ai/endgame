@@ -4,11 +4,12 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
 import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
-import { createPurchaseLookup, EBOOKS, ebookPath, findEbook } from './server/ebooks.ts';
+import { EBOOKS, ebookPath, findEbook } from './server/ebooks.ts';
+import { actionFor, createCheckout, createPaymentStore, loadPaymentSettings, verifyWebhook } from './server/payments.ts';
 import { createTablebase } from './server/tablebase.ts';
 import { createTierLookup } from './server/tier.ts';
 import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './src/auth/project.ts';
-import { checkBlindfoldLevel, checkBlindfoldMateIn, checkWoodpecker, getsEbooksFree, mayDownloadEbook } from './src/utils/access.ts';
+import { checkBlindfoldLevel, checkBlindfoldMateIn, checkWoodpecker, getsEbooksFree } from './src/utils/access.ts';
 import type { BlindfoldLevel, MateIn } from './src/utils/blindfold.ts';
 import type { PuzzleCountOption } from './src/types.ts';
 import { cleanSiteUrl, pageFor, renderPage, robotsTxt, sitemapXml } from './server/seo.ts';
@@ -381,6 +382,54 @@ function samplePuzzlesOfBand(
 async function startServer() {
   const app = express();
   app.disable('x-powered-by');
+
+  const siteUrl = cleanSiteUrl(process.env.SITE_URL);
+
+  // Payments (Dodo Payments, see server/payments.ts). Off until the environment variables are set.
+  const supabaseUrl = process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
+  const payments = loadPaymentSettings(process.env, supabaseUrl);
+  const paymentStore = payments.webhook ? createPaymentStore({ url: supabaseUrl, serviceKey: payments.webhook.serviceKey }) : null;
+
+  // Dodo tells the site about a payment here. This route comes before express.json(): the signature is over the
+  // exact bytes that were sent, so the body must stay raw. A wrong signature is a 400; a failure to save is a 500, so
+  // that Dodo sends the event again; everything else is acknowledged with 200.
+  app.post('/api/webhooks/dodo', express.raw({ type: '*/*', limit: '1mb' }), async (req, res) => {
+    if (!payments.webhook || !paymentStore) {
+      res.status(503).json({ error: 'Payments are not set up on this server.' });
+      return;
+    }
+    const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+    const header = (name: string) => req.header(name) ?? undefined;
+    if (!verifyWebhook(payments.webhook.secret, { id: header('webhook-id'), timestamp: header('webhook-timestamp'), signature: header('webhook-signature') }, body)) {
+      res.status(400).json({ error: 'Bad signature.' });
+      return;
+    }
+    let event: unknown;
+    try {
+      event = JSON.parse(body.toString('utf8'));
+    } catch {
+      res.status(400).json({ error: 'The body is not JSON.' });
+      return;
+    }
+    const action = actionFor(event, payments.webhook.premiumProducts);
+    if (action) {
+      try {
+        await paymentStore.apply(action);
+        // The server remembers a plan for a minute: forget it, so the person sees the new plan at once.
+        tierOf.forget(action.userId);
+        console.log(`[payments] ${(event as { type?: string }).type} -> ${action.kind}`);
+      } catch (err) {
+        console.error('[payments] could not save', err instanceof Error ? err.message : err);
+        res.status(500).json({ error: 'Could not save the payment.' });
+        return;
+      }
+    } else if (typeof (event as { type?: unknown } | null)?.type === 'string' && /^(subscription|payment|refund)\./.test((event as { type: string }).type)) {
+      // Not an error, but worth a line: a payment event that changed nothing (for example one without a user id).
+      console.log(`[payments] ${(event as { type: string }).type} ignored`);
+    }
+    res.status(200).json({ ok: true });
+  });
+
   app.use(express.json({ limit: '100kb' }));
 
   // Eagerly initialize and verify database connection
@@ -461,15 +510,10 @@ async function startServer() {
     key: process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_KEY,
   });
 
-  // The e-books: Premium has every one for free, everybody else downloads the ones they bought (the table
-  // ebook_purchases). The files are not in public/ or dist/, so these routes are the only way to get one:
-  // the browser sends the sign-in token and the plan and the purchases are checked here, on the server.
-  const purchasedBy = createPurchaseLookup({
-    url: process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL,
-    key: process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_KEY,
-  });
+  // The e-books are free to download for Premium. The files are not in public/ or dist/, so these routes are the only
+  // way to get one: the browser sends the sign-in token and the plan is checked here, on the server.
 
-  // Which books this visitor may download (the eBooks page shows a Download or a Buy button from this).
+  // What the eBooks and Pricing pages need: which books this visitor may download, and which Get Premium buttons work.
   app.get('/api/ebooks', async (req, res) => {
     res.set('Cache-Control', 'private, no-store');
     const visitor = await tierOf(req.headers.authorization);
@@ -477,10 +521,64 @@ async function startServer() {
       res.status(visitor.status).json({ error: visitor.error });
       return;
     }
-    const bought = visitor.tier === 'free' ? await purchasedBy(req.headers.authorization) : new Set<string>();
     res.json({
-      books: EBOOKS.map((book) => ({ slug: book.slug, owned: mayDownloadEbook(visitor.tier, bought.has(book.slug)) })),
+      books: EBOOKS.map((book) => ({ slug: book.slug, owned: getsEbooksFree(visitor.tier) })),
+      // Whether the Get Premium buttons work: the monthly and the yearly product are set up.
+      premium: {
+        monthly: Boolean(payments.checkout?.offers['premium:monthly']),
+        yearly: Boolean(payments.checkout?.offers['premium:yearly']),
+      },
     });
+  });
+
+  // Buying Premium: makes a Dodo checkout for the signed-in person and gives back its address. The person's id comes
+  // from the verified sign-in token, never from the request, so a payment can only ever be for the one who asks.
+  app.post('/api/checkout', async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    const config = payments.checkout;
+    if (!config) {
+      res.status(503).json({ error: 'Buying is not open yet.' });
+      return;
+    }
+    const offer = typeof req.body?.offer === 'string' ? req.body.offer : '';
+    const productId = Object.hasOwn(config.offers, offer) ? config.offers[offer] : undefined;
+    if (!productId) {
+      res.status(400).json({ error: 'There is nothing to buy with that name.' });
+      return;
+    }
+    const visitor = await tierOf(req.headers.authorization);
+    if (!visitor.ok) {
+      res.status(visitor.status).json({ error: visitor.error });
+      return;
+    }
+    if (visitor.tier === 'guest') {
+      res.status(401).json({ error: 'Sign in to buy.' });
+      return;
+    }
+    if (!visitor.userId) {
+      res.status(503).json({ error: 'Your account could not be checked just now. Please try again.' });
+      return;
+    }
+    if (visitor.tier === 'premium') {
+      res.status(409).json({ error: 'You already have Premium.' });
+      return;
+    }
+    try {
+      const url = await createCheckout({
+        config,
+        offer,
+        productId,
+        userId: visitor.userId,
+        email: visitor.email,
+        // Dodo adds the result of the payment (for example status=succeeded) to the return address.
+        returnUrl: `${siteUrl}/pricing?purchase=premium`,
+        cancelUrl: `${siteUrl}/pricing`,
+      });
+      res.json({ url });
+    } catch (err) {
+      console.error('[payments] checkout failed', err instanceof Error ? err.message : err);
+      res.status(502).json({ error: 'The payment page could not be opened. Please try again.' });
+    }
   });
 
   app.get('/api/ebooks/:slug', async (req, res) => {
@@ -495,10 +593,9 @@ async function startServer() {
       res.status(visitor.status).json({ error: visitor.error });
       return;
     }
-    const bought = !getsEbooksFree(visitor.tier) && visitor.tier !== 'guest' ? (await purchasedBy(req.headers.authorization)).has(book.slug) : false;
-    if (!mayDownloadEbook(visitor.tier, bought)) {
+    if (!getsEbooksFree(visitor.tier)) {
       res.status(403).json({
-        error: visitor.tier === 'guest' ? 'Sign in to download your e-books.' : 'Buy this e-book, or get Premium, to download it.',
+        error: visitor.tier === 'guest' ? 'Sign in and get Premium to download the e-books.' : 'The e-books are free to download with Premium.',
       });
       return;
     }
@@ -693,7 +790,6 @@ async function startServer() {
 
   // For search engines: robots.txt and sitemap.xml. SITE_URL (default https://chesstacticsguide.com) is
   // the address written into canonical links and the sitemap.
-  const siteUrl = cleanSiteUrl(process.env.SITE_URL);
   app.get('/robots.txt', (_req, res) => {
     res.type('text/plain').set('Cache-Control', 'public, max-age=3600').send(robotsTxt(siteUrl));
   });

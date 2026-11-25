@@ -36,6 +36,7 @@ const PAGES: Record<string, ComponentType> = {
   '/endgames': lazy(() => import('./pages/theory/EndgameTheoryPage.tsx')),
   '/openings': lazy(() => import('./pages/theory/OpeningTheoryPage.tsx')),
   '/ebooks': lazy(() => import('./pages/EbooksPage.tsx')),
+  '/pricing': lazy(() => import('./pages/PricingPage.tsx')),
   '/about': lazy(() => import('./pages/legal/AboutPage.tsx')),
   '/privacy': lazy(() => import('./pages/legal/PrivacyPage.tsx')),
   '/contact': lazy(() => import('./pages/legal/ContactPage.tsx')),

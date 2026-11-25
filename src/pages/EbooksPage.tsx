@@ -1,12 +1,12 @@
-// The eBooks tab: every e-book with its price. Each costs $1.99 to buy, and Premium has all of them for free.
-// What the visitor owns is asked from the server (GET /api/ebooks), which is also what sends the PDF.
+// The eBooks tab: the e-books are free to download for Premium; everybody else is sent to the Pricing tab.
+// Whether the visitor may download is asked from the server (GET /api/ebooks), which is also what sends the PDF.
 import { useEffect, useState } from 'react';
-import { BookMarked, Check, Download, Lock } from 'lucide-react';
+import { BookMarked, Check, Crown, Download } from 'lucide-react';
 import AppShell from '../components/AppShell';
-import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from '../components/panelUi';
+import { PRIMARY_BUTTON_CLASS } from '../components/panelUi';
 import { authHeaders, useAuth } from '../auth';
 import { getsEbooksFree } from '../utils/access';
-import { EBOOKS, EBOOK_PRICE_LABEL, PURCHASES_OPEN, type EbookInfo } from '../utils/ebooks';
+import { EBOOKS, type EbookInfo } from '../utils/ebooks';
 import { readSavedUsername } from '../utils/profile';
 
 const CARD =
@@ -34,32 +34,7 @@ export async function downloadEbook(book: EbookInfo): Promise<string | null> {
   }
 }
 
-/** The slugs of the e-books the visitor may download, or null while the server has not answered yet. */
-function useOwned(signedIn: boolean, tier: string): Set<string> | null {
-  const [owned, setOwned] = useState<Set<string> | null>(signedIn ? null : new Set());
-  useEffect(() => {
-    if (!signedIn) {
-      setOwned(new Set());
-      return;
-    }
-    let current = true;
-    setOwned(null);
-    fetch('/api/ebooks', { headers: authHeaders() })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((body: { books?: Array<{ slug?: unknown; owned?: unknown }> } | null) => {
-        if (!current) return;
-        const slugs = (body?.books ?? []).filter((b) => b.owned === true && typeof b.slug === 'string').map((b) => b.slug as string);
-        setOwned(new Set(slugs));
-      })
-      .catch(() => current && setOwned(new Set()));
-    return () => {
-      current = false;
-    };
-  }, [signedIn, tier]);
-  return owned;
-}
-
-function BookCard({ book, owned, signedIn, premium }: { book: EbookInfo; owned: boolean | null; signedIn: boolean; premium: boolean }) {
+function BookCard({ book, premium }: { book: EbookInfo; premium: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,10 +63,10 @@ function BookCard({ book, owned, signedIn, premium }: { book: EbookInfo; owned: 
         <p className="text-xs font-bold uppercase tracking-wider text-white/55">PDF · {book.pages} pages · English</p>
 
         <div className="mt-1 flex flex-col gap-2.5">
-          {owned ? (
+          {premium ? (
             <>
               <p data-testid="ebook-owned" className="flex items-center gap-1.5 text-sm font-bold text-[#39ff88]">
-                <Check className="w-4 h-4" aria-hidden="true" /> {premium ? 'Included with Premium' : 'You own this e-book'}
+                <Check className="w-4 h-4" aria-hidden="true" /> Included with Premium
               </p>
               <button
                 type="button"
@@ -110,40 +85,14 @@ function BookCard({ book, owned, signedIn, premium }: { book: EbookInfo; owned: 
             </>
           ) : (
             <>
-              <p className="flex items-baseline gap-2">
-                <span data-testid="ebook-price" className="text-2xl font-bold text-white tabular-nums">
-                  {EBOOK_PRICE_LABEL}
-                </span>
-                <span className="text-sm font-bold text-amber-300">Free with Premium</span>
-              </p>
-              {owned === null ? (
-                <p className="text-sm font-medium text-white/70">Checking your account…</p>
-              ) : signedIn ? (
-                <>
-                  <button
-                    type="button"
-                    data-testid="ebook-buy"
-                    disabled={!PURCHASES_OPEN}
-                    className={`${PRIMARY_BUTTON_CLASS} sm:w-auto sm:self-start flex items-center justify-center gap-2`}
-                  >
-                    <Lock className="w-4 h-4" aria-hidden="true" />
-                    {PURCHASES_OPEN ? `Buy for ${EBOOK_PRICE_LABEL}` : 'Buying opens soon'}
-                  </button>
-                  {!PURCHASES_OPEN && (
-                    <p data-testid="ebook-soon" className="text-sm font-medium text-white/70">
-                      Premium members get every e-book for free as soon as Premium is on sale.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <a
-                  href="/login?next=%2Febooks"
-                  data-testid="ebook-signin"
-                  className={`${SECONDARY_BUTTON_CLASS} sm:w-auto sm:self-start px-5 flex items-center justify-center no-underline`}
-                >
-                  Sign in to buy or download
-                </a>
-              )}
+              <p className="text-sm font-bold text-amber-300">Free to download with Premium</p>
+              <a
+                href="/pricing"
+                data-testid="ebook-get-premium"
+                className={`${PRIMARY_BUTTON_CLASS} sm:w-auto sm:self-start px-5 flex items-center justify-center gap-2 no-underline`}
+              >
+                <Crown className="w-4 h-4" aria-hidden="true" /> Get Premium
+              </a>
             </>
           )}
         </div>
@@ -152,11 +101,9 @@ function BookCard({ book, owned, signedIn, premium }: { book: EbookInfo; owned: 
   );
 }
 
-/** The eBooks tab: a list of e-books, each with Download (owned or Premium) or its price. */
+/** The eBooks tab: a list of e-books, each with Download (Premium) or a Get Premium link to the Pricing tab. */
 export default function EbooksPage() {
-  const { session, tier, name } = useAuth();
-  const signedIn = session !== null;
-  const owned = useOwned(signedIn, tier);
+  const { tier, name } = useAuth();
 
   useEffect(() => {
     document.title = 'Chess eBooks: The Queen’s Gambit and more | Chess Tactics Guide';
@@ -172,12 +119,12 @@ export default function EbooksPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-white">eBooks</h1>
             <p className="mt-1 text-[15px] font-medium text-white/75 leading-relaxed">
-              Chess books with diagrams, plans, traps and exercises. {EBOOK_PRICE_LABEL} each, and every one is free with Premium.
+              Chess books with diagrams, plans, traps and exercises. Free to download with Premium.
             </p>
           </div>
         </header>
         {EBOOKS.map((book) => (
-          <BookCard key={book.slug} book={book} owned={owned === null ? null : owned.has(book.slug)} signedIn={signedIn} premium={getsEbooksFree(tier)} />
+          <BookCard key={book.slug} book={book} premium={getsEbooksFree(tier)} />
         ))}
       </div>
     </AppShell>

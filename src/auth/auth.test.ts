@@ -161,6 +161,16 @@ describe('store', () => {
     assert.deepEqual([s.tier, s.status, s.name], ['premium', 'ready', 'Ana']);
     assert.ok(h.data.get(AUTH_STORAGE_KEY)?.includes('"plan":"premium"'));
   });
+  it('refreshPlan asks the server again, so a plan bought a moment ago shows up', async () => {
+    let plan = 'free';
+    const h = harness((c) => (c.url.includes('/auth/v1/token') ? { body: sessionBody() } : profileFor(plan)));
+    await h.store.signIn('ana@example.com', 'secret1');
+    assert.equal(h.store.getState().tier, 'free');
+    plan = 'premium';
+    await h.store.refreshPlan();
+    assert.equal(h.store.getState().tier, 'premium');
+    assert.ok(h.data.get(AUTH_STORAGE_KEY)?.includes('"plan":"premium"'));
+  });
   it('a failed sign-in leaves the visitor a guest', async () => {
     const h = harness(() => ({ status: 400, body: { error_code: 'invalid_credentials' } }));
     const result = await h.store.signIn('ana@example.com', 'secret1');

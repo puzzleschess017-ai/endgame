@@ -69,25 +69,3 @@ create policy "change own data" on public.user_data for update to authenticated 
 
 revoke all on public.user_data from anon, authenticated;
 grant select, insert, update on public.user_data to authenticated;
-
--- ---------------------------------------------------------------------------------------------
--- E-books bought on the site (the eBooks tab). Premium has every e-book for free and needs no row here.
--- A person can only read their own rows: nobody can add a purchase from the website. The row is written by
--- the payment provider's webhook on the server, with the service role key (which bypasses these rules).
--- ---------------------------------------------------------------------------------------------
-create table if not exists public.ebook_purchases (
-  user_id uuid not null references auth.users (id) on delete cascade,
-  slug text not null check (char_length(slug) <= 64),
-  provider text not null default '',
-  provider_ref text not null default '',
-  created_at timestamptz not null default now(),
-  primary key (user_id, slug)
-);
-
-alter table public.ebook_purchases enable row level security;
-
-drop policy if exists "read own purchases" on public.ebook_purchases;
-create policy "read own purchases" on public.ebook_purchases for select to authenticated using (auth.uid() = user_id);
-
-revoke all on public.ebook_purchases from anon, authenticated;
-grant select on public.ebook_purchases to authenticated;

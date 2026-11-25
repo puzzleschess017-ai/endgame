@@ -19,7 +19,7 @@ function fake(tokens: Record<string, 'free' | 'premium' | null>, options: { down
     if (options.down) throw new Error('offline');
     const token = (headers.Authorization ?? '').replace('Bearer ', '');
     if (!(token in tokens)) return new Response('{}', { status: 401 });
-    if (url.endsWith('/auth/v1/user')) return Response.json({ id: ID });
+    if (url.endsWith('/auth/v1/user')) return Response.json({ id: ID, email: 'ana@example.com' });
     if (url.includes('/rest/v1/profiles')) {
       const tier = tokens[token];
       return Response.json(tier ? [{ tier }] : []);
@@ -42,8 +42,8 @@ describe('createTierLookup', () => {
   it('a real token: reads the plan with the key and the user token', async () => {
     const { fetchImpl, calls } = fake({ good: 'premium', plain: 'free' });
     const lookup = createTierLookup({ url: 'https://x.supabase.co/', key: 'KEY', fetchImpl });
-    assert.deepEqual(await lookup('Bearer good'), { ok: true, tier: 'premium' });
-    assert.deepEqual(await lookup('Bearer plain'), { ok: true, tier: 'free' });
+    assert.deepEqual(await lookup('Bearer good'), { ok: true, tier: 'premium', userId: ID, email: 'ana@example.com' });
+    assert.deepEqual(await lookup('Bearer plain'), { ok: true, tier: 'free', userId: ID, email: 'ana@example.com' });
     assert.equal(calls[0].url, 'https://x.supabase.co/auth/v1/user');
     assert.equal(calls[0].headers.apikey, 'KEY');
     assert.equal(calls[0].headers.Authorization, 'Bearer good');
@@ -53,7 +53,7 @@ describe('createTierLookup', () => {
   it('a token with no profile row counts as free', async () => {
     const { fetchImpl } = fake({ t: null });
     const lookup = createTierLookup({ url: 'https://x.supabase.co', key: 'k', fetchImpl });
-    assert.deepEqual(await lookup('Bearer t'), { ok: true, tier: 'free' });
+    assert.deepEqual(await lookup('Bearer t'), { ok: true, tier: 'free', userId: ID, email: 'ana@example.com' });
   });
 
   it('a rejected or expired token is a 401, not a guest', async () => {
@@ -76,6 +76,20 @@ describe('createTierLookup', () => {
     assert.equal(calls.length, 2, 'two requests for the first lookup, none for the second');
     time += 61_000;
     await lookup('Bearer good');
+    assert.equal(calls.length, 4);
+  });
+
+  it('forget drops what is remembered about one account, so a plan just bought shows at once', async () => {
+    const plans: Record<string, 'free' | 'premium'> = { good: 'free' };
+    const { fetchImpl, calls } = fake(plans);
+    const lookup = createTierLookup({ url: 'https://x.supabase.co', key: 'k', fetchImpl, now: () => 1000, ttlMs: 60_000 });
+    assert.equal(((await lookup('Bearer good')) as { tier: string }).tier, 'free');
+    plans.good = 'premium';
+    assert.equal(((await lookup('Bearer good')) as { tier: string }).tier, 'free', 'still remembered');
+    lookup.forget('00000000-0000-4000-8000-000000000000'); // another account: nothing changes
+    assert.equal(((await lookup('Bearer good')) as { tier: string }).tier, 'free');
+    lookup.forget(ID.toUpperCase());
+    assert.equal(((await lookup('Bearer good')) as { tier: string }).tier, 'premium');
     assert.equal(calls.length, 4);
   });
 
