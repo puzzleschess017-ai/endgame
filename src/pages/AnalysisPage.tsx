@@ -18,6 +18,7 @@ import { COMPACT_CARD_CLASS, SECONDARY_BUTTON_CLASS } from '../components/panelU
 import EnginePanel, { bestEngineMove } from '../components/EnginePanel';
 import { useEngine } from '../hooks/useEngine';
 import { useAuth } from '../auth';
+import { canUseEngine } from '../utils/access';
 import TrainerLayout from '../components/TrainerLayout';
 import { useAppearance } from '../hooks/useAppearance';
 import {
@@ -116,8 +117,9 @@ export default function AnalysisPage() {
   const status = statusAt(analysis);
   const rows = useMemo(() => moveRows(analysis), [analysis]);
 
-  // The engine is Premium: a switch left on from before a sign-out does nothing.
-  const engine = useEngine(engineOn && tier === 'premium', fen);
+  // The engine needs an account: a switch left on from before a sign-out does nothing.
+  const engineAllowed = canUseEngine(tier);
+  const engine = useEngine(engineOn && engineAllowed, fen);
 
   const atStart = analysis.index === 0;
   const atEnd = analysis.index === analysis.moves.length;
@@ -262,7 +264,7 @@ export default function AnalysisPage() {
     );
   };
 
-  const arrowUci = hoverUci ?? (engineOn && tier === 'premium' ? bestEngineMove(engine) : null);
+  const arrowUci = hoverUci ?? (engineOn && engineAllowed ? bestEngineMove(engine) : null);
   const hintArrow: [Key, Key] | null = arrowUci ? [arrowUci.slice(0, 2) as Key, arrowUci.slice(2, 4) as Key] : null;
   const editorHref = `/editor?fen=${encodeURIComponent(fen)}`;
 

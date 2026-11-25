@@ -9,11 +9,15 @@ import {
   ALL_MATE_IN,
   ALL_MEMORIZE,
   canOpenBlindfold,
+  canUseEngine,
   checkBlindfoldDrill,
+  checkBlindfoldDrillLimit,
   checkBlindfoldLevel,
   checkBlindfoldMateIn,
   clampBlindfold,
   clampDrill,
+  clampDrillLimit,
+  ENGINE_TIER,
   checkBlindfoldMate,
   checkWoodpecker,
   defaultWoodpecker,
@@ -36,6 +40,7 @@ describe('the three tiers', () => {
     assert.equal(canOpenBlindfold('guest'), false);
     assert.equal(ok(checkBlindfoldMate('guest', { level: 6, memorize: 10 })), false);
     for (const kind of ['color', 'check', 'diagonal', 'knight', 'reconstruct'] as const) assert.equal(ok(checkBlindfoldDrill('guest', kind)), false);
+    for (const limit of ['minute', 'endless'] as const) assert.equal(ok(checkBlindfoldDrillLimit('guest', limit)), false);
   });
   it('signed in: Classic, easy to hard, 10 to 100 puzzles, 2 to 4 cycles', () => {
     const w = ACCESS.free.woodpecker;
@@ -53,9 +58,10 @@ describe('the three tiers', () => {
     assert.equal(ok(checkBlindfoldMate('free', { level: 8, memorize: 10 })), false);
     assert.equal(ok(checkBlindfoldMate('free', { level: 32, memorize: 10 })), false);
   });
-  it('signed in: the square colours and check or not drills', () => {
+  it('signed in: only the square colours drill; check or not is Premium', () => {
     assert.ok(ok(checkBlindfoldDrill('free', 'color')));
-    assert.ok(ok(checkBlindfoldDrill('free', 'check')));
+    const check = checkBlindfoldDrill('free', 'check');
+    assert.deepEqual([check.ok, !check.ok && check.needs], [false, 'premium']);
     const diagonal = checkBlindfoldDrill('free', 'diagonal');
     assert.deepEqual([diagonal.ok, !diagonal.ok && diagonal.needs], [false, 'premium']);
     assert.equal(ok(checkBlindfoldDrill('free', 'knight')), false);
@@ -71,6 +77,22 @@ describe('the three tiers', () => {
     assert.deepEqual(ACCESS.premium.blindfold.memorize, ALL_MEMORIZE);
     assert.deepEqual(ACCESS.premium.blindfold.mateIn, ALL_MATE_IN);
     for (const kind of ['color', 'check', 'diagonal', 'knight', 'reconstruct'] as const) assert.ok(ok(checkBlindfoldDrill('premium', kind)));
+    for (const limit of ['minute', 'endless'] as const) assert.ok(ok(checkBlindfoldDrillLimit('premium', limit)));
+  });
+  it('the engine needs an account, not Premium', () => {
+    assert.equal(ENGINE_TIER, 'free');
+    assert.equal(canUseEngine('guest'), false);
+    assert.equal(canUseEngine('free'), true);
+    assert.equal(canUseEngine('premium'), true);
+    assert.equal(unlockHint('guest', ENGINE_TIER), 'Sign in to unlock');
+    assert.equal(unlockHint('free', ENGINE_TIER), '');
+  });
+  it('signed in: the 1 minute drill only; no time limit is Premium', () => {
+    assert.ok(ok(checkBlindfoldDrillLimit('free', 'minute')));
+    const endless = checkBlindfoldDrillLimit('free', 'endless');
+    assert.deepEqual([endless.ok, !endless.ok && endless.needs], [false, 'premium']);
+    assert.equal(tierFor((a) => a.blindfold.drillLimits, 'minute'), 'free');
+    assert.equal(tierFor((a) => a.blindfold.drillLimits, 'endless'), 'premium');
   });
   it('every tier has at least what the lower tier has', () => {
     for (const [low, high] of [['guest', 'free'], ['free', 'premium']] as const) {
@@ -82,6 +104,7 @@ describe('the three tiers', () => {
       for (const v of ACCESS[low].blindfold.memorize) assert.ok(ACCESS[high].blindfold.memorize.includes(v));
       for (const v of ACCESS[low].blindfold.mateIn) assert.ok(ACCESS[high].blindfold.mateIn.includes(v));
       for (const v of ACCESS[low].blindfold.drills) assert.ok(ACCESS[high].blindfold.drills.includes(v));
+      for (const v of ACCESS[low].blindfold.drillLimits) assert.ok(ACCESS[high].blindfold.drillLimits.includes(v));
     }
   });
 });
@@ -129,7 +152,7 @@ describe('helpers', () => {
     assert.equal(tierFor((a) => a.woodpecker.counts, 200), 'premium');
     assert.equal(tierFor((a) => a.woodpecker.counts, 7 as never), null);
     assert.equal(tierFor((a) => a.blindfold.drills, 'color'), 'free');
-    assert.equal(tierFor((a) => a.blindfold.drills, 'check'), 'free');
+    assert.equal(tierFor((a) => a.blindfold.drills, 'check'), 'premium');
     assert.equal(tierFor((a) => a.blindfold.drills, 'diagonal'), 'premium');
     assert.equal(tierFor((a) => a.blindfold.drills, 'knight'), 'premium');
     assert.equal(tierFor((a) => a.blindfold.levels, 7), 'free');
@@ -216,9 +239,15 @@ describe('checks the server can make and the clamps', () => {
     assert.deepEqual(clampBlindfold('premium', { level: 32, memorize: 5 }), { level: 32, memorize: 5 });
     assert.deepEqual(clampBlindfold('guest', { level: 32, memorize: 5 }), { level: 32, memorize: 5 });
   });
-  it('clampDrill: free keeps the colour and check drills and moves the others to the first one', () => {
+  it('clampDrillLimit: free is taken back to the 1 minute run, Premium keeps its choice', () => {
+    assert.equal(clampDrillLimit('free', 'minute'), 'minute');
+    assert.equal(clampDrillLimit('free', 'endless'), 'minute');
+    assert.equal(clampDrillLimit('premium', 'endless'), 'endless');
+    assert.equal(clampDrillLimit('guest', 'endless'), 'endless');
+  });
+  it('clampDrill: free keeps the colour drill and moves the others (check or not too) to it', () => {
     assert.equal(clampDrill('free', 'color'), 'color');
-    assert.equal(clampDrill('free', 'check'), 'check');
+    assert.equal(clampDrill('free', 'check'), 'color');
     assert.equal(clampDrill('free', 'reconstruct'), 'color');
     assert.equal(clampDrill('premium', 'reconstruct'), 'reconstruct');
     assert.equal(clampDrill('free', 'knight'), 'color');

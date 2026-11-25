@@ -2,7 +2,7 @@ import { Cpu } from 'lucide-react';
 import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from './locks';
 import { formatScore, numberMoves, pvToSan, whiteShare } from '../engine/uci';
 import { ENGINE_DEPTH, type EngineState } from '../hooks/useEngine';
-import type { Tier } from '../utils/access';
+import { ENGINE_TIER, unlockHint, type Tier } from '../utils/access';
 
 interface EnginePanelProps {
   tier: Tier;
@@ -28,10 +28,10 @@ export function bestEngineMove(state: EngineState): string | null {
   return state.lines[0]?.pv[0] ?? null;
 }
 
-/** "Check with engine": a switch that runs Stockfish on the position of the board. Premium. */
+/** "Check with engine": a switch that runs Stockfish on the position of the board. Needs a signed-in account. */
 export default function EnginePanel({ tier, fen, on, onToggle, state, onHover, onPlay }: EnginePanelProps) {
   const locks = useLocks(tier);
-  const needs: Tier = 'premium';
+  const needs: Tier = ENGINE_TIER;
   const locked = locks.isLocked(needs);
   const top = state.lines[0];
   const share = top ? whiteShare(top) : 50;
@@ -45,7 +45,7 @@ export default function EnginePanel({ tier, fen, on, onToggle, state, onHover, o
         aria-checked={on}
         aria-disabled={locked || undefined}
         data-testid="engine-toggle"
-        title={locked ? 'Premium' : undefined}
+        title={locked ? unlockHint(tier, needs) : undefined}
         onClick={locked ? locks.choose('Engine analysis', needs, () => {}) : () => onToggle(!on)}
         className={`${locked ? LOCKED_CLASS : ''} flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left transition-colors cursor-pointer min-h-[40px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
           on ? 'border-[#39ff88]/60 bg-[#39ff88]/10' : 'border-white/20 bg-[#101b2f] hover:border-white/50'
