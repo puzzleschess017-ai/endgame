@@ -57,13 +57,16 @@ export default function HomePage() {
 
   const rangeLabel = `last ${range} days`;
 
+  const greeting = (
+    <h2 className="flex items-center gap-2.5 text-2xl sm:text-3xl font-bold text-white tracking-tight">
+      {`Hello, ${username || 'Guest'}!`}
+      {tier === 'premium' && <PremiumCrown className="w-6 h-6 sm:w-7 sm:h-7" />}
+    </h2>
+  );
+
   return (
-    <AppShell username={username}>
+    <AppShell username={username} heading={session ? greeting : undefined}>
       <div className="max-w-[1100px] flex flex-col gap-8" data-testid="home">
-        <h2 className="flex items-center gap-2.5 text-2xl sm:text-3xl font-bold text-white tracking-tight">
-          {`Hello, ${username || 'Guest'}!`}
-          {tier === 'premium' && <PremiumCrown className="w-6 h-6 sm:w-7 sm:h-7" />}
-        </h2>
 
         {!hasTrained ? (
           <WelcomeIntro signedIn={session !== null} premium={tier === 'premium'} />

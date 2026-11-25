@@ -312,7 +312,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
       <div className="flex flex-wrap xl:flex-col items-center xl:items-stretch gap-x-3 gap-y-2 px-4 pt-3 xl:pt-0 xl:flex-1 xl:min-h-0">
         <a
           href="/"
-          className="side-logo flex items-center gap-3 shrink-0 xl:py-4 xl:border-b xl:border-white/10"
+          className="side-logo flex items-center gap-3 shrink-0 xl:pt-6 xl:pb-4 xl:border-b xl:border-white/10"
           aria-label="Chess Tactics Guide home"
         >
           <img
