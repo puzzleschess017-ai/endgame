@@ -31,6 +31,7 @@ const PAGES: Record<string, ComponentType> = {
   '/editor': bigScreenOnly('Board Editor', lazy(() => import('./pages/EditorPage.tsx'))),
   '/tablebase': bigScreenOnly('Endgame Tablebase', lazy(() => import('./pages/TablebasePage.tsx'))),
   '/login': lazy(() => import('./pages/LoginPage.tsx')),
+  '/endgames': lazy(() => import('./pages/theory/EndgameTheoryPage.tsx')),
   '/about': lazy(() => import('./pages/legal/AboutPage.tsx')),
   '/privacy': lazy(() => import('./pages/legal/PrivacyPage.tsx')),
   '/contact': lazy(() => import('./pages/legal/ContactPage.tsx')),
@@ -39,7 +40,8 @@ const PAGES: Record<string, ComponentType> = {
 initConsent();  // Google Analytics is loaded only for a visitor who accepted cookies
 
 const path = window.location.pathname.replace(/\/+$/, '') || '/';
-const Page = PAGES[path] ?? HomePage;
+// Every lesson (/endgames/<name>) is shown by the same page as the index. An unknown name shows the index too.
+const Page = PAGES[path] ?? (path.startsWith('/endgames/') ? PAGES['/endgames'] : HomePage);
 
 createRoot(document.getElementById('root')!).render(
   <Suspense fallback={null}>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  BookOpen,
   ChartColumn,
   ChevronDown,
   Crosshair,
@@ -119,6 +120,14 @@ export const NAV_GROUPS: NavGroup[] = [
         iconClass: 'text-cyan-300',
         chipClass: 'bg-cyan-400/15',
       },
+      {
+        id: 'theory',
+        href: '/endgames',
+        label: 'Endgame Theory',
+        icon: BookOpen,
+        iconClass: 'text-yellow-300',
+        chipClass: 'bg-yellow-400/15',
+      },
     ],
   },
   {
@@ -143,6 +152,11 @@ export const MODE_ITEMS: NavItem[] = NAV_GROUPS.filter((g) => g.id === 'puzzles'
 export const NAV_ITEMS: NavItem[] = [HOME_ITEM, ...NAV_GROUPS.flatMap((g) => g.items)];
 
 export const COLLAPSED_STORAGE_KEY = 'ctg_sidebar_collapsed_v1';
+
+/** The Endgame Theory entry stays marked on every lesson (/endgames/<name>). */
+function isActive(item: NavItem, path: string): boolean {
+  return item.href === path || (item.id === 'theory' && path.startsWith('/endgames/'));
+}
 
 export function currentPath(): string {
   if (typeof window === 'undefined') return '/';
@@ -172,7 +186,7 @@ function NavLink({ item, active, hideOnPhone }: { item: NavItem; active: boolean
     <a
       href={item.href}
       aria-current={active ? 'page' : undefined}
-      className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap border transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+      className={`flex items-center gap-3 px-3 py-1.5 xl:py-1 rounded-xl text-sm font-semibold whitespace-nowrap border transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
         hideOnPhone ? 'max-sm:hidden' : ''
       } ${
         active
@@ -297,11 +311,11 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         >
           <NavLink item={HOME_ITEM} active={HOME_ITEM.href === path} />
           {NAV_GROUPS.map((group) => {
-            const hasActive = group.items.some((item) => item.href === path);
+            const hasActive = group.items.some((item) => isActive(item, path));
             // The group of the current page stays open, so the current entry is never hidden.
             const open = hasActive || !collapsed.includes(group.id);
             return (
-              <div key={group.id} className="contents xl:flex xl:flex-col xl:gap-1 xl:mt-2.5">
+              <div key={group.id} className="contents xl:flex xl:flex-col xl:gap-1 xl:mt-2">
                 <button
                   type="button"
                   onClick={() => toggle(group.id)}
@@ -317,7 +331,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
                 </button>
                 <div id={`nav-group-${group.id}`} className={`contents xl:flex xl:flex-col xl:gap-1 ${open ? '' : 'xl:hidden'}`}>
                   {group.items.map((item) => (
-                    <NavLink key={item.id} item={item} active={item.href === path} hideOnPhone={group.id === 'tools'} />
+                    <NavLink key={item.id} item={item} active={isActive(item, path)} hideOnPhone={group.id === 'tools' && item.id !== 'theory'} />
                   ))}
                 </div>
               </div>

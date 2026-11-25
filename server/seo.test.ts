@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import fs from 'node:fs';
+import { LESSONS, lessonPath } from '../src/theory/endgames.ts';
 import {
   PAGES,
   cleanSiteUrl,
@@ -83,7 +84,13 @@ describe('renderPage', () => {
       assert.ok(match, page.path);
       const data = JSON.parse(match[1]);
       const expected =
-        page.kind === 'website' ? ['WebSite'] : page.kind === 'info' ? ['AboutPage', 'ContactPage', 'WebPage'] : ['WebApplication'];
+        page.kind === 'website'
+          ? ['WebSite']
+          : page.kind === 'info'
+            ? ['AboutPage', 'ContactPage', 'WebPage']
+            : page.kind === 'article'
+              ? ['Article']
+              : ['WebApplication'];
       assert.ok(expected.includes(data['@type']), page.path);
       assert.ok(String(data.url).startsWith(SITE));
     }
@@ -121,5 +128,27 @@ describe('robots.txt and sitemap.xml', () => {
     assert.ok(locs.includes('https://example.org/'));
     assert.ok(locs.includes('https://example.org/tablebase'));
     assert.ok(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>'));
+  });
+});
+
+describe('endgame theory lessons', () => {
+  it('the title of a page is the title of the lesson and the site name', () => {
+    for (const lesson of LESSONS) assert.equal(pageFor(lessonPath(lesson.slug))!.title, `${lesson.title} | Chess Tactics Guide`);
+  });
+  it('every lesson has a page entry with its address, and every lesson page has a lesson', () => {
+    for (const lesson of LESSONS) {
+      const page = pageFor(lessonPath(lesson.slug));
+      assert.ok(page, lesson.slug);
+      assert.equal(page.kind, 'article');
+      assert.ok(page.indexable);
+    }
+    const articles = PAGES.filter((p) => p.kind === 'article');
+    assert.equal(articles.length, LESSONS.length);
+    assert.ok(pageFor('/endgames'));
+  });
+  it('descriptions are long enough to be useful in a search result', () => {
+    for (const page of PAGES.filter((p) => p.path.startsWith('/endgames'))) {
+      assert.ok(page.description.length >= 100, `${page.path} description is ${page.description.length} characters`);
+    }
   });
 });

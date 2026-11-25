@@ -99,6 +99,7 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | `/blindfold` | Blindfold: *Checkmate* (mate in 1, 2 or 3: memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; in a mate in 2 or 3 you type your moves one at a time, the opponent's reply is shown as text after each right one and the board stays empty; checkmate always counts, other moves must be the puzzle's own; levels by number of pieces: up to 6, 7, 8, 10 or any; a round is 10 puzzles; a best score for each length and level) and *Drills* (without a board, for 60 s or with no time limit: the endless run is practice, "Finish and save" adds the answers to Statistics but keeps no record;  square color, check or not, same diagonal, knight route; and *Rebuild position*: a real position is shown for 10, 20 or 30 s, the board is emptied and you put the pieces back by dragging them in or picking a piece and tapping squares; 5 positions per round, up to 6, 7, 8 or 10 pieces, scored by perfect rebuilds; the positions come from the same mate-in-1 puzzles as Blindfold). Best scores saved in the browser |
 | `/editor` | Board Editor: set up any position by dragging pieces in from the palette (or choosing a piece and tapping squares), moving them, or dragging them off the board; side to move, castling rights and en passant; load or copy a FEN; "Check in the Tablebase" opens it on the Tablebase page. The button is only on when the position is legal (both kings, no pawns on the first or last rank, the side not to move is not in check) |
 | `/tablebase` | Endgame Tablebase: perfect play for any position with 7 pieces or fewer (Syzygy tables, through the public Lichess tablebase). Shows who wins (with the mate distance when known), draws by the 50-move rule, and every legal move marked Wins / Draws / Loses, best first; click a move to play it, hover to see it as an arrow. Play on the board, step through the game (buttons, arrow keys, Home/End), try the example positions (K+Q vs K, K+R vs K, K+P vs K, Lucena), load a FEN, import and copy a PGN. `?fen=...` starts from a position. Positions with more than 7 pieces or with castling rights cannot be looked up and say so |
+| `/endgames` | Endgame theory: an index of lessons and one page per lesson (`/endgames/lucena-position`, `philidor-position`, `king-and-pawn-opposition`, `king-and-rook-vs-king`, `king-and-queen-vs-king`, `wrong-colored-bishop`). The text, diagrams (FEN plus arrows) and the "Practise this" position of every lesson are in `src/theory/endgames.ts`; `src/components/DiagramBoard.tsx` draws a diagram as plain SVG with the piece images of `public/pieces`. The pages are public (no welcome window) and article pages in the sitemap. Practise opens the position in the tablebase (`?fen=`) |
 
 Every path is served by the same app (`main.tsx` picks the page from the URL). Logic that can be
 tested without a browser lives in `src/utils/`; run all its tests with
@@ -183,6 +184,11 @@ sitemap. **A new page needs one entry in `PAGES`** (plus its route in `src/main.
 should stay 50-170 characters and titles under 70; `server/seo.test.ts` checks that.
 
 ### About, Privacy, Contact and cookies
+
+To add an endgame lesson: add an object to `LESSONS` in `src/theory/endgames.ts` (check every position in the Lichess
+tablebase first: a unit test already checks that the FENs are legal, have at most 7 pieces and that the stalemate and
+mate diagrams are real) and an entry with the same title (`<lesson title> | Chess Tactics Guide`) and a description of at
+least 100 characters in `PAGES` of `server/seo.ts`; a test fails if one of the two is missing.
 
 `/about`, `/privacy` and `/contact` live in `src/pages/legal/` (shared frame: `LegalLayout`). They are never covered
 by the welcome window (`isInfoPath` in `src/site.ts`). The contact e-mail address is `CONTACT_EMAIL` in
