@@ -1,4 +1,4 @@
-// Endless supply of puzzles that get harder one by one, for Streak and Race.
+// Endless supply of puzzles that get harder one by one, for Streak and Survival.
 // The server builds the puzzles in batches (/api/puzzles/ladder); this class asks for the next
 // batch before the current one runs out, so the player never waits between puzzles.
 import type { Puzzle } from '../types';

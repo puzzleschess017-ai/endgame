@@ -719,6 +719,11 @@ async function startServer() {
     res.redirect(301, `/analysis${query}`);
   });
 
+  // Puzzle Race was replaced by Puzzle Survival: old links and bookmarks go to the new page.
+  app.get(['/race', '/race/'], (_req, res) => {
+    res.redirect(301, '/survival');
+  });
+
   // Endgame tablebase (Lichess Syzygy, up to 7 pieces). The Board Analysis page no longer asks for it; kept for later use. Answers are kept for a day.
   const tablebase = createTablebase({ baseUrl: process.env.TABLEBASE_URL });
   app.get('/api/tablebase', async (req, res) => {

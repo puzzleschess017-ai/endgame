@@ -1,4 +1,4 @@
-// Plays one puzzle at a time on the board for Streak and Race (Woodpecker has its own, older logic).
+// Plays one puzzle at a time on the board for Streak and Survival (Woodpecker has its own, older logic).
 //
 // loadPuzzle() shows the puzzle: the opponent's first move is played, then the player moves.
 // The hook checks every move, plays the opponent's replies, and calls onSolved when the whole line

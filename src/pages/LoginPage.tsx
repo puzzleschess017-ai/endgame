@@ -213,7 +213,7 @@ export default function LoginPage() {
                 Play as a guest
               </a>
               <p className="text-xs font-medium text-white/60 leading-relaxed">
-                Guests can use Woodpecker (Classic puzzles, easy and medium), Puzzle Streak, Puzzle Race, Coordinate
+                Guests can use Woodpecker (Classic puzzles, easy and medium), Puzzle Streak, Puzzle Survival, Coordinate
                 Training, the Board Editor and Board Analysis. Results stay in this browser.
               </p>
             </div>

@@ -11,7 +11,7 @@ export const SYNCED: Array<{ key: string; kind: DataKind }> = [
   { key: ACTIVITY_STORAGE_KEY, kind: 'activity' },
   { key: WOODPECKER_HISTORY_STORAGE_KEY, kind: 'history' },
   { key: 'ctg_streak_best_v1', kind: 'best-number' },
-  { key: 'ctg_race_best_v1', kind: 'best-map' },
+  { key: 'ctg_survival_best_v1', kind: 'best-number' },
   { key: 'ctg_coordinates_best_v1', kind: 'best-map' },
   { key: 'ctg_blindfold_best_v1', kind: 'best-map' },
   { key: 'ctg_drills_best_v1', kind: 'best-map' },

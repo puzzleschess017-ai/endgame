@@ -1,4 +1,4 @@
-// "Ladder" of puzzles for Streak and Race: one puzzle per step of rating, easy first.
+// "Ladder" of puzzles for Streak and Survival: one puzzle per step of rating, easy first.
 // Uses every puzzle in the database (not only endgames).
 import type Database from 'better-sqlite3';
 
@@ -26,7 +26,7 @@ export const LADDER_LIMITS = {
   maxCount: 60,
 };
 
-/** Longest solution (in plies, opponent's first move included) that Streak and Race will use. */
+/** Longest solution (in plies, opponent's first move included) that Streak and Survival will use. */
 const MAX_MOVES_PER_PUZZLE = 8;
 const MAX_RAND_KEY = 2147483647;
 

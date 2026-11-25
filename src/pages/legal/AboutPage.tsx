@@ -15,7 +15,7 @@ export default function AboutPage() {
           accuracy are tracked per cycle.
         </li>
         <li>
-          <a href="/streak">Puzzle Streak</a> and <a href="/race">Puzzle Race</a>: puzzles that get harder one by
+          <a href="/streak">Puzzle Streak</a> and <a href="/survival">Puzzle Survival</a>: puzzles that get harder one by
           one, or as many as you can solve against the clock.
         </li>
         <li>

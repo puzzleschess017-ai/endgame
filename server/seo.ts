@@ -22,7 +22,7 @@ export const PAGES: PageMeta[] = [
     path: '/',
     title: 'Chess Tactics Guide | Chess training: endgames, puzzles and blindfold',
     description:
-      'Free chess training: Woodpecker endgames, puzzle streaks and races, coordinates and blindfold drills. Sign in to keep your results on every device.',
+      'Free chess training: Woodpecker endgames, puzzle streaks and survival runs, coordinates and blindfold drills. Sign in to keep your results on every device.',
     indexable: true,
     kind: 'website',
     priority: 1.0,
@@ -45,9 +45,9 @@ export const PAGES: PageMeta[] = [
     priority: 0.8,
   },
   {
-    path: '/race',
-    title: 'Puzzle Race | Chess Tactics Guide',
-    description: 'Puzzle Race: solve as many chess puzzles as you can in 1, 3 or 5 minutes. A wrong move costs 10 seconds.',
+    path: '/survival',
+    title: 'Puzzle Survival | Chess Tactics Guide',
+    description: 'Puzzle Survival: solve chess puzzles that get harder one by one. You have 3 lives and no clock; every wrong move costs a life.',
     indexable: true,
     kind: 'app',
     priority: 0.8,
