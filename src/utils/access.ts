@@ -77,6 +77,19 @@ export function canUseEngine(tier: Tier): boolean {
   return TIERS.indexOf(tier) >= TIERS.indexOf(ENGINE_TIER);
 }
 
+/** The lowest plan that gets every e-book for free (a monthly or yearly subscription is Premium). */
+export const EBOOK_TIER: Tier = 'premium';
+
+/** True when the tier has every e-book without buying it. */
+export function getsEbooksFree(tier: Tier): boolean {
+  return TIERS.indexOf(tier) >= TIERS.indexOf(EBOOK_TIER);
+}
+
+/** True when the visitor may download an e-book: Premium has all of them, everybody else needs to have bought it. */
+export function mayDownloadEbook(tier: Tier, purchased: boolean): boolean {
+  return getsEbooksFree(tier) || (tier !== 'guest' && purchased);
+}
+
 export const TIER_NAME: Record<Tier, string> = { guest: 'guest', free: 'a signed-in account', premium: 'Premium' };
 
 /** What the person must do to get a choice: sign in, or go Premium. Empty when they already have it. */

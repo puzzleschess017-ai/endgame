@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  BookMarked,
   BookOpen,
   Library,
   ChartColumn,
@@ -136,6 +137,20 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Library,
         iconClass: 'text-orange-300',
         chipClass: 'bg-orange-400/15',
+      },
+    ],
+  },
+  {
+    id: 'library',
+    label: 'Library',
+    items: [
+      {
+        id: 'ebooks',
+        href: '/ebooks',
+        label: 'eBooks',
+        icon: BookMarked,
+        iconClass: 'text-rose-300',
+        chipClass: 'bg-rose-400/15',
       },
     ],
   },
