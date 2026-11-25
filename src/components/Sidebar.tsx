@@ -309,7 +309,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
     setCollapsed((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
-    <aside className="xl:w-[256px] xl:shrink-0 xl:sticky xl:top-0 xl:h-screen xl:flex xl:flex-col bg-[#0d1627] border-b xl:border-b-0 xl:border-r border-white/10">
+    <aside className="xl:w-[256px] xl:shrink-0 xl:sticky xl:top-0 xl:h-screen xl:flex xl:flex-col bg-gradient-to-b from-[#101c33] to-[#080f1c] border-b xl:border-b-0 xl:border-r border-white/10">
       <div className="flex flex-wrap xl:flex-col items-center xl:items-stretch gap-x-3 gap-y-2 px-4 pt-3 xl:pt-0 xl:flex-1 xl:min-h-0">
         <a
           href="/"

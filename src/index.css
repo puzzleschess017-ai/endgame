@@ -22,6 +22,17 @@
     color: #ffffff;
   }
 
+  /* The page background: a deep blue that shifts from lighter at the top left to darker at the bottom right,
+     with a faint green glow at the top right and a blue one at the bottom left. */
+  .app-bg {
+    background-color: #101b2f;
+    background-image:
+      radial-gradient(900px 560px at 88% -8%, rgba(57, 255, 136, 0.07), transparent 62%),
+      radial-gradient(1000px 680px at -5% 105%, rgba(70, 120, 255, 0.16), transparent 62%),
+      linear-gradient(155deg, #16264a 0%, #101b2f 48%, #0a1322 100%);
+    background-attachment: fixed;
+  }
+
   h1,
   h2,
   h3,

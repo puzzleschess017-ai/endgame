@@ -18,7 +18,7 @@ interface AppShellProps {
 export default function AppShell({ username, children }: AppShellProps) {
   const gateOpen = useGateOpen();
   return (
-    <div className="min-h-screen bg-[#101b2f] text-white xl:flex">
+    <div className="min-h-screen app-bg text-white xl:flex">
       <Sidebar username={username} />
       <main className="flex-1 min-w-0 px-4 sm:px-6 py-5 xl:py-7">
         {/* On big screens the account buttons sit at the top right of the page (on small screens they are in the top bar). */}
