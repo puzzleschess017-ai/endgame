@@ -65,7 +65,7 @@ export default function HomePage() {
   );
 
   return (
-    <AppShell username={username} heading={greeting}>
+    <AppShell username={username} heading={session ? greeting : undefined}>
       <div className="max-w-[1100px] flex flex-col gap-8" data-testid="home">
 
         {!hasTrained ? (
