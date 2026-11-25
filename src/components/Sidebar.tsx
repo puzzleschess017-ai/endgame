@@ -170,23 +170,9 @@ export const NAV_GROUPS: NavGroup[] = [
       },
     ],
   },
-  {
-    id: 'progress',
-    label: 'Progress',
-    items: [
-      {
-        id: 'statistics',
-        href: '/statistics',
-        label: 'Statistics',
-        icon: ChartColumn,
-        iconClass: 'text-emerald-400',
-        chipClass: 'bg-emerald-500/15',
-      },
-    ],
-  },
 ];
 
-/** The training modes (puzzles and training, not Tools, Home or Statistics), in menu order. */
+/** The training modes (puzzles and training, not Tools or Home), in menu order. */
 export const MODE_ITEMS: NavItem[] = NAV_GROUPS.filter((g) => g.id === 'puzzles' || g.id === 'training').flatMap((g) => g.items);
 
 export const NAV_ITEMS: NavItem[] = [HOME_ITEM, ...NAV_GROUPS.flatMap((g) => g.items)];

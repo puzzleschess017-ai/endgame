@@ -2,7 +2,7 @@
 // account (name, email, plan), a way to change the name, and the places that belong to the account. A crown next to the
 // name shows that the account has Premium.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ChartColumn, Check, Crown, LogOut, Pencil, UserRound } from 'lucide-react';
+import { ChartColumn, Check, Crown, LogIn, LogOut, Pencil, UserRound } from 'lucide-react';
 import { auth, useAuth } from '../auth';
 import { signOutAndSync } from '../sync';
 
@@ -63,16 +63,33 @@ export default function ProfileMenu({ guestName, align, className = '', testId =
 
   if (!session) {
     return (
-      <div className={className}>
-        <a
-          href="/login"
+      <div ref={box} className={`relative min-w-0 ${className}`}>
+        <button
+          type="button"
           data-testid={testId}
+          aria-haspopup="menu"
+          aria-expanded={open}
           title={guestName ? `${guestName}: sign in or create an account` : 'Sign in or create an account'}
-          className={`${rowClass} no-underline`}
+          onClick={() => setOpen((v) => !v)}
+          className={`${rowClass} w-full cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]`}
         >
           {chip}
           <span className="truncate">{guestName || 'Guest'}</span>
-        </a>
+        </button>
+        {open && (
+          <div
+            role="menu"
+            data-testid="profile-menu"
+            className={`absolute z-50 w-[250px] top-full mt-2 ${align === 'left' ? 'left-0' : 'right-0'} bg-[#16233b] border border-white/15 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.6)] p-2 flex flex-col gap-0.5`}
+          >
+            <a role="menuitem" href="/login" data-testid="guest-sign-in" className={ITEM}>
+              <LogIn className="w-4 h-4 text-[#39ff88]" aria-hidden="true" /> Sign in or create an account
+            </a>
+            <a role="menuitem" href="/statistics" className={ITEM}>
+              <ChartColumn className="w-4 h-4 text-emerald-400" aria-hidden="true" /> My statistics
+            </a>
+          </div>
+        )}
       </div>
     );
   }
