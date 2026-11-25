@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
-import { Chess } from 'chess.js';
 import {
-  EXAMPLES,
   countPieces,
   fetchTablebase,
   lookupProblem,
@@ -11,7 +9,6 @@ import {
   type TablebaseMove,
   type TablebaseResult,
 } from './tablebase.ts';
-import { validateFen } from './editor.ts';
 
 const base: TablebaseResult = {
   fen: 'x',
@@ -55,15 +52,6 @@ test('moveLabel', () => {
   assert.equal(moveLabel(move('blessed-loss')).text, 'Draws (50-move rule)');
   assert.deepEqual(moveLabel(move('win', true)), { text: 'Checkmate', tone: 'good' });
   assert.equal(moveLabel(move('unknown')).text, '?');
-});
-
-test('every example is a legal position within the tablebase limits', () => {
-  for (const example of EXAMPLES) {
-    assert.deepEqual(validateFen(example.fen), { ok: true }, example.label);
-    assert.equal(lookupProblem(example.fen), null, example.label);
-    assert.doesNotThrow(() => new Chess(example.fen), example.label);
-  }
-  assert.equal(new Set(EXAMPLES.map((e) => e.id)).size, EXAMPLES.length);
 });
 
 const realFetch = globalThis.fetch;

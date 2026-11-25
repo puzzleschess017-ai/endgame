@@ -125,16 +125,3 @@ export async function fetchTablebase(fen: string, signal?: AbortSignal): Promise
     return { ok: false, error: 'The tablebase could not be reached. Check your connection and try again.' };
   }
 }
-
-export interface Example {
-  id: string;
-  label: string;
-  fen: string;
-}
-
-export const EXAMPLES: Example[] = [
-  { id: 'kqk', label: 'King and queen vs king', fen: '8/8/8/4k3/8/8/2Q5/4K3 w - - 0 1' },
-  { id: 'krk', label: 'King and rook vs king', fen: '8/8/8/4k3/8/8/2R5/4K3 w - - 0 1' },
-  { id: 'kpk', label: 'King and pawn vs king', fen: '8/8/8/4k3/8/4K3/4P3/8 w - - 0 1' },
-  { id: 'lucena', label: 'Lucena position (rook endgame)', fen: '1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1' },
-];

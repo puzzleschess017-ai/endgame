@@ -15,6 +15,8 @@ interface TrainerLayoutProps {
   board: ReactNode;
   /** Right-hand panel (setup, run info, results). */
   panel: ReactNode;
+  /** Under the board and its size buttons, in the same column (it does not scroll with the panel). */
+  belowBoard?: ReactNode;
   /** Modals and other overlays. */
   children?: ReactNode;
 }
@@ -34,6 +36,7 @@ export default function TrainerLayout({
   onAppearanceChange,
   board,
   panel,
+  belowBoard,
   children,
 }: TrainerLayoutProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -85,6 +88,8 @@ export default function TrainerLayout({
                 <Settings className="w-4 h-4" />
               </button>
             </div>
+
+            {belowBoard}
           </section>
 
           <aside className="w-full max-w-[560px] lg:w-[370px] shrink-0">{panel}</aside>

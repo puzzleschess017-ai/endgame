@@ -1,36 +1,11 @@
-// The endgame theory lessons. Every position was checked against the Lichess endgame tablebase, so the
-// result written next to a diagram is the true result. Edit the text here; the pages, the index and the
-// "practise this" buttons are built from it. A lesson also needs an entry in server/seo.ts (a test checks that).
+// The endgame theory lessons. The first six lessons were checked against the Lichess endgame tablebase; the
+// positions of the later ones (rule of the square, queen against a pawn, the two bishop mates) were checked
+// with chess.js and Stockfish. Edit the text here; the pages, the index and the "practise this" buttons are
+// built from it. A lesson also needs an entry in server/seo.ts (a test checks that).
 
-export interface Diagram {
-  fen: string;
-  caption: string;
-  /** Arrows drawn on the board, as [from, to] squares. */
-  arrows?: Array<[string, string]>;
-}
+import type { Lesson, TheoryCollection } from './types.ts';
 
-export interface Section {
-  heading: string;
-  paragraphs?: string[];
-  bullets?: string[];
-  diagram?: Diagram;
-}
-
-export interface Lesson {
-  slug: string;
-  /** Page heading and link text. */
-  title: string;
-  /** One or two sentences for the index card. */
-  summary: string;
-  /** What the lesson is about: a result to know, or a technique to carry out. */
-  kind: 'Win' | 'Draw' | 'Technique';
-  intro: string[];
-  sections: Section[];
-  /** The position the "practise this" button opens in Board Analysis. */
-  practice: { fen: string; label: string };
-  /** Slugs of lessons to read next. */
-  related: string[];
-}
+export type { Diagram, Lesson, Section } from './types.ts';
 
 export const THEORY_BASE = '/endgames';
 
@@ -334,6 +309,211 @@ export const LESSONS: Lesson[] = [
     practice: { fen: '7k/8/5K1P/8/8/8/8/5B2 w - - 0 1', label: 'Check the wrong-colored bishop in Board Analysis' },
     related: ['king-and-pawn-opposition', 'philidor-position'],
   },
+  {
+    slug: 'rule-of-the-square',
+    title: 'The Rule of the Square in Pawn Endings',
+    summary: 'See at a glance whether a king can catch a passed pawn: draw the square and remember who is to move.',
+    kind: 'Technique',
+    intro: [
+      'A passed pawn racing to the eighth rank while the enemy king is far away decides many endgames. You do not have to count move by move: the rule of the square gives you the answer in one look.',
+    ],
+    sections: [
+      {
+        heading: 'Draw the square',
+        paragraphs: [
+          'Count how many moves the pawn needs to reach its queening square. That number is the length of the side of the square. Draw the square from the pawn towards the side where the defending king stands. A white pawn on a4 needs four moves to reach a8, so the square is a4, a8, e8 and e4.',
+          'If the defending king can step into the square, he catches the pawn. If he cannot, the pawn queens.',
+        ],
+      },
+      {
+        heading: 'The king is inside the square: a draw',
+        paragraphs: [
+          'The black king on e6 is on the edge of the square. After 1.a5 Kd7 2.a6 Kc7 3.a7 Kb7 the king reaches the pawn in time: the pawn can only queen by being captured on the next move. The white king is too far away to help.',
+        ],
+        diagram: {
+          fen: '8/8/4k3/8/P7/8/8/7K w - - 0 1',
+          caption: 'White to move. The king on e6 is inside the square, so the pawn is caught. The game is a draw.',
+          arrows: [['a4', 'a8'], ['e6', 'b7']],
+        },
+      },
+      {
+        heading: 'The king is outside the square: the pawn queens',
+        paragraphs: [
+          'Move the king one file away, to f6, and it is outside the square. Now 1.a5 cannot be stopped: the king never gets close enough and the pawn promotes.',
+        ],
+        diagram: {
+          fen: '8/8/5k2/8/P7/8/8/7K w - - 0 1',
+          caption: 'White to move. The king on f6 is one file too far from the pawn, and White wins.',
+          arrows: [['a4', 'a8']],
+        },
+      },
+      {
+        heading: 'Who is to move?',
+        paragraphs: [
+          'The square is drawn for the side that is to move. When the defender is on move he gains one step. The same position with Black to move is a draw, because 1...Ke6 puts the king inside the square.',
+        ],
+        diagram: {
+          fen: '8/8/5k2/8/P7/8/8/7K b - - 0 1',
+          caption: 'Black to move. 1...Ke6 steps into the square, and the pawn is caught. A draw.',
+          arrows: [['f6', 'e6']],
+        },
+      },
+      {
+        heading: 'Two things to remember',
+        bullets: [
+          'A pawn on its starting rank can move two squares, so count it as if it stood on the third rank.',
+          'The rule ignores the attacker\'s king. If your own king is close enough to help the pawn, the square does not matter any more.',
+          'Use it before you start a king walk or a pawn push: a few seconds of counting saves you from running into a lost race.',
+        ],
+      },
+    ],
+    practice: { fen: '8/8/5k2/8/P7/8/8/7K w - - 0 1', label: 'Check the pawn race in Board Analysis' },
+    related: ['king-and-pawn-opposition', 'queen-vs-pawn-on-the-seventh'],
+  },
+  {
+    slug: 'queen-vs-pawn-on-the-seventh',
+    title: 'Queen vs Pawn on the Seventh Rank',
+    summary: 'A queen usually beats a pawn, but a bishop pawn or a rook pawn on the seventh rank can draw by stalemate.',
+    kind: 'Draw',
+    intro: [
+      'A queen against a pawn looks like an easy win, and it is, until the pawn reaches the seventh rank with its king beside it. Then the stalemate tricks begin. This is one of the most useful endgames to know, because the result depends on which pawn it is.',
+    ],
+    sections: [
+      {
+        heading: 'The stalemate trick',
+        paragraphs: [
+          'Here Black has a pawn on c2 and a king on a1. If White takes the pawn with 1.Qxc2, the black king has no move and is not in check: stalemate. Nothing else wins for White either, because the king and the pawn protect each other.',
+        ],
+        diagram: {
+          fen: '8/8/7K/8/8/1Q6/2p5/k7 w - - 0 1',
+          caption: 'White to move. 1.Qxc2 is stalemate, and the queen cannot make progress. A draw.',
+          arrows: [['b3', 'c2']],
+        },
+      },
+      {
+        heading: 'Bishop pawn and rook pawn: a draw',
+        paragraphs: [
+          'With a pawn on the c-file or the f-file (the bishop pawns), or on the a-file or the h-file (the rook pawns), the defender always has these stalemate tricks. Each time the queen checks, the king steps into the corner and the queen has to be careful not to stalemate him. If the attacking king is far away, the game is drawn.',
+        ],
+        diagram: {
+          fen: '8/8/7K/3Q4/8/8/2p5/1k6 w - - 0 1',
+          caption: 'White to move. The bishop pawn on c2 is supported by its king, and the white king is too far away. The game is a draw.',
+        },
+      },
+      {
+        heading: 'Knight pawn and central pawns: the queen wins',
+        paragraphs: [
+          'With a pawn on the b-, d-, e- or g-file the stalemate tricks do not work, and the queen wins. The queen forces the king in front of the pawn with a few checks, which costs the defender time and blocks his own pawn. The white king then walks up and the queen delivers mate.',
+          'In the diagram White plays 1.Qc4+ Kb2 2.Qd3 Kc1 3.Qc3+ Kd1, and the king now stands in front of its pawn. White brings the king closer and wins.',
+        ],
+        diagram: {
+          fen: '8/8/7K/3Q4/8/8/2kp4/8 w - - 0 1',
+          caption: 'White to move and win. The d-pawn gives the defender no stalemate trick.',
+          arrows: [['d5', 'c4']],
+        },
+      },
+      {
+        heading: 'If the attacking king is close',
+        bullets: [
+          'When the white king is near the pawn, the queen wins even against a bishop pawn or a rook pawn: the king takes away the squares the defender needs.',
+          'If you have the pawn, keep your king next to it and avoid trading into this ending when the enemy king is nearby.',
+          'If you have the queen, bring your king closer before you go for the win.',
+        ],
+      },
+    ],
+    practice: { fen: '8/8/7K/3Q4/8/8/2p5/1k6 w - - 0 1', label: 'Check the queen against the c-pawn in Board Analysis' },
+    related: ['king-and-queen-vs-king', 'rule-of-the-square'],
+  },
+  {
+    slug: 'bishop-and-knight-mate',
+    title: 'Checkmate With Bishop and Knight',
+    summary: "The hardest basic mate: drive the king to a corner of your bishop's color and use the knight to close the net.",
+    kind: 'Technique',
+    intro: [
+      'A king, a bishop and a knight against a lone king is a forced win, but it needs a precise method and can take up to 33 moves. Most players learn it once, so it is worth knowing the plan before you need it.',
+    ],
+    sections: [
+      {
+        heading: 'Know the right corner',
+        paragraphs: [
+          "A bishop and a knight can only give mate in a corner that has the color of the bishop. With a light-squared bishop that is a8 or h1, with a dark-squared bishop it is a1 or h8. In the other two corners the king is safe, so you have to drive it across the board.",
+        ],
+        diagram: {
+          fen: '7k/5K2/8/8/8/8/4B3/6N1 b - - 0 1',
+          caption: 'Black to move. The bishop is light-squared, so h8 is the wrong corner. White must push the king towards a8 or h1.',
+        },
+      },
+      {
+        heading: 'The plan',
+        bullets: [
+          'Drive the king to the edge, with your king and both pieces working together as a net.',
+          'Steer it along the edge to the corner of the bishop\'s color. If it runs into the wrong corner, push it out again.',
+          'Bring the knight along a zig-zag route shaped like a W, so that each jump takes away a square the king needs. The details are easier to learn by playing the ending against the engine than from a diagram.',
+          'Finish with a check from the bishop or the knight, while your king covers the squares next to the corner.',
+        ],
+      },
+      {
+        heading: 'The final mate',
+        paragraphs: [
+          'This is the pattern you are aiming for. The white king covers a7 and b7, the knight covers b8, and the bishop checks along the long diagonal.',
+        ],
+        diagram: {
+          fen: 'k7/3N4/1K6/8/8/3B4/8/8 w - - 0 1',
+          caption: 'White to move. 1.Be4 is checkmate.',
+          arrows: [['d3', 'e4']],
+        },
+      },
+      {
+        heading: 'Watch out for',
+        bullets: [
+          'Stalemate. When the king is on the edge, always check that it still has a legal move before you play a quiet move.',
+          'Keep the bishop and the knight protected by your king or by each other.',
+          'Count the moves. The fifty-move rule applies, and with a good method you have plenty of time.',
+        ],
+      },
+    ],
+    practice: { fen: '7k/5K2/8/8/8/8/4B3/6N1 b - - 0 1', label: 'Check the bishop and knight mate in Board Analysis' },
+    related: ['two-bishops-mate', 'king-and-rook-vs-king'],
+  },
+  {
+    slug: 'two-bishops-mate',
+    title: 'Checkmate With Two Bishops',
+    summary: 'Two bishops of opposite colors can mate with the help of the king: build a wall and push the king to the edge.',
+    kind: 'Technique',
+    intro: [
+      'A king and two bishops can force checkmate against a lone king, but only when the bishops are of opposite colors, one light-squared and one dark-squared. Two bishops of the same color cannot do it, because they never control squares of the other color. The mate takes at most 19 moves.',
+    ],
+    sections: [
+      {
+        heading: 'Build a wall',
+        paragraphs: [
+          'Place the bishops on neighbouring diagonals, side by side, so that together they form a barrier the king cannot cross. Then push the barrier forward one step at a time and bring your own king up behind it. The black king is forced back to the edge.',
+        ],
+      },
+      {
+        heading: 'Mate in the corner',
+        paragraphs: [
+          'At the end the black king stands in a corner, your king takes away the squares next to it and the bishops cover the rest. Unlike the bishop and knight mate, you can mate in any corner of the board.',
+          'Here the bishop on e6 covers g8, the king on g6 covers g7 and h7, and the bishop on g5 gives the last check from f6.',
+        ],
+        diagram: {
+          fen: '7k/8/4B1K1/6B1/8/8/8/8 w - - 0 1',
+          caption: 'White to move. 1.Bf6 is checkmate.',
+          arrows: [['g5', 'f6']],
+        },
+      },
+      {
+        heading: 'Watch out for',
+        bullets: [
+          'Stalemate. When the king is on the edge or in the corner, make sure it can still move before you play a quiet move.',
+          'Keep your bishops protected, or at least out of the reach of the enemy king.',
+          'Do not hurry. A move that keeps the wall closed is better than a check that lets the king break out.',
+        ],
+      },
+    ],
+    practice: { fen: '7k/8/4B1K1/6B1/8/8/8/8 w - - 0 1', label: 'Check the two bishops mate in Board Analysis' },
+    related: ['bishop-and-knight-mate', 'king-and-queen-vs-king'],
+  },
 ];
 
 export function lessonBySlug(slug: string): Lesson | undefined {
@@ -351,7 +531,27 @@ export function lessonForPath(pathname: string): Lesson | undefined {
   return lessonBySlug(clean.slice(THEORY_BASE.length + 1));
 }
 
-/** Address of Board Analysis with the lesson's position loaded. */
-export function practiceHref(lesson: Lesson): string {
-  return `/analysis?fen=${encodeURIComponent(lesson.practice.fen)}`;
+/** Address of Board Analysis with the lesson's position (or line of moves) loaded. */
+export function practiceHref(lesson: Pick<Lesson, 'practice'>): string {
+  const { pgn, fen } = lesson.practice;
+  return pgn ? `/analysis?pgn=${encodeURIComponent(pgn)}` : `/analysis?fen=${encodeURIComponent(fen)}`;
 }
+
+export const ENDGAMES: TheoryCollection = {
+  base: THEORY_BASE,
+  name: 'Endgame theory',
+  allLabel: 'All endgame lessons',
+  lessons: LESSONS,
+  bySlug: lessonBySlug,
+  forPath: lessonForPath,
+  pathFor: lessonPath,
+  index: {
+    title: 'Chess Endgame Theory and Lessons',
+    heading: 'Chess endgame theory',
+    intro:
+      'Short lessons on the endgames every player should know. Each one has diagrams, the key idea in plain words and a button that opens the position in Board Analysis, so you can play it out and check it with the engine.',
+  },
+  practiceText:
+    'Theory sticks when you play it. Open the position in Board Analysis and check it with the engine, or train endgames from real games with the Woodpecker method.',
+  woodpecker: true,
+};

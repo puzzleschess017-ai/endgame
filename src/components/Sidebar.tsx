@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   BookOpen,
+  Library,
   ChartColumn,
   ChevronDown,
   Crosshair,
@@ -128,6 +129,14 @@ export const NAV_GROUPS: NavGroup[] = [
         iconClass: 'text-yellow-300',
         chipClass: 'bg-yellow-400/15',
       },
+      {
+        id: 'openings',
+        href: '/openings',
+        label: 'Opening Theory',
+        icon: Library,
+        iconClass: 'text-orange-300',
+        chipClass: 'bg-orange-400/15',
+      },
     ],
   },
   {
@@ -153,9 +162,13 @@ export const NAV_ITEMS: NavItem[] = [HOME_ITEM, ...NAV_GROUPS.flatMap((g) => g.i
 
 export const COLLAPSED_STORAGE_KEY = 'ctg_sidebar_collapsed_v1';
 
-/** The Endgame Theory entry stays marked on every lesson (/endgames/<name>). */
+/** The theory entries stay marked on every lesson (/endgames/<name>, /openings/<name>). */
 function isActive(item: NavItem, path: string): boolean {
-  return item.href === path || (item.id === 'theory' && path.startsWith('/endgames/'));
+  return (
+    item.href === path ||
+    (item.id === 'theory' && path.startsWith('/endgames/')) ||
+    (item.id === 'openings' && path.startsWith('/openings/'))
+  );
 }
 
 export function currentPath(): string {
@@ -331,7 +344,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
                 </button>
                 <div id={`nav-group-${group.id}`} className={`contents xl:flex xl:flex-col xl:gap-1 ${open ? '' : 'xl:hidden'}`}>
                   {group.items.map((item) => (
-                    <NavLink key={item.id} item={item} active={isActive(item, path)} hideOnPhone={group.id === 'tools' && item.id !== 'theory'} />
+                    <NavLink key={item.id} item={item} active={isActive(item, path)} hideOnPhone={group.id === 'tools' && item.id !== 'theory' && item.id !== 'openings'} />
                   ))}
                 </div>
               </div>

@@ -90,7 +90,7 @@ export const PAGES: PageMeta[] = [
     path: '/endgames',
     title: 'Chess Endgame Theory and Lessons | Chess Tactics Guide',
     description:
-      'Free chess endgame lessons with diagrams: the Lucena and Philidor positions, the opposition, king and rook mate, king and queen mate and the wrong-colored bishop.',
+      'Free chess endgame lessons with diagrams: the Lucena and Philidor positions, the opposition, the rule of the square, basic mates and the wrong-colored bishop.',
     indexable: true,
     kind: 'info',
     priority: 0.8,
@@ -145,6 +145,114 @@ export const PAGES: PageMeta[] = [
     title: 'Wrong-Colored Bishop: A Draw With an Extra Piece | Chess Tactics Guide',
     description:
       'Why a bishop and a rook pawn can only draw when the bishop is the wrong color, and how the right bishop wins the same position.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/endgames/rule-of-the-square',
+    title: 'The Rule of the Square in Pawn Endings | Chess Tactics Guide',
+    description:
+      'The rule of the square explained with diagrams: see at a glance whether a king can catch a passed pawn, and why the side to move matters.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/endgames/queen-vs-pawn-on-the-seventh',
+    title: 'Queen vs Pawn on the Seventh Rank | Chess Tactics Guide',
+    description:
+      'Queen against a pawn on the seventh rank: when the bishop pawn or the rook pawn draws by stalemate, and when the queen wins. With diagrams.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/endgames/bishop-and-knight-mate',
+    title: 'Checkmate With Bishop and Knight | Chess Tactics Guide',
+    description:
+      'How to checkmate with a bishop and a knight: drive the king to the corner of the bishop\'s color and finish with the knight. With diagrams.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/endgames/two-bishops-mate',
+    title: 'Checkmate With Two Bishops | Chess Tactics Guide',
+    description:
+      'How to checkmate with two bishops of opposite colors: build a wall, push the king to the edge and finish with the king\'s help. With diagrams.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings',
+    title: 'Chess Opening Theory and Lessons | Chess Tactics Guide',
+    description:
+      'Free chess opening lessons with diagrams: opening principles, the Italian Game, Ruy Lopez, Sicilian, French, Caro-Kann and the Queen\'s Gambit.',
+    indexable: true,
+    kind: 'info',
+    priority: 0.8,
+  },
+  {
+    path: '/openings/opening-principles',
+    title: 'Opening Principles Every Player Should Know | Chess Tactics Guide',
+    description:
+      'The basic opening principles with diagrams: control the center, develop your pieces, castle early and keep your queen at home in the first moves.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings/italian-game',
+    title: 'The Italian Game: Quick Development and Attack | Chess Tactics Guide',
+    description:
+      'The Italian Game explained with diagrams: the Giuoco Piano, the Two Knights Defence, the ideas behind 3.Bc4 and the plans for both sides.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings/ruy-lopez',
+    title: 'The Ruy Lopez: The Classic Spanish Opening | Chess Tactics Guide',
+    description:
+      'The Ruy Lopez explained with diagrams: the Closed Variation, the Berlin Defence and the main plans after 1.e4 e5 2.Nf3 Nc6 3.Bb5.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings/sicilian-defense',
+    title: 'The Sicilian Defence: Fight for the Win as Black | Chess Tactics Guide',
+    description:
+      'The Sicilian Defence explained with diagrams: the idea of 1...c5, the Najdorf, the Dragon and how to meet White\'s side lines.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings/french-defense',
+    title: 'The French Defence: Solid With Counterplay | Chess Tactics Guide',
+    description:
+      'The French Defence explained with diagrams: the Winawer, the Advance Variation, the bad bishop problem and Black\'s pawn breaks ...c5 and ...f6.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings/caro-kann-defense',
+    title: 'The Caro-Kann Defence: Solid and Reliable | Chess Tactics Guide',
+    description:
+      'The Caro-Kann Defence explained with diagrams: the Classical and Advance Variations, and how to develop the bishop before closing the chain.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings/queens-gambit',
+    title: 'The Queen\'s Gambit: Classic Play With 1.d4 | Chess Tactics Guide',
+    description:
+      'The Queen\'s Gambit explained with diagrams: how Black declines or accepts the pawn, the main plans for both sides and the key pawn breaks.',
     indexable: true,
     kind: 'article',
     priority: 0.7,

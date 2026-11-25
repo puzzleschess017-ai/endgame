@@ -41,7 +41,6 @@ import { getLegalDests, isPromotionMove } from '../utils/chessHelpers';
 import { buildFen, parseFen, validateFen } from '../utils/editor';
 import { readSavedUsername } from '../utils/profile';
 import { playMoveSound } from '../utils/sound';
-import { EXAMPLES } from '../utils/tablebase';
 
 const NAV_BUTTON_CLASS =
   'py-1.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-[#39ff88] hover:text-[#39ff88] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/20 disabled:hover:text-white text-white flex items-center justify-center cursor-pointer min-h-[36px] focus-visible:outline-2 focus-visible:outline-[#39ff88]';
@@ -55,14 +54,23 @@ function readFen(text: string): { ok: true; fen: string } | { ok: false; error: 
   return validation.ok ? { ok: true, fen } : { ok: false, error: validation.reason };
 }
 
-/** The position the page opens with: the one in the address (?fen=) when it is legal, else the first example. */
+/**
+ * What the page opens with: a line of moves from the address (?pgn=, used by the opening lessons) or a position
+ * (?fen=) when they are legal, else the starting position.
+ */
 function initialAnalysis(): Analysis {
-  const fen = new URLSearchParams(window.location.search).get('fen');
+  const params = new URLSearchParams(window.location.search);
+  const pgn = params.get('pgn');
+  if (pgn) {
+    const parsed = parsePgn(pgn);
+    if (parsed.ok) return { startFen: parsed.startFen, moves: parsed.moves, index: parsed.moves.length };
+  }
+  const fen = params.get('fen');
   if (fen) {
     const read = readFen(fen);
     if (read.ok) return createAnalysis(read.fen);
   }
-  return createAnalysis(EXAMPLES[0].fen);
+  return createAnalysis();
 }
 
 function isTyping(target: EventTarget | null): boolean {
@@ -258,11 +266,100 @@ export default function AnalysisPage() {
   const hintArrow: [Key, Key] | null = arrowUci ? [arrowUci.slice(0, 2) as Key, arrowUci.slice(2, 4) as Key] : null;
   const editorHref = `/editor?fen=${encodeURIComponent(fen)}`;
 
+  const sharePanel = (
+    <div className={COMPACT_CARD_CLASS} data-testid="share-panel">
+      <div className="flex flex-col gap-2">
+        <label htmlFor="tb-fen" className="text-sm font-bold text-white">
+          Position (FEN)
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="tb-fen"
+            data-testid="fen-input"
+            value={fenDraft ?? fen}
+            onChange={(e) => {
+              setFenDraft(e.target.value);
+              setFenError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') loadFen();
+            }}
+            spellCheck={false}
+            autoComplete="off"
+            className="min-w-0 flex-1 bg-[#101b2f] border border-white/20 rounded-lg px-3 py-2 text-xs font-mono text-white min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+          />
+          <button type="button" data-testid="fen-load" onClick={loadFen} className={`${SECONDARY_BUTTON_CLASS} !w-auto`}>
+            Load
+          </button>
+          <button
+            type="button"
+            data-testid="fen-copy"
+            aria-label="Copy FEN"
+            title="Copy FEN"
+            onClick={async () => {
+              if (await copyText(fen)) flash('fen');
+            }}
+            className={`${SECONDARY_BUTTON_CLASS} !w-auto !px-3`}
+          >
+            {copied === 'fen' ? <Check className="w-4 h-4 text-[#39ff88]" /> : <Copy className="w-4 h-4" />}
+          </button>
+        </div>
+        {fenError && (
+          <p role="alert" data-testid="fen-error" className="text-sm font-semibold text-[#ff7a7a]">
+            {fenError}
+          </p>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor="tb-pgn" className="text-sm font-bold text-white">
+          Game (PGN)
+        </label>
+        <textarea
+          id="tb-pgn"
+          data-testid="pgn-input"
+          value={pgnDraft}
+          onChange={(e) => {
+            setPgnDraft(e.target.value);
+            setPgnError(null);
+          }}
+          rows={3}
+          placeholder="Paste a game here, for example 1. e4 e5 2. Nf3 Nc6"
+          spellCheck={false}
+          className="bg-[#101b2f] border border-white/20 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder:text-white/40 resize-y focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+        />
+        {pgnError && (
+          <p role="alert" data-testid="pgn-error" className="text-sm font-semibold text-[#ff7a7a]">
+            {pgnError}
+          </p>
+        )}
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" data-testid="pgn-import" onClick={importPgn} disabled={!pgnDraft.trim()} className={SECONDARY_BUTTON_CLASS}>
+            Import PGN
+          </button>
+          <button
+            type="button"
+            data-testid="pgn-copy"
+            disabled={analysis.moves.length === 0}
+            onClick={async () => {
+              if (await copyText(exportPgn(analysis))) flash('pgn');
+            }}
+            className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2`}
+          >
+            {copied === 'pgn' ? <Check className="w-4 h-4 text-[#39ff88]" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
+            {copied === 'pgn' ? 'Copied' : 'Copy PGN'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <TrainerLayout
       username={username}
       appearance={appearance}
       onAppearanceChange={setAppearance}
+      belowBoard={sharePanel}
       board={
         <ChessboardPanel
           fen={fen}
@@ -289,9 +386,6 @@ export default function AnalysisPage() {
         <div className={COMPACT_CARD_CLASS} data-testid="analysis-panel">
           <div>
             <h2 className="text-xl font-bold text-white tracking-tight">Board Analysis</h2>
-            <p className="mt-0.5 text-xs font-medium text-white/70">
-              Play on the board and check the position with the engine. Any number of pieces.
-            </p>
           </div>
 
           <div className="flex flex-col gap-1" aria-live="polite">
@@ -366,113 +460,6 @@ export default function AnalysisPage() {
             </a>
           </div>
 
-          <details className="group" data-testid="share-details">
-            <summary className="cursor-pointer text-sm font-bold text-white select-none focus-visible:outline-2 focus-visible:outline-[#39ff88] rounded">
-              Examples, FEN and PGN
-            </summary>
-            <div className="mt-3 flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-bold text-white">Try a position</h3>
-            <div className="flex flex-wrap gap-2" data-testid="examples">
-              {EXAMPLES.map((example) => (
-                <button
-                  key={example.id}
-                  type="button"
-                  data-testid={`example-${example.id}`}
-                  onClick={() => startFrom(example.fen)}
-                  className="px-3 py-2 rounded-lg bg-[#101b2f] border border-white/20 hover:border-[#39ff88] text-xs font-semibold text-white cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]"
-                >
-                  {example.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="tb-fen" className="text-sm font-bold text-white">
-                  Position (FEN)
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    id="tb-fen"
-                    data-testid="fen-input"
-                    value={fenDraft ?? fen}
-                    onChange={(e) => {
-                      setFenDraft(e.target.value);
-                      setFenError(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') loadFen();
-                    }}
-                    spellCheck={false}
-                    autoComplete="off"
-                    className="min-w-0 flex-1 bg-[#101b2f] border border-white/20 rounded-lg px-3 py-2 text-xs font-mono text-white min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
-                  />
-                  <button type="button" data-testid="fen-load" onClick={loadFen} className={`${SECONDARY_BUTTON_CLASS} !w-auto`}>
-                    Load
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="fen-copy"
-                    aria-label="Copy FEN"
-                    title="Copy FEN"
-                    onClick={async () => {
-                      if (await copyText(fen)) flash('fen');
-                    }}
-                    className={`${SECONDARY_BUTTON_CLASS} !w-auto !px-3`}
-                  >
-                    {copied === 'fen' ? <Check className="w-4 h-4 text-[#39ff88]" /> : <Copy className="w-4 h-4" />}
-                  </button>
-                </div>
-                {fenError && (
-                  <p role="alert" data-testid="fen-error" className="text-sm font-semibold text-[#ff7a7a]">
-                    {fenError}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="tb-pgn" className="text-sm font-bold text-white">
-                  Game (PGN)
-                </label>
-                <textarea
-                  id="tb-pgn"
-                  data-testid="pgn-input"
-                  value={pgnDraft}
-                  onChange={(e) => {
-                    setPgnDraft(e.target.value);
-                    setPgnError(null);
-                  }}
-                  rows={4}
-                  placeholder="Paste a game here, for example 1. e4 e5 2. Nf3 Nc6"
-                  spellCheck={false}
-                  className="bg-[#101b2f] border border-white/20 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder:text-white/40 resize-y focus-visible:outline-2 focus-visible:outline-[#39ff88]"
-                />
-                {pgnError && (
-                  <p role="alert" data-testid="pgn-error" className="text-sm font-semibold text-[#ff7a7a]">
-                    {pgnError}
-                  </p>
-                )}
-                <div className="grid grid-cols-2 gap-2">
-                  <button type="button" data-testid="pgn-import" onClick={importPgn} disabled={!pgnDraft.trim()} className={SECONDARY_BUTTON_CLASS}>
-                    Import PGN
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="pgn-copy"
-                    disabled={analysis.moves.length === 0}
-                    onClick={async () => {
-                      if (await copyText(exportPgn(analysis))) flash('pgn');
-                    }}
-                    className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2`}
-                  >
-                    {copied === 'pgn' ? <Check className="w-4 h-4 text-[#39ff88]" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
-                    {copied === 'pgn' ? 'Copied' : 'Copy PGN'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </details>
         </div>
       }
     />
