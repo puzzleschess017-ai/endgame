@@ -11,7 +11,7 @@ const STEPS: Array<{ title: string; text: string; image: string; alt: string }> 
     title: 'Pick a mode',
     text: 'Start with Woodpecker or Puzzle Streak. Every mode starts easy.',
     image: '/welcome/pick-a-mode.webp',
-    alt: 'The Puzzle Streak page: the board on the left and the start panel on the right',
+    alt: 'The Woodpecker Method page: the board on the left and the setup panel on the right',
   },
   {
     title: 'Train a little every day',
