@@ -308,7 +308,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
     setCollapsed((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
-    <aside className="xl:w-[256px] xl:shrink-0 xl:sticky xl:top-0 xl:h-screen xl:flex xl:flex-col bg-gradient-to-b from-[#101c33] to-[#080f1c] border-b xl:border-b-0 xl:border-r border-white/10">
+    <aside className="xl:w-[280px] xl:shrink-0 xl:sticky xl:top-0 xl:h-screen xl:flex xl:flex-col bg-gradient-to-b from-[#101c33] to-[#080f1c] border-b xl:border-b-0 xl:border-r border-white/10">
       <div className="flex flex-wrap xl:flex-col items-center xl:items-stretch gap-x-3 gap-y-2 px-4 pt-3 xl:pt-0 xl:flex-1 xl:min-h-0">
         <a
           href="/"
@@ -318,12 +318,12 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
           <img
             src="/assets/aistudio/Add_a_heading__16_-removebg-preview_c70fa2ca.png"
             alt="Chess Tactics Guide logo"
-            className="w-8 h-8 object-contain select-none shrink-0"
+            className="w-11 h-11 object-contain select-none shrink-0"
             draggable={false}
           />
           <span className="flex flex-col leading-tight">
-            <h1 className="text-base font-bold tracking-tight text-white whitespace-nowrap">Chess Tactics Guide</h1>
-            <span className="text-xs font-medium text-white/60">Improve Every Day</span>
+            <h1 className="text-lg font-bold tracking-tight text-white whitespace-nowrap">Chess Tactics Guide</h1>
+            <span className="text-sm font-medium text-white/60">Improve Every Day</span>
           </span>
         </a>
 
