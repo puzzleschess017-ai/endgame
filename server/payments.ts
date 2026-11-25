@@ -143,7 +143,14 @@ function idOf(value: unknown): string | null {
 
 /** True when a payment's cart holds a Premium product of this site (a payment of this site holds one product). */
 function cartHasPremium(data: Record<string, unknown>, premiumProducts: string[]): boolean {
-  const cart = Array.isArray(data.product_cart) ? data.product_cart : [];
+  // Dodo sends product_cart as null in the payment of a checkout session's subscription, so the cart cannot be checked.
+  // The offer the server itself put in the checkout's metadata says which product was bought; the event is signed, so
+  // that metadata can only be the one this server wrote.
+  if (!Array.isArray(data.product_cart)) {
+    const offer = record(data.metadata)?.offer;
+    return premiumProducts.length > 0 && (offer === 'premium:monthly' || offer === 'premium:yearly');
+  }
+  const cart = data.product_cart;
   return cart.some((item) => {
     const id = record(item)?.product_id;
     return typeof id === 'string' && premiumProducts.includes(id);

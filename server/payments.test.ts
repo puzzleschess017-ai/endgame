@@ -129,6 +129,12 @@ describe('actionFor', () => {
     // the id in capitals is still the same person
     assert.deepEqual(actionFor(payment({ metadata: { user_id: USER.toUpperCase() } }), PRODUCTS), on);
   });
+  it('Dodo sends product_cart as null for a checkout session: the offer in the metadata says it is Premium', () => {
+    assert.deepEqual(actionFor(payment({ product_cart: null }), PRODUCTS), on);
+    assert.deepEqual(actionFor(payment({ product_cart: null, metadata: { user_id: USER, offer: 'premium:yearly' } }), PRODUCTS), on);
+    assert.equal(actionFor(payment({ product_cart: null, subscription_id: undefined }), PRODUCTS), null, 'a one-time payment is still not Premium');
+    assert.equal(actionFor(payment({ product_cart: null }), []), null, 'nothing to do when no Premium product is set up');
+  });
   it('a one-time payment, even of a Premium product, is not Premium', () => {
     assert.equal(actionFor(payment({ subscription_id: undefined }), PRODUCTS), null);
   });
@@ -139,7 +145,8 @@ describe('actionFor', () => {
     assert.equal(actionFor(payment({ payment_id: undefined }), PRODUCTS), null);
     assert.equal(actionFor(payment({ status: 'failed' }), PRODUCTS), null);
     assert.equal(actionFor(payment({}, OTHER_ID), PRODUCTS), null);
-    assert.equal(actionFor(payment({ product_cart: null }), PRODUCTS), null);
+    assert.equal(actionFor(payment({ product_cart: null, metadata: { user_id: USER } }), PRODUCTS), null, 'no cart and no offer of this site');
+    assert.equal(actionFor(payment({ product_cart: null, metadata: { user_id: USER, offer: 'other:thing' } }), PRODUCTS), null);
     assert.equal(actionFor(payment({}, MONTHLY_ID, 'payment.failed'), PRODUCTS), null);
     assert.equal(actionFor(payment({}, MONTHLY_ID, 'payment.processing'), PRODUCTS), null);
   });
