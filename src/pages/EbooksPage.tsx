@@ -1,12 +1,12 @@
 // The eBooks tab: every e-book with its price. Each costs $1.99 to buy, and Premium has all of them for free.
 // What the visitor owns is asked from the server (GET /api/ebooks), which is also what sends the PDF.
 import { useEffect, useState } from 'react';
-import { BookMarked, Check, Download, Lock } from 'lucide-react';
+import { BookMarked, Check, Download, Lock, ShoppingCart } from 'lucide-react';
 import AppShell from '../components/AppShell';
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from '../components/panelUi';
 import { authHeaders, useAuth } from '../auth';
 import { getsEbooksFree } from '../utils/access';
-import { EBOOKS, EBOOK_PRICE_LABEL, PURCHASES_OPEN, type EbookInfo } from '../utils/ebooks';
+import { EBOOKS, EBOOK_PRICE_LABEL, type EbookInfo } from '../utils/ebooks';
 import { readSavedUsername } from '../utils/profile';
 
 const CARD =
@@ -34,32 +34,75 @@ export async function downloadEbook(book: EbookInfo): Promise<string | null> {
   }
 }
 
-/** The slugs of the e-books the visitor may download, or null while the server has not answered yet. */
-function useOwned(signedIn: boolean, tier: string): Set<string> | null {
-  const [owned, setOwned] = useState<Set<string> | null>(signedIn ? null : new Set());
+/** What the server says about the e-books: which ones the visitor may download, and for which one buying is set up. */
+interface Library {
+  /** null while the server has not answered yet. */
+  owned: Set<string> | null;
+  buyable: Set<string>;
+  /** Asks the server again (used after a payment, until the purchase has arrived). */
+  reload: () => void;
+}
+
+function useLibrary(signedIn: boolean, tier: string): Library {
+  const [state, setState] = useState<{ owned: Set<string> | null; buyable: Set<string> }>({ owned: signedIn ? null : new Set(), buyable: new Set() });
+  const [round, setRound] = useState(0);
   useEffect(() => {
-    if (!signedIn) {
-      setOwned(new Set());
-      return;
-    }
     let current = true;
-    setOwned(null);
+    if (!signedIn) setState((was) => ({ ...was, owned: new Set() }));
+    // Without an account the server cannot say what is owned, but the Buy button still needs to know if buying is open.
     fetch('/api/ebooks', { headers: authHeaders() })
       .then((res) => (res.ok ? res.json() : null))
-      .then((body: { books?: Array<{ slug?: unknown; owned?: unknown }> } | null) => {
+      .then((body: { books?: Array<{ slug?: unknown; owned?: unknown; buyable?: unknown }> } | null) => {
         if (!current) return;
-        const slugs = (body?.books ?? []).filter((b) => b.owned === true && typeof b.slug === 'string').map((b) => b.slug as string);
-        setOwned(new Set(slugs));
+        const books = (body?.books ?? []).filter((b): b is { slug: string; owned?: unknown; buyable?: unknown } => typeof b.slug === 'string');
+        setState({
+          owned: new Set(books.filter((b) => b.owned === true).map((b) => b.slug)),
+          buyable: new Set(books.filter((b) => b.buyable === true).map((b) => b.slug)),
+        });
       })
-      .catch(() => current && setOwned(new Set()));
+      .catch(() => current && setState((was) => ({ ...was, owned: was.owned ?? new Set() })));
     return () => {
       current = false;
     };
-  }, [signedIn, tier]);
-  return owned;
+  }, [signedIn, tier, round]);
+  return { owned: state.owned, buyable: state.buyable, reload: () => setRound((n) => n + 1) };
 }
 
-function BookCard({ book, owned, signedIn, premium }: { book: EbookInfo; owned: boolean | null; signedIn: boolean; premium: boolean }) {
+/** Asks the server for a checkout of an e-book and goes to its page. Returns an error message when that did not work. */
+async function startCheckout(book: EbookInfo): Promise<string | null> {
+  try {
+    const res = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ offer: `ebook:${book.slug}` }),
+    });
+    const body = (await res.json().catch(() => null)) as { url?: unknown; error?: unknown } | null;
+    if (res.ok && typeof body?.url === 'string') {
+      window.location.assign(body.url);
+      return null;
+    }
+    return typeof body?.error === 'string' ? body.error : 'The payment page could not be opened. Please try again.';
+  } catch {
+    return 'The payment page could not be opened. Check your connection and try again.';
+  }
+}
+
+function BookCard({
+  book,
+  owned,
+  buyable,
+  signedIn,
+  premium,
+  unlocking,
+}: {
+  book: EbookInfo;
+  owned: boolean | null;
+  buyable: boolean;
+  signedIn: boolean;
+  premium: boolean;
+  /** True just after a payment, while the purchase has not arrived yet. */
+  unlocking: boolean;
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,6 +111,16 @@ function BookCard({ book, owned, signedIn, premium }: { book: EbookInfo; owned: 
     setError(null);
     setError(await downloadEbook(book));
     setBusy(false);
+  };
+
+  const buy = async () => {
+    setBusy(true);
+    setError(null);
+    const problem = await startCheckout(book);
+    if (problem) {
+      setError(problem);
+      setBusy(false);
+    }
   };
 
   return (
@@ -119,22 +172,34 @@ function BookCard({ book, owned, signedIn, premium }: { book: EbookInfo; owned: 
               {owned === null ? (
                 <p className="text-sm font-medium text-white/70">Checking your account…</p>
               ) : signedIn ? (
-                <>
-                  <button
-                    type="button"
-                    data-testid="ebook-buy"
-                    disabled={!PURCHASES_OPEN}
-                    className={`${PRIMARY_BUTTON_CLASS} sm:w-auto sm:self-start flex items-center justify-center gap-2`}
-                  >
-                    <Lock className="w-4 h-4" aria-hidden="true" />
-                    {PURCHASES_OPEN ? `Buy for ${EBOOK_PRICE_LABEL}` : 'Buying opens soon'}
-                  </button>
-                  {!PURCHASES_OPEN && (
-                    <p data-testid="ebook-soon" className="text-sm font-medium text-white/70">
-                      Premium members get every e-book for free as soon as Premium is on sale.
-                    </p>
-                  )}
-                </>
+                unlocking ? (
+                  <p data-testid="ebook-unlocking" role="status" className="text-sm font-bold text-[#39ff88]">
+                    Payment received. Unlocking your e-book…
+                  </p>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      data-testid="ebook-buy"
+                      disabled={!buyable || busy}
+                      onClick={() => void buy()}
+                      className={`${PRIMARY_BUTTON_CLASS} sm:w-auto sm:self-start flex items-center justify-center gap-2`}
+                    >
+                      {buyable ? <ShoppingCart className="w-4 h-4" aria-hidden="true" /> : <Lock className="w-4 h-4" aria-hidden="true" />}
+                      {!buyable ? 'Buying opens soon' : busy ? 'Opening the payment page…' : `Buy for ${EBOOK_PRICE_LABEL}`}
+                    </button>
+                    {!buyable && (
+                      <p data-testid="ebook-soon" className="text-sm font-medium text-white/70">
+                        Premium members get every e-book for free as soon as Premium is on sale.
+                      </p>
+                    )}
+                    {error && (
+                      <p role="alert" data-testid="ebook-error" className="text-sm font-medium text-[#ffd2cc]">
+                        {error}
+                      </p>
+                    )}
+                  </>
+                )
               ) : (
                 <a
                   href="/login?next=%2Febooks"
@@ -156,7 +221,21 @@ function BookCard({ book, owned, signedIn, premium }: { book: EbookInfo; owned: 
 export default function EbooksPage() {
   const { session, tier, name } = useAuth();
   const signedIn = session !== null;
-  const owned = useOwned(signedIn, tier);
+  const { owned, buyable, reload } = useLibrary(signedIn, tier);
+
+  // After paying, Polar sends the person back here (?purchase=success). The payment reaches the server a moment
+  // later (the webhook), so the page asks again every few seconds, for half a minute, until the book is there.
+  const [justPaid] = useState(() => new URLSearchParams(window.location.search).get('purchase') === 'success');
+  const [tries, setTries] = useState(0);
+  const waiting = justPaid && signedIn && owned !== null && EBOOKS.some((book) => !owned.has(book.slug)) && tries < 12;
+  useEffect(() => {
+    if (!waiting) return;
+    const timer = window.setTimeout(() => {
+      setTries((n) => n + 1);
+      reload();
+    }, 2500);
+    return () => window.clearTimeout(timer);
+  }, [waiting, tries]);
 
   useEffect(() => {
     document.title = 'Chess eBooks: The Queen’s Gambit and more | Chess Tactics Guide';
@@ -177,7 +256,15 @@ export default function EbooksPage() {
           </div>
         </header>
         {EBOOKS.map((book) => (
-          <BookCard key={book.slug} book={book} owned={owned === null ? null : owned.has(book.slug)} signedIn={signedIn} premium={getsEbooksFree(tier)} />
+          <BookCard
+            key={book.slug}
+            book={book}
+            owned={owned === null ? null : owned.has(book.slug)}
+            buyable={buyable.has(book.slug)}
+            signedIn={signedIn}
+            premium={getsEbooksFree(tier)}
+            unlocking={waiting}
+          />
         ))}
       </div>
     </AppShell>

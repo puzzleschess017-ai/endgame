@@ -15,9 +15,6 @@ export interface EbookInfo {
 /** The price of one e-book. Premium has all of them for free. */
 export const EBOOK_PRICE_LABEL = '$1.99';
 
-/** False until the payment provider is connected: the Buy button then says that buying opens soon. */
-export const PURCHASES_OPEN = false;
-
 export const EBOOKS: EbookInfo[] = [
   {
     slug: 'queens-gambit',

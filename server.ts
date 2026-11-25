@@ -1,10 +1,12 @@
 import express from 'express';
 import fs from 'node:fs';
+import net from 'node:net';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
 import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
 import { createPurchaseLookup, EBOOKS, ebookPath, findEbook } from './server/ebooks.ts';
+import { actionFor, createCheckout, createPaymentStore, loadPaymentSettings, verifyWebhook } from './server/payments.ts';
 import { createTablebase } from './server/tablebase.ts';
 import { createTierLookup } from './server/tier.ts';
 import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './src/auth/project.ts';
@@ -381,6 +383,49 @@ function samplePuzzlesOfBand(
 async function startServer() {
   const app = express();
   app.disable('x-powered-by');
+
+  const siteUrl = cleanSiteUrl(process.env.SITE_URL);
+
+  // Payments (Polar, see server/payments.ts). Off until the environment variables are set.
+  const supabaseUrl = process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
+  const payments = loadPaymentSettings(process.env, EBOOKS.map((book) => book.slug), supabaseUrl);
+  const paymentStore = payments.webhook ? createPaymentStore({ url: supabaseUrl, serviceKey: payments.webhook.serviceKey }) : null;
+
+  // Polar tells the site about a payment here. This route comes before express.json(): the signature is over the
+  // exact bytes that were sent, so the body must stay raw. A wrong signature is a 403; a failure to save is a 500, so
+  // that Polar sends the event again (it tries up to ten times); everything else is acknowledged with 202.
+  app.post('/api/webhooks/polar', express.raw({ type: '*/*', limit: '1mb' }), async (req, res) => {
+    if (!payments.webhook || !paymentStore) {
+      res.status(503).json({ error: 'Payments are not set up on this server.' });
+      return;
+    }
+    const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+    const header = (name: string) => req.header(name) ?? undefined;
+    if (!verifyWebhook(payments.webhook.secret, { id: header('webhook-id'), timestamp: header('webhook-timestamp'), signature: header('webhook-signature') }, body)) {
+      res.status(403).json({ error: 'Bad signature.' });
+      return;
+    }
+    let event: unknown;
+    try {
+      event = JSON.parse(body.toString('utf8'));
+    } catch {
+      res.status(400).json({ error: 'The body is not JSON.' });
+      return;
+    }
+    const action = actionFor(event, payments.webhook.products);
+    if (action) {
+      try {
+        await paymentStore.apply(action);
+        console.log(`[payments] ${(event as { type?: string }).type} -> ${action.kind}`);
+      } catch (err) {
+        console.error('[payments] could not save', err instanceof Error ? err.message : err);
+        res.status(500).json({ error: 'Could not save the payment.' });
+        return;
+      }
+    }
+    res.status(202).json({ ok: true });
+  });
+
   app.use(express.json({ limit: '100kb' }));
 
   // Eagerly initialize and verify database connection
@@ -479,8 +524,65 @@ async function startServer() {
     }
     const bought = visitor.tier === 'free' ? await purchasedBy(req.headers.authorization) : new Set<string>();
     res.json({
-      books: EBOOKS.map((book) => ({ slug: book.slug, owned: mayDownloadEbook(visitor.tier, bought.has(book.slug)) })),
+      books: EBOOKS.map((book) => ({
+        slug: book.slug,
+        owned: mayDownloadEbook(visitor.tier, bought.has(book.slug)),
+        // Whether the Buy button works: the checkout is set up for this book.
+        buyable: Boolean(payments.checkout?.offers[`ebook:${book.slug}`]),
+      })),
     });
+  });
+
+  // Buying: makes a Polar checkout for the signed-in person and gives back its address. The person's id comes
+  // from the verified sign-in token, never from the request, so a payment can only ever be for the one who asks.
+  app.post('/api/checkout', async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    const config = payments.checkout;
+    if (!config) {
+      res.status(503).json({ error: 'Buying is not open yet.' });
+      return;
+    }
+    const offer = typeof req.body?.offer === 'string' ? req.body.offer : '';
+    const productId = Object.hasOwn(config.offers, offer) ? config.offers[offer] : undefined;
+    if (!productId) {
+      res.status(400).json({ error: 'There is nothing to buy with that name.' });
+      return;
+    }
+    const visitor = await tierOf(req.headers.authorization);
+    if (!visitor.ok) {
+      res.status(visitor.status).json({ error: visitor.error });
+      return;
+    }
+    if (visitor.tier === 'guest') {
+      res.status(401).json({ error: 'Sign in to buy.' });
+      return;
+    }
+    if (!visitor.userId) {
+      res.status(503).json({ error: 'Your account could not be checked just now. Please try again.' });
+      return;
+    }
+    const slug = offer.startsWith('ebook:') ? offer.slice('ebook:'.length) : null;
+    const alreadyHas = slug ? getsEbooksFree(visitor.tier) || (await purchasedBy(req.headers.authorization)).has(slug) : visitor.tier === 'premium';
+    if (alreadyHas) {
+      res.status(409).json({ error: slug ? 'You already have this e-book.' : 'You already have Premium.' });
+      return;
+    }
+    const forwarded = String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim();
+    try {
+      const url = await createCheckout({
+        config,
+        productId,
+        userId: visitor.userId,
+        email: visitor.email,
+        successUrl: slug ? `${siteUrl}/ebooks?purchase=success&checkout_id={CHECKOUT_ID}` : `${siteUrl}/login?purchase=success&checkout_id={CHECKOUT_ID}`,
+        returnUrl: slug ? `${siteUrl}/ebooks` : `${siteUrl}/login`,
+        ipAddress: net.isIP(forwarded) ? forwarded : undefined,
+      });
+      res.json({ url });
+    } catch (err) {
+      console.error('[payments] checkout failed', err instanceof Error ? err.message : err);
+      res.status(502).json({ error: 'The payment page could not be opened. Please try again.' });
+    }
   });
 
   app.get('/api/ebooks/:slug', async (req, res) => {
@@ -693,7 +795,6 @@ async function startServer() {
 
   // For search engines: robots.txt and sitemap.xml. SITE_URL (default https://chesstacticsguide.com) is
   // the address written into canonical links and the sitemap.
-  const siteUrl = cleanSiteUrl(process.env.SITE_URL);
   app.get('/robots.txt', (_req, res) => {
     res.type('text/plain').set('Cache-Control', 'public, max-age=3600').send(robotsTxt(siteUrl));
   });
