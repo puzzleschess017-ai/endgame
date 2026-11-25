@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { CycleResult, Puzzle, TrainingSession } from '../types';
 import { formatDuration } from '../utils/chessHelpers';
+import { selectReview, type ReviewItem } from '../utils/review';
 
 interface TrainingSidebarProps {
   session: TrainingSession;
@@ -25,6 +26,8 @@ interface TrainingSidebarProps {
   autoAdvancePaused: boolean;
   onToggleAutoAdvancePause: () => void;
   onRepeatSameSet: () => void;
+  /** Starts a run with only the given puzzles (the missed and the slowest of the last cycle). */
+  onStartReview: (items: ReviewItem[]) => void;
 }
 
 export default function TrainingSidebar({
@@ -41,6 +44,7 @@ export default function TrainingSidebar({
   autoAdvancePaused,
   onToggleAutoAdvancePause,
   onRepeatSameSet,
+  onStartReview,
 }: TrainingSidebarProps) {
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -93,6 +97,8 @@ export default function TrainingSidebar({
         </div>
 
         <CycleHistoryTable results={session.cycleResults} />
+
+        <ReviewBox result={latestResult} onStart={onStartReview} midRun />
 
         <div className="space-y-2.5 pt-1">
           <p className="text-sm font-medium text-white/85 tabular-nums">
@@ -148,6 +154,8 @@ export default function TrainingSidebar({
 
         <CycleHistoryTable results={session.cycleResults} />
 
+        <ReviewBox result={last} onStart={onStartReview} />
+
         <div className="flex flex-col gap-2.5 pt-1">
           <button
             type="button"
@@ -179,6 +187,7 @@ export default function TrainingSidebar({
         <div className="flex items-center justify-between text-sm">
           <span className="font-bold text-white tabular-nums">
             Cycle {session.currentCycle} of {session.config.totalCycles}
+            {session.review && <span className="ml-2 text-xs font-bold text-[#39ff88] uppercase tracking-wider">Review</span>}
           </span>
           <span className="font-semibold text-white/80 tabular-nums">
             Puzzle {session.currentPuzzleIndex + 1} / {totalPuzzles}
@@ -376,6 +385,33 @@ function CycleHistoryTable({ results }: { results: CycleResult[] }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/** The missed and the slowest puzzles of a cycle, with a button to practise only them. */
+function ReviewBox({ result, onStart, midRun }: { result: CycleResult | undefined; onStart: (items: ReviewItem[]) => void; midRun?: boolean }) {
+  const review = selectReview(result?.attempts);
+  if (review.items.length === 0) return null;
+  const slowest = review.items.filter((i) => i.reason === 'slow').reduce((m, i) => Math.max(m, i.ms), 0);
+  const parts = [
+    review.missed > 0 ? `${review.missed} missed` : 'No puzzle missed',
+    review.slow > 0 ? `${review.slow} slowest (up to ${formatDuration(slowest)})` : '',
+  ].filter(Boolean);
+  return (
+    <div data-testid="review-box" className="rounded-xl border border-white/10 bg-[#101b2f] p-3.5 flex flex-col gap-2">
+      <div className="text-sm font-bold text-white">Review</div>
+      <p className="text-[13px] font-medium text-white/80 leading-snug tabular-nums">{parts.join(' · ')}</p>
+      <button
+        type="button"
+        data-testid="review-start"
+        onClick={() => onStart(review.items)}
+        className="w-full py-2.5 px-3.5 rounded-xl bg-[#16233b] border border-[#39ff88]/60 hover:border-[#39ff88] text-white text-sm font-bold cursor-pointer min-h-[42px]"
+      >
+        Practise these {review.items.length}
+        {midRun ? ' now' : ''}
+      </button>
+      {midRun && <p className="text-xs font-medium text-white/60">This ends the current run.</p>}
     </div>
   );
 }
