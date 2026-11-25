@@ -10,8 +10,9 @@ import {
   segmentClass,
 } from '../../components/panelUi';
 import TrainerLayout from '../../components/TrainerLayout';
+import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
 import { useAuth } from '../../auth';
-import { canOpenBlindfold, clampDrill } from '../../utils/access';
+import { canOpenBlindfold, clampDrill, clampDrillLimit, tierFor, unlockHint } from '../../utils/access';
 import { useAppearance } from '../../hooks/useAppearance';
 import {
   DRILL_DURATION_MS,
@@ -56,7 +57,8 @@ const TICK_MS = 100;
 export default function Drills({ username, mode, onModeChange }: BlindfoldModeProps) {
   const { tier } = useAuth();
   const [kind, setKind] = useState<DrillKind>(() => clampDrill(tier, loadDrillKind()));
-  const [limit, setLimit] = useState<DrillLimit>(() => loadDrillLimit());
+  const [limit, setLimit] = useState<DrillLimit>(() => clampDrillLimit(tier, loadDrillLimit()));
+  const limitLocks = useLocks(tier);
   const [appearance, setAppearance] = useAppearance();
   const [phase, setPhase] = useState<Phase>('setup');
   const [question, setQuestion] = useState<DrillQuestion | null>(null);
@@ -97,6 +99,12 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
     const allowed = clampDrill(tier, kind);
     if (allowed !== kind) setKind(allowed);
   }, [tier, kind]);
+
+  // Same for the run length: "No time limit" is Premium, so a saved one is taken back to the 1 minute run.
+  useEffect(() => {
+    const allowed = clampDrillLimit(tier, limit);
+    if (allowed !== limit) setLimit(allowed);
+  }, [tier, limit]);
 
   useEffect(() => {
     saveDrillKind(kind);
@@ -263,19 +271,27 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
               <div className="space-y-1.5">
                 <span className="text-sm font-semibold text-white">Time</span>
                 <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
-                  {DRILL_LIMITS.map((l) => (
-                    <button
-                      key={l}
-                      type="button"
-                      data-testid={`limit-${l}`}
-                      aria-pressed={limit === l}
-                      onClick={() => setLimit(l)}
-                      className={segmentClass(limit === l, true)}
-                    >
-                      {drillLimitLabel(l)}
-                    </button>
-                  ))}
+                  {DRILL_LIMITS.map((l) => {
+                    const needs = tierFor((a) => a.blindfold.drillLimits, l);
+                    const locked = limitLocks.isLocked(needs);
+                    return (
+                      <button
+                        key={l}
+                        type="button"
+                        data-testid={`limit-${l}`}
+                        aria-pressed={limit === l}
+                        aria-disabled={locked || undefined}
+                        title={locked ? unlockHint(tier, needs) : undefined}
+                        onClick={limitLocks.choose(l === 'endless' ? 'No time limit' : 'The 1 minute run', needs, () => setLimit(l))}
+                        className={`${segmentClass(limit === l, true)} ${locked ? LOCKED_CLASS : ''}`}
+                      >
+                        {drillLimitLabel(l)}
+                        {locked && <LockMark />}
+                      </button>
+                    );
+                  })}
                 </div>
+                <UnlockNotice notice={limitLocks.notice} />
               </div>
 
               <p className="text-[13px] font-semibold text-white/75 tabular-nums leading-snug">

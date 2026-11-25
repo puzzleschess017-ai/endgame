@@ -3,11 +3,12 @@
 //   free    - signed in, no premium
 //   premium - signed in and paid (until payment exists, the tier is set by hand in the database)
 // Board Editor, Board Analysis, Puzzle Streak, Puzzle Race, Coordinate Training and Statistics are for
-// everybody. The limits below are for Woodpecker and Blindfold. The same rules are used in the browser (to
+// everybody, except that "Check with engine" in Board Analysis needs an account (ENGINE_TIER). The limits
+// below are for Woodpecker and Blindfold. The same rules are used in the browser (to
 // grey out choices) and on the server (to refuse a request that asks for more than the visitor may have).
 import type { CycleCountOption, Difficulty, PuzzleCountOption, PuzzleMode, TrainingConfig } from '../types';
 import type { BlindfoldLevel, MateIn, MemorizeSeconds } from './blindfold';
-import { DRILL_KINDS, type DrillKind } from './drills.ts';
+import { DRILL_KINDS, DRILL_LIMITS, drillLimitLabel, type DrillKind, type DrillLimit } from './drills.ts';
 
 export type Tier = 'guest' | 'free' | 'premium';
 export const TIERS: Tier[] = ['guest', 'free', 'premium'];
@@ -35,6 +36,8 @@ export interface BlindfoldAccess {
   mateIn: MateIn[];
   /** Which drills (square colours, check or not, diagonals, knight routes, rebuild position) may be played. */
   drills: DrillKind[];
+  /** How long a timed drill may run: the 1 minute run, or "No time limit" (practice, no record). */
+  drillLimits: DrillLimit[];
 }
 
 export interface Access {
@@ -45,15 +48,15 @@ export interface Access {
 export const ACCESS: Record<Tier, Access> = {
   guest: {
     woodpecker: { cycles: [2, 3], counts: [10, 50], difficulties: ['easy', 'medium'], types: ['classic'] },
-    blindfold: { levels: [], memorize: [], mateIn: [], drills: [] },
+    blindfold: { levels: [], memorize: [], mateIn: [], drills: [], drillLimits: [] },
   },
   free: {
     woodpecker: { cycles: [2, 3, 4], counts: [10, 50, 100], difficulties: ['easy', 'medium', 'hard'], types: ['classic'] },
-    blindfold: { levels: [6, 7], memorize: [10], mateIn: [1], drills: ['color', 'check'] },
+    blindfold: { levels: [6, 7], memorize: [10], mateIn: [1], drills: ['color'], drillLimits: ['minute'] },
   },
   premium: {
     woodpecker: { cycles: ALL_CYCLES, counts: ALL_COUNTS, difficulties: ALL_DIFFICULTIES, types: ALL_TYPES },
-    blindfold: { levels: ALL_LEVELS, memorize: ALL_MEMORIZE, mateIn: ALL_MATE_IN, drills: DRILL_KINDS },
+    blindfold: { levels: ALL_LEVELS, memorize: ALL_MEMORIZE, mateIn: ALL_MATE_IN, drills: DRILL_KINDS, drillLimits: DRILL_LIMITS },
   },
 };
 
@@ -64,6 +67,14 @@ export function isTier(value: unknown): value is Tier {
 /** The lowest tier that has `value` in the list chosen by `pick`, or null when nobody has it. */
 export function tierFor<T>(pick: (access: Access) => T[], value: T): Tier | null {
   return TIERS.find((tier) => pick(ACCESS[tier]).includes(value)) ?? null;
+}
+
+/** The lowest plan that may use "Check with engine" in Board Analysis: a signed-in account (not Premium). */
+export const ENGINE_TIER: Tier = 'free';
+
+/** True when the tier may switch the engine on. The engine runs in the browser, so this is checked there only. */
+export function canUseEngine(tier: Tier): boolean {
+  return TIERS.indexOf(tier) >= TIERS.indexOf(ENGINE_TIER);
 }
 
 export const TIER_NAME: Record<Tier, string> = { guest: 'guest', free: 'a signed-in account', premium: 'Premium' };
@@ -166,6 +177,19 @@ export function checkBlindfoldDrill(tier: Tier, kind: DrillKind): Check {
   return ACCESS[tier].blindfold.drills.includes(kind)
     ? { ok: true }
     : refuse(DRILL_NAME[kind], tierFor((a) => a.blindfold.drills, kind));
+}
+
+/** The run length to show: the wanted one when allowed, else the first allowed one (or the wanted one when none is). */
+export function clampDrillLimit(tier: Tier, limit: DrillLimit): DrillLimit {
+  const { drillLimits } = ACCESS[tier].blindfold;
+  return drillLimits.length === 0 || drillLimits.includes(limit) ? limit : drillLimits[0];
+}
+
+/** Checks how long a drill run may be (a drill with no time limit is Premium). */
+export function checkBlindfoldDrillLimit(tier: Tier, limit: DrillLimit): Check {
+  return ACCESS[tier].blindfold.drillLimits.includes(limit)
+    ? { ok: true }
+    : refuse(limit === 'endless' ? 'A drill with no time limit' : `A ${drillLimitLabel(limit)} drill`, tierFor((a) => a.blindfold.drillLimits, limit));
 }
 
 /** True when the tier may open Blindfold at all (some mode of it). */

@@ -12,6 +12,12 @@ export const LEGAL_LINKS = [
   { href: '/contact', label: 'Contact' },
 ] as const;
 
+/**
+ * The welcome window: a first-time visitor is asked to create an account, sign in or play as a guest, over a blurred page.
+ * It is switched off, so everybody lands on the page they opened (as a guest until they sign in). Set to true to bring it back.
+ */
+export const WELCOME_WINDOW = false;
+
 /** Paths of the pages every visitor may read without the welcome window being in the way. */
 export const INFO_PATHS: readonly string[] = LEGAL_LINKS.map((link) => link.href);
 

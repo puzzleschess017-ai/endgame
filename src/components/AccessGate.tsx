@@ -2,15 +2,15 @@ import { useEffect, useRef } from 'react';
 import { LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '../auth';
 import { chooseGuest, useGuestChoice } from '../auth/guest';
-import { isInfoPath } from '../site';
+import { isInfoPath, WELCOME_WINDOW } from '../site';
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
 
-/** True while the welcome window is covering the page. The login page and the About/Privacy/Contact pages are never covered. */
+/** True while the welcome window is covering the page (never, while `WELCOME_WINDOW` in src/site.ts is off). The login page and the About/Privacy/Contact pages are never covered. */
 export function useGateOpen(): boolean {
   const { session } = useAuth();
   const chosenGuest = useGuestChoice();
   const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
-  return !session && !chosenGuest && path !== '/login' && !isInfoPath(path);
+  return WELCOME_WINDOW && !session && !chosenGuest && path !== '/login' && !isInfoPath(path);
 }
 
 /**
