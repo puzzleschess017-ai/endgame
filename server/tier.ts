@@ -19,7 +19,12 @@ const EXPIRED = 'Your sign-in has expired. Please sign in again.';
 const USER_ID = /^[0-9a-f-]{32,40}$/i;
 const MAX_REMEMBERED = 1000;
 
-export function createTierLookup(options: TierLookupOptions): (authorization: string | undefined) => Promise<Visitor> {
+export type TierLookup = ((authorization: string | undefined) => Promise<Visitor>) & {
+  /** Drops what is remembered about an account, so its next request asks Supabase again (used when a payment changed its plan). */
+  forget(userId: string): void;
+};
+
+export function createTierLookup(options: TierLookupOptions): TierLookup {
   const fetchImpl = options.fetchImpl ?? fetch;
   const now = options.now ?? (() => Date.now());
   const ttl = options.ttlMs ?? 60_000;
@@ -33,7 +38,7 @@ export function createTierLookup(options: TierLookupOptions): (authorization: st
     });
   }
 
-  return async function lookup(authorization) {
+  async function lookup(authorization: string | undefined): Promise<Visitor> {
     const token = /^Bearer\s+(\S+)$/i.exec(authorization ?? '')?.[1];
     if (!token) return { ok: true, tier: 'guest' };
 
@@ -63,5 +68,11 @@ export function createTierLookup(options: TierLookupOptions): (authorization: st
     } catch {
       return unknown;
     }
-  };
+  }
+
+  return Object.assign(lookup, {
+    forget(userId: string): void {
+      for (const [token, entry] of remembered) if (entry.userId === userId.toLowerCase()) remembered.delete(token);
+    },
+  });
 }

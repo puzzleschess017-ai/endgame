@@ -181,6 +181,11 @@ export function createAuthStore(parts: AuthStoreParts) {
       return result;
     },
 
+    /** Asks again which plan the account has (after a payment, when the plan may just have changed). */
+    async refreshPlan(): Promise<void> {
+      await loadProfile();
+    },
+
     async signOut(): Promise<void> {
       const session = state.session;
       set(null, null);

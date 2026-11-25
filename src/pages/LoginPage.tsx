@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { LogOut, UserRound } from 'lucide-react';
 import AppShell from '../components/AppShell';
+import PremiumCard from '../components/PremiumCard';
 import { CARD_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, segmentClass } from '../components/panelUi';
 import { auth, useAuth } from '../auth';
 import { chooseGuest } from '../auth/guest';
@@ -219,6 +220,7 @@ export default function LoginPage() {
             </div>
           </div>
         )}
+        {signedIn && state.status !== 'loading' && state.tier === 'free' && <PremiumCard signedIn returnTo="/login" unlocking={false} />}
       </div>
     </AppShell>
   );

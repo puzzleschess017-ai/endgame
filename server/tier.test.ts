@@ -79,6 +79,20 @@ describe('createTierLookup', () => {
     assert.equal(calls.length, 4);
   });
 
+  it('forget drops what is remembered about one account, so a plan just bought shows at once', async () => {
+    const plans: Record<string, 'free' | 'premium'> = { good: 'free' };
+    const { fetchImpl, calls } = fake(plans);
+    const lookup = createTierLookup({ url: 'https://x.supabase.co', key: 'k', fetchImpl, now: () => 1000, ttlMs: 60_000 });
+    assert.equal(((await lookup('Bearer good')) as { tier: string }).tier, 'free');
+    plans.good = 'premium';
+    assert.equal(((await lookup('Bearer good')) as { tier: string }).tier, 'free', 'still remembered');
+    lookup.forget('00000000-0000-4000-8000-000000000000'); // another account: nothing changes
+    assert.equal(((await lookup('Bearer good')) as { tier: string }).tier, 'free');
+    lookup.forget(ID.toUpperCase());
+    assert.equal(((await lookup('Bearer good')) as { tier: string }).tier, 'premium');
+    assert.equal(calls.length, 4);
+  });
+
   it('when Supabase cannot be reached a signed-in visitor counts as free (and is not remembered)', async () => {
     const { fetchImpl, calls } = fake({ good: 'premium' }, { down: true });
     const lookup = createTierLookup({ url: 'https://x.supabase.co', key: 'k', fetchImpl });

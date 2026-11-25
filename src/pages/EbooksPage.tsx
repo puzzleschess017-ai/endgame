@@ -1,10 +1,11 @@
-// The eBooks tab: every e-book with its price. Each costs $1.99 to buy, and Premium has all of them for free.
+// The eBooks tab: every e-book with its price, and the Premium plans. Each e-book costs $1.99 to buy, and Premium has all of them for free.
 // What the visitor owns is asked from the server (GET /api/ebooks), which is also what sends the PDF.
 import { useEffect, useState } from 'react';
 import { BookMarked, Check, Download, Lock, ShoppingCart } from 'lucide-react';
 import AppShell from '../components/AppShell';
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from '../components/panelUi';
-import { authHeaders, useAuth } from '../auth';
+import PremiumCard from '../components/PremiumCard';
+import { auth, authHeaders, useAuth } from '../auth';
 import { getsEbooksFree } from '../utils/access';
 import { EBOOKS, EBOOK_PRICE_LABEL, type EbookInfo } from '../utils/ebooks';
 import { readSavedUsername } from '../utils/profile';
@@ -223,19 +224,28 @@ export default function EbooksPage() {
   const signedIn = session !== null;
   const { owned, buyable, reload } = useLibrary(signedIn, tier);
 
-  // After paying, Polar sends the person back here (?purchase=success). The payment reaches the server a moment
-  // later (the webhook), so the page asks again every few seconds, for half a minute, until the book is there.
-  const [justPaid] = useState(() => new URLSearchParams(window.location.search).get('purchase') === 'success');
+  // After paying, Dodo sends the person back here (?purchase=book or ?purchase=premium, and Dodo adds status=... to the
+  // address). The payment reaches the server a moment later (the webhook), so the page asks again every few seconds, for
+  // half a minute, until the e-book or Premium is there. A payment that did not go through is not waited for.
+  const [{ purchase, paid }] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const kind = params.get('purchase');
+    const status = (params.get('status') ?? '').toLowerCase();
+    return { purchase: kind === 'book' || kind === 'premium' ? kind : null, paid: status === '' || ['succeeded', 'active', 'processing'].includes(status) };
+  });
   const [tries, setTries] = useState(0);
-  const waiting = justPaid && signedIn && owned !== null && EBOOKS.some((book) => !owned.has(book.slug)) && tries < 12;
+  const waitingForBook = purchase === 'book' && paid && signedIn && owned !== null && EBOOKS.some((book) => !owned.has(book.slug));
+  const waitingForPremium = purchase === 'premium' && paid && signedIn && tier !== 'premium';
+  const waiting = (waitingForBook || waitingForPremium) && tries < 12;
   useEffect(() => {
     if (!waiting) return;
     const timer = window.setTimeout(() => {
       setTries((n) => n + 1);
       reload();
+      if (waitingForPremium) void auth.refreshPlan();
     }, 2500);
     return () => window.clearTimeout(timer);
-  }, [waiting, tries]);
+  }, [waiting, waitingForPremium, tries]);
 
   useEffect(() => {
     document.title = 'Chess eBooks: The Queen’s Gambit and more | Chess Tactics Guide';
@@ -255,6 +265,7 @@ export default function EbooksPage() {
             </p>
           </div>
         </header>
+        {!getsEbooksFree(tier) && <PremiumCard signedIn={signedIn} returnTo="/ebooks" unlocking={waiting && waitingForPremium} />}
         {EBOOKS.map((book) => (
           <BookCard
             key={book.slug}

@@ -1,6 +1,5 @@
 import express from 'express';
 import fs from 'node:fs';
-import net from 'node:net';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
@@ -386,15 +385,15 @@ async function startServer() {
 
   const siteUrl = cleanSiteUrl(process.env.SITE_URL);
 
-  // Payments (Polar, see server/payments.ts). Off until the environment variables are set.
+  // Payments (Dodo Payments, see server/payments.ts). Off until the environment variables are set.
   const supabaseUrl = process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
   const payments = loadPaymentSettings(process.env, EBOOKS.map((book) => book.slug), supabaseUrl);
   const paymentStore = payments.webhook ? createPaymentStore({ url: supabaseUrl, serviceKey: payments.webhook.serviceKey }) : null;
 
-  // Polar tells the site about a payment here. This route comes before express.json(): the signature is over the
-  // exact bytes that were sent, so the body must stay raw. A wrong signature is a 403; a failure to save is a 500, so
-  // that Polar sends the event again (it tries up to ten times); everything else is acknowledged with 202.
-  app.post('/api/webhooks/polar', express.raw({ type: '*/*', limit: '1mb' }), async (req, res) => {
+  // Dodo tells the site about a payment here. This route comes before express.json(): the signature is over the
+  // exact bytes that were sent, so the body must stay raw. A wrong signature is a 400; a failure to save is a 500, so
+  // that Dodo sends the event again; everything else is acknowledged with 200.
+  app.post('/api/webhooks/dodo', express.raw({ type: '*/*', limit: '1mb' }), async (req, res) => {
     if (!payments.webhook || !paymentStore) {
       res.status(503).json({ error: 'Payments are not set up on this server.' });
       return;
@@ -402,7 +401,7 @@ async function startServer() {
     const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
     const header = (name: string) => req.header(name) ?? undefined;
     if (!verifyWebhook(payments.webhook.secret, { id: header('webhook-id'), timestamp: header('webhook-timestamp'), signature: header('webhook-signature') }, body)) {
-      res.status(403).json({ error: 'Bad signature.' });
+      res.status(400).json({ error: 'Bad signature.' });
       return;
     }
     let event: unknown;
@@ -416,14 +415,19 @@ async function startServer() {
     if (action) {
       try {
         await paymentStore.apply(action);
+        // The server remembers a plan for a minute: forget it, so the person sees the new plan at once.
+        if (action.kind === 'set-tier') tierOf.forget(action.userId);
         console.log(`[payments] ${(event as { type?: string }).type} -> ${action.kind}`);
       } catch (err) {
         console.error('[payments] could not save', err instanceof Error ? err.message : err);
         res.status(500).json({ error: 'Could not save the payment.' });
         return;
       }
+    } else if (typeof (event as { type?: unknown } | null)?.type === 'string' && /^(subscription|payment|refund)\./.test((event as { type: string }).type)) {
+      // Not an error, but worth a line: a payment event that changed nothing (for example one without a user id).
+      console.log(`[payments] ${(event as { type: string }).type} ignored`);
     }
-    res.status(202).json({ ok: true });
+    res.status(200).json({ ok: true });
   });
 
   app.use(express.json({ limit: '100kb' }));
@@ -530,10 +534,15 @@ async function startServer() {
         // Whether the Buy button works: the checkout is set up for this book.
         buyable: Boolean(payments.checkout?.offers[`ebook:${book.slug}`]),
       })),
+      // Whether the Get Premium buttons work: the monthly and the yearly product are set up.
+      premium: {
+        monthly: Boolean(payments.checkout?.offers['premium:monthly']),
+        yearly: Boolean(payments.checkout?.offers['premium:yearly']),
+      },
     });
   });
 
-  // Buying: makes a Polar checkout for the signed-in person and gives back its address. The person's id comes
+  // Buying: makes a Dodo checkout for the signed-in person and gives back its address. The person's id comes
   // from the verified sign-in token, never from the request, so a payment can only ever be for the one who asks.
   app.post('/api/checkout', async (req, res) => {
     res.set('Cache-Control', 'private, no-store');
@@ -567,16 +576,16 @@ async function startServer() {
       res.status(409).json({ error: slug ? 'You already have this e-book.' : 'You already have Premium.' });
       return;
     }
-    const forwarded = String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim();
     try {
       const url = await createCheckout({
         config,
+        offer,
         productId,
         userId: visitor.userId,
         email: visitor.email,
-        successUrl: slug ? `${siteUrl}/ebooks?purchase=success&checkout_id={CHECKOUT_ID}` : `${siteUrl}/login?purchase=success&checkout_id={CHECKOUT_ID}`,
-        returnUrl: slug ? `${siteUrl}/ebooks` : `${siteUrl}/login`,
-        ipAddress: net.isIP(forwarded) ? forwarded : undefined,
+        // Dodo adds the result of the payment (for example status=succeeded) to the return address.
+        returnUrl: `${siteUrl}/ebooks?purchase=${slug ? 'book' : 'premium'}`,
+        cancelUrl: `${siteUrl}/ebooks`,
       });
       res.json({ url });
     } catch (err) {

@@ -41,7 +41,7 @@ export default function AboutPage() {
       <p>
         Everything works without an account, and your results stay in your browser. A free account keeps your
         results on every device and unlocks more training options. Some of the more advanced options are reserved
-        for Premium, which is not on sale yet.
+        for Premium, a monthly or yearly subscription that also includes every e-book.
       </p>
       <p>
         Questions, ideas or a bug to report? See the <a href="/contact">Contact</a> page. How your data is handled
