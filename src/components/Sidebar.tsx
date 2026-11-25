@@ -318,12 +318,11 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
           <img
             src="/assets/aistudio/Add_a_heading__16_-removebg-preview_c70fa2ca.png"
             alt="Chess Tactics Guide logo"
-            className="w-11 h-11 object-contain select-none shrink-0"
+            className="w-14 h-14 object-contain select-none shrink-0"
             draggable={false}
           />
           <span className="flex flex-col leading-tight">
             <h1 className="text-lg font-bold tracking-tight text-white whitespace-nowrap">Chess Tactics Guide</h1>
-            <span className="text-sm font-medium text-white/60">Improve Every Day</span>
           </span>
         </a>
 

@@ -40,7 +40,7 @@ export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean;
   return (
     <div className="flex flex-col gap-8" data-testid="welcome">
       <section className={`${CARD} p-6 sm:p-8 flex flex-col gap-4`}>
-        <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">Train your chess, one puzzle at a time</h2>
+        <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">Train your chess, improve every day</h2>
         <p className="max-w-[62ch] text-base font-medium text-white/80 leading-relaxed">
           Chess Tactics Guide is a free training site for tactics and endgames. Solve puzzles from the Lichess database,
           drill the board until you know it by heart, learn the key endgames and openings, and keep track of how you improve.
