@@ -15,6 +15,9 @@ import {
 } from 'lucide-react';
 import ChessboardPanel, { type PendingPromotion } from '../components/ChessboardPanel';
 import { COMPACT_CARD_CLASS, SECONDARY_BUTTON_CLASS } from '../components/panelUi';
+import EnginePanel, { bestEngineMove } from '../components/EnginePanel';
+import { useEngine } from '../hooks/useEngine';
+import { useAuth } from '../auth';
 import TrainerLayout from '../components/TrainerLayout';
 import { useAppearance } from '../hooks/useAppearance';
 import {
@@ -89,6 +92,8 @@ type Lookup =
 
 export default function TablebasePage() {
   const [appearance, setAppearance] = useAppearance();
+  const { tier } = useAuth();
+  const [engineOn, setEngineOn] = useState(false);
   const [username] = useState(() => readSavedUsername());
 
   const [analysis, setAnalysis] = useState<Analysis>(initialAnalysis);
@@ -125,6 +130,9 @@ export default function TablebasePage() {
   const lastMove = lastMoveAt(analysis);
   const status = statusAt(analysis);
   const rows = useMemo(() => moveRows(analysis), [analysis]);
+
+  // The engine is Premium: a switch left on from before a sign-out does nothing.
+  const engine = useEngine(engineOn && tier === 'premium', fen);
 
   const atStart = analysis.index === 0;
   const atEnd = analysis.index === analysis.moves.length;
@@ -295,7 +303,8 @@ export default function TablebasePage() {
   };
 
   const verdict = lookup.state === 'ready' ? verdictText(lookup.result, turn) : null;
-  const hintArrow: [Key, Key] | null = hoverUci ? [hoverUci.slice(0, 2) as Key, hoverUci.slice(2, 4) as Key] : null;
+  const arrowUci = hoverUci ?? (engineOn && tier === 'premium' ? bestEngineMove(engine) : null);
+  const hintArrow: [Key, Key] | null = arrowUci ? [arrowUci.slice(0, 2) as Key, arrowUci.slice(2, 4) as Key] : null;
   const editorHref = `/editor?fen=${encodeURIComponent(fen)}`;
 
   return (
@@ -372,6 +381,16 @@ export default function TablebasePage() {
               </div>
             )}
           </div>
+
+          <EnginePanel
+            tier={tier}
+            fen={fen}
+            on={engineOn}
+            onToggle={setEngineOn}
+            state={engine}
+            onHover={setHoverUci}
+            onPlay={playUci}
+          />
 
           {lookup.state === 'ready' && lookup.result.moves.length > 0 && (
             <div className="flex flex-col gap-1.5">
