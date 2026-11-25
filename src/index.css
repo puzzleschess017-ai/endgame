@@ -397,8 +397,8 @@
 }
 
 @media (min-width: 1280px) and (max-height: 840px) {
-  .side-nav .nav-home { margin-bottom: 0.5rem; }
+  .side-nav .nav-home { margin-bottom: 1rem; }
 }
 @media (min-width: 1280px) and (max-height: 680px) {
-  .side-nav .nav-home { margin-bottom: 0.25rem; }
+  .side-nav .nav-home { margin-bottom: 0.625rem; }
 }
