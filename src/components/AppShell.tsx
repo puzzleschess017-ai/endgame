@@ -28,7 +28,7 @@ export default function AppShell({ username, children }: AppShellProps) {
           <SoundMenu />
         </div>
         {children}
-        <SiteLinks className="flex mt-8 xl:hidden" />
+        <SiteLinks className="flex mt-10 pt-3 border-t border-white/10" />
       </main>
       <AccessGate />
       <CookieBanner hidden={gateOpen} />
