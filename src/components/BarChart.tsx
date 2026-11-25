@@ -62,9 +62,12 @@ export default function BarChart({
   const peak = Math.max(0, ...values);
   const top = fixedMax ?? niceMax(peak);
   const hasData = peak > 0;
-  // About six labels on the x axis, always including the last (today).
-  const every = data.length <= 7 ? 1 : Math.ceil(data.length / 6);
+  // About four labels on the x axis, always including the last (today): more than that overlap on a phone.
+  const every = data.length <= 7 ? 1 : Math.ceil(data.length / 4);
   const showLabel = (i: number) => (data.length - 1 - i) % every === 0;
+  // The gap between bars shrinks with their number: 90 bars with a 3px gap need 267px for the gaps alone, which leaves
+  // no width for the bars on a phone.
+  const gap = data.length > 60 ? 1 : data.length > 30 ? 2 : 3;
 
   return (
     <section
@@ -105,14 +108,14 @@ export default function BarChart({
               />
             ))}
 
-            <div className="absolute inset-0 flex items-end gap-[3px]" aria-hidden="true">
+            <div className="absolute inset-0 flex items-end" style={{ gap }} aria-hidden="true">
               {data.map((d, i) => {
                 const value = d.value ?? 0;
                 const height = value > 0 ? Math.max(2, (value / top) * 100) : 0;
                 return (
                   <div
                     key={d.key}
-                    className="relative flex-1 h-full flex items-end justify-center"
+                    className="relative flex-1 min-w-0 h-full flex items-end justify-center"
                     onMouseEnter={() => setActive(i)}
                   >
                     {value > 0 && (
@@ -150,11 +153,15 @@ export default function BarChart({
             )}
           </div>
 
-          <div className="mt-2 flex gap-[3px]" aria-hidden="true">
+          <div className="mt-2 flex" style={{ gap }} aria-hidden="true">
             {data.map((d, i) => (
               <div key={d.key} className="relative flex-1 h-4">
                 {showLabel(i) && (
-                  <span className="absolute left-1/2 -translate-x-1/2 text-xs font-medium text-white/60 whitespace-nowrap">
+                  <span
+                    className={`absolute text-xs font-medium text-white/60 whitespace-nowrap ${
+                      i === data.length - 1 ? 'right-0' : 'left-1/2 -translate-x-1/2'
+                    }`}
+                  >
                     {d.label}
                   </span>
                 )}
