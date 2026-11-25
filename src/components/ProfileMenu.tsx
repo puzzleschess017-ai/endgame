@@ -17,13 +17,13 @@ const ITEM =
 interface ProfileMenuProps {
   /** The name to show when nobody is signed in (the name saved in this browser). */
   guestName?: string;
-  /** Which way the menu opens: up from the bottom of the sidebar, or down from the top bar. */
-  opens: 'up' | 'down';
+  /** Which edge of the button the menu lines up with. */
+  align: 'left' | 'right';
   className?: string;
   testId?: string;
 }
 
-export default function ProfileMenu({ guestName, opens, className = '', testId = 'sidebar-name' }: ProfileMenuProps) {
+export default function ProfileMenu({ guestName, align, className = '', testId = 'sidebar-name' }: ProfileMenuProps) {
   const { session, name, tier } = useAuth();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -53,18 +53,27 @@ export default function ProfileMenu({ guestName, opens, className = '', testId =
     };
   }, [open]);
 
-  const labelClass = 'min-w-0 flex items-center gap-1.5 text-sm font-semibold text-[#39ff88] hover:text-white';
+  const rowClass =
+    'min-w-0 flex items-center gap-3 px-3 py-1.5 rounded-xl border border-transparent text-sm font-semibold text-white/85 hover:text-white hover:bg-white/5';
+  const chip = (
+    <span className="w-7 h-7 rounded-lg bg-[#39ff88]/15 flex items-center justify-center shrink-0">
+      <UserRound className="w-[17px] h-[17px] text-[#39ff88]" aria-hidden="true" />
+    </span>
+  );
 
   if (!session) {
     return (
-      <a
-        href="/login"
-        data-testid={testId}
-        title={guestName ? `${guestName}: sign in or create an account` : 'Sign in or create an account'}
-        className={`${labelClass} no-underline ${className}`}
-      >
-        <span className="truncate">{guestName || 'Guest'}</span>
-      </a>
+      <div className={className}>
+        <a
+          href="/login"
+          data-testid={testId}
+          title={guestName ? `${guestName}: sign in or create an account` : 'Sign in or create an account'}
+          className={`${rowClass} no-underline`}
+        >
+          {chip}
+          <span className="truncate">{guestName || 'Guest'}</span>
+        </a>
+      </div>
     );
   }
 
@@ -98,17 +107,18 @@ export default function ProfileMenu({ guestName, opens, className = '', testId =
         aria-expanded={open}
         title={`${name}: your account`}
         onClick={() => setOpen((v) => !v)}
-        className={`${labelClass} max-w-full cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88] rounded-md`}
+        className={`${rowClass} w-full cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]`}
       >
+        {chip}
+        <span className="truncate">My profile</span>
         {premium && <PremiumCrown />}
-        <span className="truncate">{name}</span>
       </button>
 
       {open && (
         <div
           role="menu"
           data-testid="profile-menu"
-          className={`absolute z-50 w-[250px] ${opens === 'up' ? 'bottom-full mb-2 left-0' : 'top-full mt-2 right-0'} bg-[#16233b] border border-white/15 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.6)] p-2 flex flex-col gap-0.5`}
+          className={`absolute z-50 w-[250px] top-full mt-2 ${align === 'left' ? 'left-0' : 'right-0'} bg-[#16233b] border border-white/15 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.6)] p-2 flex flex-col gap-0.5`}
         >
           <div className="flex items-center gap-3 px-3 py-2.5">
             <span className="w-10 h-10 rounded-full bg-[#39ff88]/15 flex items-center justify-center shrink-0">
