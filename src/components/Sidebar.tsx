@@ -5,6 +5,7 @@ import {
   Library,
   ChartColumn,
   ChevronDown,
+  Crown,
   Crosshair,
   Cpu,
   EyeOff,
@@ -151,6 +152,20 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: BookMarked,
         iconClass: 'text-rose-300',
         chipClass: 'bg-rose-400/15',
+      },
+    ],
+  },
+  {
+    id: 'premium',
+    label: 'Premium',
+    items: [
+      {
+        id: 'pricing',
+        href: '/pricing',
+        label: 'Pricing',
+        icon: Crown,
+        iconClass: 'text-amber-300',
+        chipClass: 'bg-amber-400/15',
       },
     ],
   },

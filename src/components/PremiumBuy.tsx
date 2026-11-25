@@ -1,7 +1,6 @@
-// "Get Premium": the monthly and the yearly plan, bought from Dodo's payment page. Premium has every e-book for free and the
-// full training options. What the visitor has and whether buying is open comes from the server (GET /api/ebooks).
+// The buy buttons of Premium: the monthly and the yearly plan, bought from Dodo's payment page. What the visitor can buy
+// comes from the server (GET /api/ebooks), which says which of the two products are set up.
 import { useEffect, useState } from 'react';
-import { Crown } from 'lucide-react';
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
 import { auth, authHeaders } from '../auth';
 import { PREMIUM_MONTHLY_LABEL, PREMIUM_YEARLY_LABEL, yearlySavingPercent, type PremiumPlan } from '../utils/premium';
@@ -44,7 +43,7 @@ async function startPremiumCheckout(plan: PremiumPlan): Promise<string | null> {
   }
 }
 
-export default function PremiumCard({ signedIn, returnTo, unlocking }: { signedIn: boolean; returnTo: string; unlocking: boolean }) {
+export default function PremiumBuy({ signedIn, returnTo, unlocking }: { signedIn: boolean; returnTo: string; unlocking: boolean }) {
   const open = usePremiumOpen();
   const [busy, setBusy] = useState<PremiumPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,22 +60,7 @@ export default function PremiumCard({ signedIn, returnTo, unlocking }: { signedI
 
   const anyOpen = open !== null && (open.monthly || open.yearly);
   return (
-    <section
-      data-testid="premium-card"
-      className="bg-[#16233b] border border-amber-300/30 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)] p-5 sm:p-6 flex flex-col gap-4"
-    >
-      <div className="flex items-start gap-3">
-        <span className="w-11 h-11 rounded-xl bg-amber-300/15 flex items-center justify-center shrink-0">
-          <Crown className="w-6 h-6 text-amber-300" aria-hidden="true" />
-        </span>
-        <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Get Premium</h2>
-          <p className="mt-0.5 text-sm font-medium text-white/80 leading-relaxed">
-            Every e-book for free, plus the full Woodpecker and Blindfold training and every drill.
-          </p>
-        </div>
-      </div>
-
+    <div data-testid="premium-buy" className="flex flex-col gap-3">
       {unlocking ? (
         <p data-testid="premium-unlocking" role="status" className="text-sm font-bold text-[#39ff88]">
           Payment received. Turning Premium on…
@@ -130,6 +114,6 @@ export default function PremiumCard({ signedIn, returnTo, unlocking }: { signedI
           )}
         </>
       )}
-    </section>
+    </div>
   );
 }

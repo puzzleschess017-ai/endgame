@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { LogOut, UserRound } from 'lucide-react';
+import { Crown, LogOut, UserRound } from 'lucide-react';
 import AppShell from '../components/AppShell';
-import PremiumCard from '../components/PremiumCard';
 import { CARD_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, segmentClass } from '../components/panelUi';
 import { auth, useAuth } from '../auth';
 import { chooseGuest } from '../auth/guest';
@@ -220,7 +219,15 @@ export default function LoginPage() {
             </div>
           </div>
         )}
-        {signedIn && state.status !== 'loading' && state.tier === 'free' && <PremiumCard signedIn returnTo="/login" unlocking={false} />}
+        {signedIn && state.status !== 'loading' && state.tier === 'free' && (
+          <a
+            href="/pricing"
+            data-testid="account-get-premium"
+            className="flex items-center justify-center gap-2 rounded-2xl border border-amber-300/30 bg-[#16233b] px-5 py-3.5 text-sm font-bold text-amber-300 no-underline hover:bg-[#1b2b47]"
+          >
+            <Crown className="w-4 h-4" aria-hidden="true" /> Get Premium
+          </a>
+        )}
       </div>
     </AppShell>
   );

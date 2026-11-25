@@ -8,39 +8,43 @@ import {
   loadPaymentSettings,
   verifyWebhook,
   type CheckoutConfig,
-  type Product,
 } from './payments.ts';
 
 const USER = '3f8c2d5e-1a4b-4c6d-8e9f-0a1b2c3d4e5f';
-const EBOOK_ID = 'pdt_0NdBookQueensGambit1';
 const MONTHLY_ID = 'pdt_0NdPremiumMonthly22';
 const YEARLY_ID = 'pdt_0NdPremiumYearly333';
-const PRODUCTS: Record<string, Product> = {
-  [EBOOK_ID]: { kind: 'ebook', slug: 'queens-gambit' },
-  [MONTHLY_ID]: { kind: 'premium' },
-  [YEARLY_ID]: { kind: 'premium' },
-};
+const OTHER_ID = 'pdt_0NdSomethingElse444';
+const PRODUCTS = [MONTHLY_ID, YEARLY_ID];
 
 describe('loadPaymentSettings', () => {
-  const slugs = ['queens-gambit'];
-  const settings = (env: Record<string, string>) => loadPaymentSettings(env, slugs, 'https://x.supabase.co');
+  const settings = (env: Record<string, string>) => loadPaymentSettings(env, 'https://x.supabase.co');
 
   it('everything is off until the values are set', () => {
     assert.deepEqual(settings({}), { checkout: null, webhook: null });
     assert.deepEqual(settings({ DODO_PAYMENTS_API_KEY: 'k' }), { checkout: null, webhook: null });
-    assert.deepEqual(settings({ DODO_PAYMENTS_PRODUCT_EBOOK_QUEENS_GAMBIT: EBOOK_ID }), { checkout: null, webhook: null });
+    assert.deepEqual(settings({ DODO_PAYMENTS_PRODUCT_PREMIUM_MONTHLY: MONTHLY_ID }), { checkout: null, webhook: null });
+    // the e-books are not for sale any more: a leftover product id of one is not read
+    assert.deepEqual(settings({ DODO_PAYMENTS_API_KEY: 'k', DODO_PAYMENTS_PRODUCT_EBOOK_QUEENS_GAMBIT: OTHER_ID }), { checkout: null, webhook: null });
   });
   it('checkout needs a key and a product; the webhook needs the secret, the service key and a product', () => {
-    const checkout = settings({ DODO_PAYMENTS_API_KEY: 'k', DODO_PAYMENTS_PRODUCT_EBOOK_QUEENS_GAMBIT: EBOOK_ID });
-    assert.deepEqual(checkout.checkout, { apiKey: 'k', baseUrl: 'https://live.dodopayments.com', offers: { 'ebook:queens-gambit': EBOOK_ID } });
+    const checkout = settings({ DODO_PAYMENTS_API_KEY: 'k', DODO_PAYMENTS_PRODUCT_PREMIUM_MONTHLY: MONTHLY_ID, DODO_PAYMENTS_PRODUCT_PREMIUM_YEARLY: YEARLY_ID });
+    assert.deepEqual(checkout.checkout, {
+      apiKey: 'k',
+      baseUrl: 'https://live.dodopayments.com',
+      offers: { 'premium:monthly': MONTHLY_ID, 'premium:yearly': YEARLY_ID },
+    });
     assert.equal(checkout.webhook, null);
     const hook = settings({ DODO_PAYMENTS_WEBHOOK_KEY: 's', SUPABASE_SERVICE_ROLE_KEY: 'k', DODO_PAYMENTS_PRODUCT_PREMIUM_MONTHLY: MONTHLY_ID });
     assert.equal(hook.checkout, null);
-    assert.deepEqual(hook.webhook, { secret: 's', supabaseUrl: 'https://x.supabase.co', serviceKey: 'k', products: { [MONTHLY_ID]: { kind: 'premium' } } });
+    assert.deepEqual(hook.webhook, { secret: 's', supabaseUrl: 'https://x.supabase.co', serviceKey: 'k', premiumProducts: [MONTHLY_ID] });
+  });
+  it('one plan can be left out: the other one still works', () => {
+    const yearlyOnly = settings({ DODO_PAYMENTS_API_KEY: 'k', DODO_PAYMENTS_PRODUCT_PREMIUM_YEARLY: YEARLY_ID });
+    assert.deepEqual(Object.keys(yearlyOnly.checkout?.offers ?? {}), ['premium:yearly']);
   });
   it('test mode is Dodo’s test environment: asked for, or seen from a dodo_test_ key; a product id that is not an id is ignored', () => {
     const base = { DODO_PAYMENTS_PRODUCT_PREMIUM_YEARLY: YEARLY_ID };
-    const asked = settings({ ...base, DODO_PAYMENTS_API_KEY: 'k', DODO_PAYMENTS_ENVIRONMENT: ' Test_Mode ', DODO_PAYMENTS_PRODUCT_EBOOK_QUEENS_GAMBIT: 'no id!' });
+    const asked = settings({ ...base, DODO_PAYMENTS_API_KEY: 'k', DODO_PAYMENTS_ENVIRONMENT: ' Test_Mode ', DODO_PAYMENTS_PRODUCT_PREMIUM_MONTHLY: 'no id!' });
     assert.equal(asked.checkout?.baseUrl, 'https://test.dodopayments.com');
     assert.deepEqual(Object.keys(asked.checkout?.offers ?? {}), ['premium:yearly']);
     assert.equal(settings({ ...base, DODO_PAYMENTS_API_KEY: 'dodo_test_abc' }).checkout?.baseUrl, 'https://test.dodopayments.com');
@@ -95,9 +99,9 @@ describe('verifyWebhook', () => {
 });
 
 // The shapes follow Dodo's webhook types (the "dodopayments" SDK): { business_id, timestamp, type, data }, where data is the
-// payment, the refund or the subscription as it is at the time of delivery.
+// payment or the subscription as it is at the time of delivery.
 describe('actionFor', () => {
-  const payment = (extra: Record<string, unknown> = {}, product = EBOOK_ID, type = 'payment.succeeded') => ({
+  const payment = (extra: Record<string, unknown> = {}, product = MONTHLY_ID, type = 'payment.succeeded') => ({
     business_id: 'bus_1',
     timestamp: '2026-12-01T10:00:00Z',
     type,
@@ -105,16 +109,11 @@ describe('actionFor', () => {
       payload_type: 'Payment',
       payment_id: 'pay_1',
       status: 'succeeded',
+      subscription_id: 'sub_1',
       product_cart: [{ product_id: product, quantity: 1 }],
-      metadata: { user_id: USER, offer: 'ebook:queens-gambit' },
+      metadata: { user_id: USER, offer: 'premium:monthly' },
       ...extra,
     },
-  });
-  const premiumPayment = (extra: Record<string, unknown> = {}, product = MONTHLY_ID) =>
-    payment({ subscription_id: 'sub_1', metadata: { user_id: USER, offer: 'premium:monthly' }, ...extra }, product);
-  const refund = (extra: Record<string, unknown> = {}, type = 'refund.succeeded') => ({
-    type,
-    data: { payload_type: 'Refund', refund_id: 'ref_1', payment_id: 'pay_1', status: 'succeeded', is_partial: false, metadata: {}, ...extra },
   });
   const sub = (status: string, extra: Record<string, unknown> = {}, product = MONTHLY_ID, type = 'subscription.active') => ({
     type,
@@ -123,35 +122,30 @@ describe('actionFor', () => {
   const on = { kind: 'set-tier', userId: USER, tier: 'premium' };
   const off = { kind: 'set-tier', userId: USER, tier: 'free' };
 
-  it('a paid e-book gives the book to the person named in the metadata', () => {
-    assert.deepEqual(actionFor(payment(), PRODUCTS), { kind: 'grant-ebook', userId: USER, slug: 'queens-gambit', ref: 'pay_1' });
+  it('the first payment of a Premium subscription, and each renewal, turn Premium on', () => {
+    assert.deepEqual(actionFor(payment(), PRODUCTS), on);
+    assert.deepEqual(actionFor(payment({}, YEARLY_ID), PRODUCTS), on, 'the yearly product too');
+    assert.deepEqual(actionFor(payment({ subscription_id: undefined, subscription_ids: ['sub_1'] }), PRODUCTS), on);
     // the id in capitals is still the same person
-    const capitals = payment({ metadata: { user_id: USER.toUpperCase() } });
-    assert.deepEqual(actionFor(capitals, PRODUCTS), { kind: 'grant-ebook', userId: USER, slug: 'queens-gambit', ref: 'pay_1' });
+    assert.deepEqual(actionFor(payment({ metadata: { user_id: USER.toUpperCase() } }), PRODUCTS), on);
   });
-  it('a payment that is not an e-book of this site, has no known person, or did not succeed gives nothing', () => {
+  it('a one-time payment, even of a Premium product, is not Premium', () => {
+    assert.equal(actionFor(payment({ subscription_id: undefined }), PRODUCTS), null);
+  });
+  it('a payment that is not of this site, has no known person, or did not succeed gives nothing', () => {
     assert.equal(actionFor(payment({ metadata: {} }), PRODUCTS), null);
     assert.equal(actionFor(payment({ metadata: { user_id: 'x; drop table' } }), PRODUCTS), null);
     assert.equal(actionFor(payment({ payment_id: 'a/../b' }), PRODUCTS), null);
     assert.equal(actionFor(payment({ payment_id: undefined }), PRODUCTS), null);
     assert.equal(actionFor(payment({ status: 'failed' }), PRODUCTS), null);
-    assert.equal(actionFor(payment({}, 'pdt_unknown_product_9'), PRODUCTS), null);
+    assert.equal(actionFor(payment({}, OTHER_ID), PRODUCTS), null);
     assert.equal(actionFor(payment({ product_cart: null }), PRODUCTS), null);
-    assert.equal(actionFor(payment({}, EBOOK_ID, 'payment.failed'), PRODUCTS), null);
-    assert.equal(actionFor(payment({}, EBOOK_ID, 'payment.processing'), PRODUCTS), null);
+    assert.equal(actionFor(payment({}, MONTHLY_ID, 'payment.failed'), PRODUCTS), null);
+    assert.equal(actionFor(payment({}, MONTHLY_ID, 'payment.processing'), PRODUCTS), null);
   });
-  it('a full refund takes the e-book away again; a partial or failed refund does not', () => {
-    assert.deepEqual(actionFor(refund(), PRODUCTS), { kind: 'revoke-ebook', ref: 'pay_1' });
-    assert.equal(actionFor(refund({ is_partial: true }), PRODUCTS), null);
-    assert.equal(actionFor(refund({ status: 'failed' }, 'refund.failed'), PRODUCTS), null);
-    assert.equal(actionFor(refund({ payment_id: 'a b' }), PRODUCTS), null);
-  });
-  it('the first payment of a Premium subscription, and each renewal, turn Premium on', () => {
-    assert.deepEqual(actionFor(premiumPayment(), PRODUCTS), on);
-    assert.deepEqual(actionFor(premiumPayment({}, YEARLY_ID), PRODUCTS), on, 'the yearly product too');
-    assert.deepEqual(actionFor(premiumPayment({ subscription_id: undefined, subscription_ids: ['sub_1'] }), PRODUCTS), on);
-    // a one-time payment of a Premium product that is not part of a subscription is not Premium
-    assert.equal(actionFor(payment({}, MONTHLY_ID), PRODUCTS), null);
+  it('refunds are not handled: Premium ends with the subscription', () => {
+    const refund = { type: 'refund.succeeded', data: { payload_type: 'Refund', refund_id: 'ref_1', payment_id: 'pay_1', status: 'succeeded', is_partial: false, metadata: { user_id: USER } } };
+    assert.equal(actionFor(refund, PRODUCTS), null);
   });
   it('Premium follows the status of the subscription: active is on, on hold, cancelled, expired and paused are off', () => {
     assert.deepEqual(actionFor(sub('active'), PRODUCTS), on);
@@ -170,10 +164,9 @@ describe('actionFor', () => {
       assert.equal(actionFor(sub(status), PRODUCTS), null, status);
     }
   });
-  it('Premium events with no known person or product, and things that are not events, give nothing', () => {
+  it('subscription events with no known person or product, and things that are not events, give nothing', () => {
     assert.equal(actionFor(sub('active', { metadata: {} }), PRODUCTS), null);
-    assert.equal(actionFor(sub('active', {}, 'pdt_unknown_product_9'), PRODUCTS), null);
-    assert.equal(actionFor(sub('active', {}, EBOOK_ID), PRODUCTS), null, 'an e-book is not a subscription');
+    assert.equal(actionFor(sub('active', {}, OTHER_ID), PRODUCTS), null);
     for (const junk of [null, 5, 'x', [], {}, { type: 'payment.succeeded' }, { type: 5, data: {} }, { type: 'dispute.opened', data: {} }]) {
       assert.equal(actionFor(junk, PRODUCTS), null);
     }
@@ -195,28 +188,21 @@ describe('createPaymentStore', () => {
     return { calls, store: createPaymentStore({ url: 'https://x.supabase.co/', serviceKey, fetchImpl }) };
   }
 
-  it('giving a book is an upsert of one row, so a repeated webhook changes nothing', async () => {
+  it('the plan is a PATCH of one profile', async () => {
     const { calls, store: s } = store('eyJ.legacy.jwt');
-    await s.apply({ kind: 'grant-ebook', userId: USER, slug: 'queens-gambit', ref: 'pay_1' });
-    assert.equal(calls[0].url, 'https://x.supabase.co/rest/v1/ebook_purchases?on_conflict=user_id,slug');
-    assert.equal(calls[0].method, 'POST');
-    assert.deepEqual(calls[0].body, [{ user_id: USER, slug: 'queens-gambit', provider: 'dodo', provider_ref: 'pay_1' }]);
-    assert.equal(calls[0].headers.Prefer, 'resolution=merge-duplicates,return=minimal');
-  });
-  it('taking a book away deletes by the payment, and the plan is a PATCH of one profile', async () => {
-    const { calls, store: s } = store('eyJ.legacy.jwt');
-    await s.apply({ kind: 'revoke-ebook', ref: 'pay_1' });
     await s.apply({ kind: 'set-tier', userId: USER, tier: 'premium' });
-    assert.deepEqual([calls[0].method, calls[0].url], ['DELETE', 'https://x.supabase.co/rest/v1/ebook_purchases?provider=eq.dodo&provider_ref=eq.pay_1']);
-    assert.deepEqual([calls[1].method, calls[1].url, calls[1].body], ['PATCH', `https://x.supabase.co/rest/v1/profiles?id=eq.${USER}`, { tier: 'premium' }]);
+    await s.apply({ kind: 'set-tier', userId: USER, tier: 'free' });
+    assert.deepEqual([calls[0].method, calls[0].url, calls[0].body], ['PATCH', `https://x.supabase.co/rest/v1/profiles?id=eq.${USER}`, { tier: 'premium' }]);
+    assert.deepEqual(calls[1].body, { tier: 'free' });
+    assert.equal(calls[0].headers.Prefer, 'return=minimal');
   });
   it('a legacy key (a JWT) is also the bearer token; a new sb_secret key goes in apikey only', async () => {
     const legacy = store('eyJ.legacy.jwt');
-    await legacy.store.apply({ kind: 'revoke-ebook', ref: 'o' });
+    await legacy.store.apply({ kind: 'set-tier', userId: USER, tier: 'premium' });
     assert.equal(legacy.calls[0].headers.apikey, 'eyJ.legacy.jwt');
     assert.equal(legacy.calls[0].headers.Authorization, 'Bearer eyJ.legacy.jwt');
     const modern = store('sb_secret_abc');
-    await modern.store.apply({ kind: 'revoke-ebook', ref: 'o' });
+    await modern.store.apply({ kind: 'set-tier', userId: USER, tier: 'premium' });
     assert.equal(modern.calls[0].headers.apikey, 'sb_secret_abc');
     assert.equal(modern.calls[0].headers.Authorization, undefined);
   });
@@ -230,12 +216,12 @@ describe('createCheckout', () => {
   const config: CheckoutConfig = { apiKey: 'dodo_test_x', baseUrl: 'https://test.dodopayments.com', offers: {} };
   const request = {
     config,
-    offer: 'ebook:queens-gambit',
-    productId: EBOOK_ID,
+    offer: 'premium:yearly',
+    productId: YEARLY_ID,
     userId: USER,
     email: 'ana@example.com',
-    returnUrl: 'https://s.example/ebooks?purchase=book',
-    cancelUrl: 'https://s.example/ebooks',
+    returnUrl: 'https://s.example/pricing?purchase=premium',
+    cancelUrl: 'https://s.example/pricing',
   };
 
   it('asks Dodo for a checkout session with the person’s id in the metadata and gives back its address', async () => {
@@ -248,11 +234,11 @@ describe('createCheckout', () => {
     assert.equal(seen!.url, 'https://test.dodopayments.com/checkouts');
     assert.equal((seen!.init.headers as Record<string, string>).Authorization, 'Bearer dodo_test_x');
     assert.deepEqual(JSON.parse(String(seen!.init.body)), {
-      product_cart: [{ product_id: EBOOK_ID, quantity: 1 }],
+      product_cart: [{ product_id: YEARLY_ID, quantity: 1 }],
       customer: { email: 'ana@example.com' },
-      metadata: { user_id: USER, offer: 'ebook:queens-gambit' },
-      return_url: 'https://s.example/ebooks?purchase=book',
-      cancel_url: 'https://s.example/ebooks',
+      metadata: { user_id: USER, offer: 'premium:yearly' },
+      return_url: 'https://s.example/pricing?purchase=premium',
+      cancel_url: 'https://s.example/pricing',
     });
   });
   it('without an email the customer is left out (Dodo asks for it on its page)', async () => {

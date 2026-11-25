@@ -6,7 +6,7 @@ import type {
   TrainingConfig,
 } from '../types';
 import { tierFor, unlockHint, type Tier } from '../utils/access';
-import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from './locks';
+import { GetPremiumLink, LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from './locks';
 import { COMPACT_CARD_CLASS, SETUP_TEXT_CLASS, START_BUTTON_CLASS } from './panelUi';
 
 const PUZZLE_COUNTS: PuzzleCountOption[] = [10, 50, 100, 200, 300, 500];
@@ -199,6 +199,7 @@ export default function SettingsPanel({
       </div>
 
       <UnlockNotice notice={locks.notice} />
+      <GetPremiumLink tier={tier} />
 
       {error && (
         <div

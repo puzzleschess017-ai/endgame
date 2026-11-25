@@ -20,7 +20,6 @@ import {
   EBOOK_TIER,
   ENGINE_TIER,
   getsEbooksFree,
-  mayDownloadEbook,
   checkBlindfoldMate,
   checkWoodpecker,
   defaultWoodpecker,
@@ -101,11 +100,6 @@ describe('the three tiers', () => {
   it('every e-book is free with Premium; everybody else must have bought it', () => {
     assert.equal(EBOOK_TIER, 'premium');
     assert.deepEqual((['guest', 'free', 'premium'] as const).map(getsEbooksFree), [false, false, true]);
-    assert.equal(mayDownloadEbook('premium', false), true);
-    assert.equal(mayDownloadEbook('free', true), true);
-    assert.equal(mayDownloadEbook('free', false), false);
-    assert.equal(mayDownloadEbook('guest', false), false);
-    assert.equal(mayDownloadEbook('guest', true), false);
   });
   it('signed in: the 1 minute drill only; no time limit is Premium', () => {
     assert.ok(ok(checkBlindfoldDrillLimit('free', 'minute')));

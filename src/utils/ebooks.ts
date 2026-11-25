@@ -1,4 +1,4 @@
-// The e-books on sale in the eBooks tab. This list is only what the page shows: the PDF files and the
+// The e-books of the eBooks tab (free to download with Premium). This list is only what the page shows: the PDF files and the
 // rule of who may download them are on the server (server/ebooks.ts, src/utils/access.ts).
 export interface EbookInfo {
   /** The part of the address after /api/ebooks/, also the name of the cover in public/covers/. */
@@ -11,9 +11,6 @@ export interface EbookInfo {
   /** File name the browser saves the PDF under. */
   downloadName: string;
 }
-
-/** The price of one e-book. Premium has all of them for free. */
-export const EBOOK_PRICE_LABEL = '$1.99';
 
 export const EBOOKS: EbookInfo[] = [
   {

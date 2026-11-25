@@ -324,7 +324,16 @@ export const PAGES: PageMeta[] = [
     path: '/ebooks',
     title: 'Chess eBooks: The Queen’s Gambit and more | Chess Tactics Guide',
     description:
-      'Chess e-books with diagrams, plans, traps and exercises, every line checked by computer. $1.99 each, free with Premium.',
+      'Chess e-books with diagrams, plans, traps and exercises, every line checked by computer. Free to download with Premium.',
+    indexable: true,
+    kind: 'info',
+    priority: 0.6,
+  },
+  {
+    path: '/pricing',
+    title: 'Pricing: Free and Premium | Chess Tactics Guide',
+    description:
+      'Chess Tactics Guide is free to train with. Premium is $4.99 a month or $39.99 a year and opens every Woodpecker and Blindfold option and the e-books.',
     indexable: true,
     kind: 'info',
     priority: 0.6,

@@ -4,12 +4,12 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
 import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
-import { createPurchaseLookup, EBOOKS, ebookPath, findEbook } from './server/ebooks.ts';
+import { EBOOKS, ebookPath, findEbook } from './server/ebooks.ts';
 import { actionFor, createCheckout, createPaymentStore, loadPaymentSettings, verifyWebhook } from './server/payments.ts';
 import { createTablebase } from './server/tablebase.ts';
 import { createTierLookup } from './server/tier.ts';
 import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './src/auth/project.ts';
-import { checkBlindfoldLevel, checkBlindfoldMateIn, checkWoodpecker, getsEbooksFree, mayDownloadEbook } from './src/utils/access.ts';
+import { checkBlindfoldLevel, checkBlindfoldMateIn, checkWoodpecker, getsEbooksFree } from './src/utils/access.ts';
 import type { BlindfoldLevel, MateIn } from './src/utils/blindfold.ts';
 import type { PuzzleCountOption } from './src/types.ts';
 import { cleanSiteUrl, pageFor, renderPage, robotsTxt, sitemapXml } from './server/seo.ts';
@@ -387,7 +387,7 @@ async function startServer() {
 
   // Payments (Dodo Payments, see server/payments.ts). Off until the environment variables are set.
   const supabaseUrl = process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
-  const payments = loadPaymentSettings(process.env, EBOOKS.map((book) => book.slug), supabaseUrl);
+  const payments = loadPaymentSettings(process.env, supabaseUrl);
   const paymentStore = payments.webhook ? createPaymentStore({ url: supabaseUrl, serviceKey: payments.webhook.serviceKey }) : null;
 
   // Dodo tells the site about a payment here. This route comes before express.json(): the signature is over the
@@ -411,12 +411,12 @@ async function startServer() {
       res.status(400).json({ error: 'The body is not JSON.' });
       return;
     }
-    const action = actionFor(event, payments.webhook.products);
+    const action = actionFor(event, payments.webhook.premiumProducts);
     if (action) {
       try {
         await paymentStore.apply(action);
         // The server remembers a plan for a minute: forget it, so the person sees the new plan at once.
-        if (action.kind === 'set-tier') tierOf.forget(action.userId);
+        tierOf.forget(action.userId);
         console.log(`[payments] ${(event as { type?: string }).type} -> ${action.kind}`);
       } catch (err) {
         console.error('[payments] could not save', err instanceof Error ? err.message : err);
@@ -510,15 +510,10 @@ async function startServer() {
     key: process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_KEY,
   });
 
-  // The e-books: Premium has every one for free, everybody else downloads the ones they bought (the table
-  // ebook_purchases). The files are not in public/ or dist/, so these routes are the only way to get one:
-  // the browser sends the sign-in token and the plan and the purchases are checked here, on the server.
-  const purchasedBy = createPurchaseLookup({
-    url: process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL,
-    key: process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_KEY,
-  });
+  // The e-books are free to download for Premium. The files are not in public/ or dist/, so these routes are the only
+  // way to get one: the browser sends the sign-in token and the plan is checked here, on the server.
 
-  // Which books this visitor may download (the eBooks page shows a Download or a Buy button from this).
+  // What the eBooks and Pricing pages need: which books this visitor may download, and which Get Premium buttons work.
   app.get('/api/ebooks', async (req, res) => {
     res.set('Cache-Control', 'private, no-store');
     const visitor = await tierOf(req.headers.authorization);
@@ -526,14 +521,8 @@ async function startServer() {
       res.status(visitor.status).json({ error: visitor.error });
       return;
     }
-    const bought = visitor.tier === 'free' ? await purchasedBy(req.headers.authorization) : new Set<string>();
     res.json({
-      books: EBOOKS.map((book) => ({
-        slug: book.slug,
-        owned: mayDownloadEbook(visitor.tier, bought.has(book.slug)),
-        // Whether the Buy button works: the checkout is set up for this book.
-        buyable: Boolean(payments.checkout?.offers[`ebook:${book.slug}`]),
-      })),
+      books: EBOOKS.map((book) => ({ slug: book.slug, owned: getsEbooksFree(visitor.tier) })),
       // Whether the Get Premium buttons work: the monthly and the yearly product are set up.
       premium: {
         monthly: Boolean(payments.checkout?.offers['premium:monthly']),
@@ -542,7 +531,7 @@ async function startServer() {
     });
   });
 
-  // Buying: makes a Dodo checkout for the signed-in person and gives back its address. The person's id comes
+  // Buying Premium: makes a Dodo checkout for the signed-in person and gives back its address. The person's id comes
   // from the verified sign-in token, never from the request, so a payment can only ever be for the one who asks.
   app.post('/api/checkout', async (req, res) => {
     res.set('Cache-Control', 'private, no-store');
@@ -570,10 +559,8 @@ async function startServer() {
       res.status(503).json({ error: 'Your account could not be checked just now. Please try again.' });
       return;
     }
-    const slug = offer.startsWith('ebook:') ? offer.slice('ebook:'.length) : null;
-    const alreadyHas = slug ? getsEbooksFree(visitor.tier) || (await purchasedBy(req.headers.authorization)).has(slug) : visitor.tier === 'premium';
-    if (alreadyHas) {
-      res.status(409).json({ error: slug ? 'You already have this e-book.' : 'You already have Premium.' });
+    if (visitor.tier === 'premium') {
+      res.status(409).json({ error: 'You already have Premium.' });
       return;
     }
     try {
@@ -584,8 +571,8 @@ async function startServer() {
         userId: visitor.userId,
         email: visitor.email,
         // Dodo adds the result of the payment (for example status=succeeded) to the return address.
-        returnUrl: `${siteUrl}/ebooks?purchase=${slug ? 'book' : 'premium'}`,
-        cancelUrl: `${siteUrl}/ebooks`,
+        returnUrl: `${siteUrl}/pricing?purchase=premium`,
+        cancelUrl: `${siteUrl}/pricing`,
       });
       res.json({ url });
     } catch (err) {
@@ -606,10 +593,9 @@ async function startServer() {
       res.status(visitor.status).json({ error: visitor.error });
       return;
     }
-    const bought = !getsEbooksFree(visitor.tier) && visitor.tier !== 'guest' ? (await purchasedBy(req.headers.authorization)).has(book.slug) : false;
-    if (!mayDownloadEbook(visitor.tier, bought)) {
+    if (!getsEbooksFree(visitor.tier)) {
       res.status(403).json({
-        error: visitor.tier === 'guest' ? 'Sign in to download your e-books.' : 'Buy this e-book, or get Premium, to download it.',
+        error: visitor.tier === 'guest' ? 'Sign in and get Premium to download the e-books.' : 'The e-books are free to download with Premium.',
       });
       return;
     }
