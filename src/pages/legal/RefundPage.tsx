@@ -21,8 +21,12 @@ export default function RefundPage() {
       <h2>Refunds</h2>
       <ul>
         <li>
-          You can ask for a full refund within {REFUND_DAYS} days of any payment, the first one or a renewal, without
-          giving a reason.
+          You can ask for a full refund within {REFUND_DAYS} days of your <strong>first payment</strong> for Premium
+          (monthly or yearly), without giving a reason.
+        </li>
+        <li>
+          Renewal payments are not refunded. To avoid being charged again, cancel before the renewal date. Your receipt
+          shows when it is.
         </li>
         <li>After {REFUND_DAYS} days we do not refund the period you have already paid for, but you can still cancel the next one.</li>
         <li>If you were charged by mistake, or twice, write to us and we will put it right.</li>
@@ -32,7 +36,7 @@ export default function RefundPage() {
       <h2>How to ask</h2>
       <p>
         Write to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> (or use the <a href="/contact">Contact</a>{' '}
-        page) from the e-mail address of your account, and tell us which payment it is about. We reply within a few
+        page) from the e-mail address of your account, and tell us which payment it is about (the date and the amount). We reply within a few
         business days. Because Dodo Payments is the seller of record, the refund is made through them.
       </p>
 

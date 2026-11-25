@@ -29,7 +29,7 @@ const FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: 'Can I cancel?',
-    a: 'Yes, at any time. Cancelling stops the next payment, and you keep Premium until the end of the period you have already paid for. You can manage the subscription in Dodo’s customer portal, or write to us on the Contact page. See the Refund and Cancellation Policy for refunds.',
+    a: 'Yes, at any time. Cancelling stops the next payment, and you keep Premium until the end of the period you have already paid for. You can manage the subscription in Dodo’s customer portal, or write to us on the Contact page. Your first payment can be refunded within 7 days; see the Refund and Cancellation Policy.',
   },
   {
     q: 'What happens to my results if Premium ends?',

@@ -7,11 +7,11 @@ export const CONTACT_EMAIL = 'puzzleschess017@gmail.com';
 export const PRIVACY_UPDATED = '25 November 2026';
 
 /** Shown on the Terms and Refund pages; change it whenever their text changes. */
-export const TERMS_UPDATED = '25 November 2026';
-export const REFUND_UPDATED = '25 November 2026';
+export const TERMS_UPDATED = '26 November 2026';
+export const REFUND_UPDATED = '26 November 2026';
 
-/** How many days after a payment the buyer may ask for the money back (the Refund page and the Pricing FAQ say it). */
-export const REFUND_DAYS = 14;
+/** How many days after the first payment the buyer may ask for the money back (the Terms and Refund pages say it). Renewals are not refunded. */
+export const REFUND_DAYS = 7;
 
 export const LEGAL_LINKS = [
   { href: '/about', label: 'About' },
