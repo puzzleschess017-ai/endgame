@@ -89,7 +89,7 @@ a dependency, run `bun install` and commit `bun.lock` together with
 
 | Path | What it is |
 | --- | --- |
-| `/` | Home, a dashboard: six overview tiles (puzzles solved, total training time and sessions, daily streak, average accuracy, best Puzzle Streak, Woodpecker cycles) and four bar charts (sessions, minutes, puzzles, accuracy per day) with a 7 / 30 / 90 days switch. Everything is read from the browser. Unknown paths show Home too |
+| `/` | Home, a dashboard: a *Daily goal* card on top (puzzles solved today out of a goal of 10, 20, 30, 50 or 100, and the days in a row on which the goal was reached; the goal is a setting of the device, `ctg_daily_goal_v1`, and progress comes from the activity log, so it grows when a run or a Woodpecker cycle ends; `src/utils/goal.ts`), then six overview tiles (puzzles solved, total training time and sessions, daily streak, average accuracy, best Puzzle Streak, Woodpecker cycles) and four bar charts (sessions, minutes, puzzles, accuracy per day) with a 7 / 30 / 90 days switch. Everything is read from the browser. Unknown paths show Home too |
 | `/woodpecker` | Woodpecker endgame trainer (it used to be on `/`) |
 | `/statistics` | Statistics: personal records of every mode and the last Woodpecker cycles |
 | `/coordinates` | Coordinates trainer: click the named square against the clock (30 or 60 s, playing as White or Black). The board has no labels, on purpose |

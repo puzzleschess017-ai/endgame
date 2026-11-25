@@ -151,7 +151,7 @@ export function dailySeries(log: ActivityLog, count: number, now: number = Date.
   });
 }
 
-function shiftDay(key: string, delta: number): string {
+export function shiftDay(key: string, delta: number): string {
   const [y, m, d] = key.split('-').map(Number);
   return dayKey(new Date(y, m - 1, d + delta, 12).getTime());
 }
