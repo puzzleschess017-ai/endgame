@@ -93,11 +93,24 @@ export function createSyncEngine(parts: SyncEngineParts) {
   function becomeGuest(): void {
     const saved = readSaved();
     if (saved) {
+      let removed = false;
+      let kept = false;
       for (const { key } of SYNCED) {
-        if (fingerprint(storage.getItem(key)) === (saved.synced[key] ?? '')) storage.removeItem(key);
+        const raw = storage.getItem(key);
+        if (raw === null) continue;
+        if (fingerprint(raw) === (saved.synced[key] ?? '')) {
+          storage.removeItem(key);
+          removed = true;
+        } else {
+          kept = true;
+        }
       }
-      writeSaved(null);
-      setState({ status: 'off', error: '', version: state.version + 1 });
+      // Results that were not on the account yet stay here, and they hold the account's earlier results as
+      // well. So whose they are is remembered: when the same account signs in again they are put together
+      // with the account's (the larger number of each day wins). Forgetting it would make the next sign-in
+      // treat them as a guest's and ADD them to what the account has, counting every puzzle again.
+      writeSaved(kept ? { owner: saved.owner, synced: {} } : null);
+      setState({ status: 'off', error: '', version: removed ? state.version + 1 : state.version });
     } else if (state.status !== 'off') {
       setState({ status: 'off', error: '' });
     }

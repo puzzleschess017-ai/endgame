@@ -253,6 +253,50 @@ describe('the sync engine', () => {
     assert.equal(t.rows.get('u1')?.[STREAK], 9, 'the first account is not touched');
   });
 
+  it('signing out with unsaved results and signing in to the SAME account again does not count anything twice', async () => {
+    const t = setup({ [ACTIVITY]: { '2026-11-01': day(2, 7) } });
+    await t.engine.syncNow();
+    // 3 more puzzles solved, not on the account yet
+    t.map.set(ACTIVITY, JSON.stringify({ '2026-11-01': day(5, 10) }));
+    t.signIn(null);
+    t.engine.becomeGuest();
+    t.signIn(user('u1'));
+    await t.engine.syncNow();
+    assert.deepEqual(read(t.map, ACTIVITY), { '2026-11-01': day(5, 10) });
+    assert.deepEqual(t.rows.get('u1')?.[ACTIVITY], { '2026-11-01': day(5, 10) });
+    // and again: sign out, sign in, nothing is added each time
+    for (let i = 0; i < 3; i++) {
+      t.map.set(ACTIVITY, JSON.stringify({ '2026-11-01': day(5 + i + 1, 10 + i + 1) }));
+      t.signIn(null);
+      t.engine.becomeGuest();
+      t.signIn(user('u1'));
+      await t.engine.syncNow();
+    }
+    assert.deepEqual(read(t.map, ACTIVITY), { '2026-11-01': day(8, 13) });
+    assert.deepEqual(t.rows.get('u1')?.[ACTIVITY], { '2026-11-01': day(8, 13) });
+  });
+
+  it('signing out while the results are still being saved does not count them twice at the next sign-in', async () => {
+    const t = setup({ [ACTIVITY]: { '2026-11-01': day(2, 7) } });
+    await t.engine.syncNow();
+    t.map.set(ACTIVITY, JSON.stringify({ '2026-11-01': day(5, 10) }));
+    // a slow account: the save is still on its way when the visitor signs out
+    const realSave = t.client.save.bind(t.client);
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    (t.client as { save: typeof t.client.save }).save = async (s, v, o) => { await gate; return realSave(s, v, o); };
+    const running = t.engine.syncNow();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    t.signIn(null);
+    t.engine.becomeGuest();
+    release();
+    await running;
+    t.signIn(user('u1'));
+    await t.engine.syncNow();
+    assert.deepEqual(read(t.map, ACTIVITY), { '2026-11-01': day(5, 10) });
+    assert.deepEqual(t.rows.get('u1')?.[ACTIVITY], { '2026-11-01': day(5, 10) });
+  });
+
   it('another account signing in on a browser that was not signed out cleanly does not get the first account\'s results', async () => {
     const t = setup({ [ACTIVITY]: { '2026-11-01': day(2, 7) } });
     await t.engine.syncNow();
