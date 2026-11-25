@@ -4,8 +4,6 @@ import {
   ArrowRight,
   CheckCircle2,
   Eye,
-  Pause,
-  Play,
   RotateCcw,
 } from 'lucide-react';
 import type { CycleResult, Puzzle, TrainingSession } from '../types';
@@ -22,9 +20,6 @@ interface TrainingSidebarProps {
   onNextPuzzle: () => void;
   onResetSession: () => void;
   onStartNextCycleNow: () => void;
-  autoAdvanceSeconds: number | null;
-  autoAdvancePaused: boolean;
-  onToggleAutoAdvancePause: () => void;
   onRepeatSameSet: () => void;
   /** Starts a run with only the given puzzles (the missed and the slowest of the last cycle). */
   onStartReview: (items: ReviewItem[]) => void;
@@ -40,9 +35,6 @@ export default function TrainingSidebar({
   onNextPuzzle,
   onResetSession,
   onStartNextCycleNow,
-  autoAdvanceSeconds,
-  autoAdvancePaused,
-  onToggleAutoAdvancePause,
   onRepeatSameSet,
   onStartReview,
 }: TrainingSidebarProps) {
@@ -100,33 +92,15 @@ export default function TrainingSidebar({
 
         <ReviewBox result={latestResult} onStart={onStartReview} midRun />
 
-        <div className="space-y-2.5 pt-1">
-          <p className="text-sm font-medium text-white/85 tabular-nums">
-            {autoAdvancePaused
-              ? `Auto-advance paused before Cycle ${nextCycleNum}.`
-              : `Proceeding automatically to Cycle ${nextCycleNum} in ${autoAdvanceSeconds ?? 0}s...`}
-          </p>
-
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={onStartNextCycleNow}
-              className="flex-1 py-3 px-4 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-sm flex items-center justify-center gap-2 transition-all duration-150 shadow-[0_4px_16px_rgba(57,255,136,0.2)] cursor-pointer min-h-[44px] whitespace-nowrap"
-            >
-              <span>Start Cycle {nextCycleNum}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={onToggleAutoAdvancePause}
-              className="py-3 px-4 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold flex items-center gap-1.5 transition-all duration-150 cursor-pointer min-h-[44px] whitespace-nowrap"
-              aria-label={autoAdvancePaused ? 'Resume auto-advance' : 'Pause auto-advance'}
-            >
-              {autoAdvancePaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
-              <span>{autoAdvancePaused ? 'Resume' : 'Pause'}</span>
-            </button>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={onStartNextCycleNow}
+          data-testid="start-next-cycle"
+          className="w-full py-3 px-4 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-sm flex items-center justify-center gap-2 transition-all duration-150 shadow-[0_4px_16px_rgba(57,255,136,0.2)] cursor-pointer min-h-[44px] whitespace-nowrap"
+        >
+          <span>Start Cycle {nextCycleNum}</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
       </div>
     );
   }
