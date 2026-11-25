@@ -6,10 +6,25 @@ import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
 
 const CARD = 'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
 
-const STEPS: Array<{ title: string; text: string }> = [
-  { title: 'Pick a mode', text: 'Start with Woodpecker or Puzzle Streak. Every mode starts easy.' },
-  { title: 'Train a little every day', text: 'Set a daily goal and watch your streak of days grow.' },
-  { title: 'See your progress', text: 'Statistics, charts and personal bests appear here as soon as you finish your first run.' },
+const STEPS: Array<{ title: string; text: string; image: string; alt: string }> = [
+  {
+    title: 'Pick a mode',
+    text: 'Start with Woodpecker or Puzzle Streak. Every mode starts easy.',
+    image: '/welcome/pick-a-mode.webp',
+    alt: 'The Puzzle Streak page: the board on the left and the start panel on the right',
+  },
+  {
+    title: 'Train a little every day',
+    text: 'Set a daily goal and watch your streak of days grow.',
+    image: '/welcome/daily-goal.webp',
+    alt: 'The Dashboard with the daily goal bar and the training overview',
+  },
+  {
+    title: 'See your progress',
+    text: 'Statistics, charts and personal bests appear here as soon as you finish your first run.',
+    image: '/welcome/progress.webp',
+    alt: 'Charts of sessions, training time, puzzles solved and accuracy per day',
+  },
 ];
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -54,10 +69,20 @@ export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean;
       <Section title="How it works">
         <ol className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {STEPS.map((step, i) => (
-            <li key={step.title} className={`${CARD} px-5 py-4 flex flex-col gap-1.5`}>
-              <span className="w-7 h-7 rounded-full bg-[#39ff88]/15 text-[#39ff88] text-sm font-bold flex items-center justify-center">{i + 1}</span>
-              <span className="text-[15px] font-bold text-white">{step.title}</span>
-              <span className="text-sm font-medium text-white/70 leading-snug">{step.text}</span>
+            <li key={step.title} className={`${CARD} overflow-hidden flex flex-col`}>
+              <div className="px-5 pt-4 pb-3 flex flex-col gap-1.5">
+                <span className="w-7 h-7 rounded-full bg-[#39ff88]/15 text-[#39ff88] text-sm font-bold flex items-center justify-center">{i + 1}</span>
+                <span className="text-[15px] font-bold text-white">{step.title}</span>
+                <span className="text-sm font-medium text-white/70 leading-snug">{step.text}</span>
+              </div>
+              <img
+                src={step.image}
+                alt={step.alt}
+                width={1000}
+                height={600}
+                loading="lazy"
+                className="mt-auto w-full h-auto border-t border-white/10"
+              />
             </li>
           ))}
         </ol>
