@@ -339,10 +339,12 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         </a>
 
         <div className="ml-auto xl:hidden flex items-center gap-2 min-w-0">
-          {(session || username) && <ProfileMenu guestName={savedName} opens="down" testId="topbar-name" className="hidden sm:block max-w-[150px]" />}
+          <ProfileMenu guestName={savedName} align="right" testId="topbar-name" className="hidden sm:block max-w-[170px]" />
           <AccountControls compact />
           <SoundMenu />
         </div>
+
+        <ProfileMenu guestName={savedName} align="left" className="hidden xl:block pt-2" />
 
         <nav
           ref={navRef}
@@ -381,7 +383,6 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
       </div>
 
       <div className="hidden xl:flex items-center justify-between gap-2 px-4 py-2.5 border-t border-white/10">
-        <ProfileMenu guestName={savedName} opens="up" className="flex-1" />
         <AccountControls />
         <SoundMenu />
       </div>

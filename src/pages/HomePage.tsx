@@ -61,7 +61,7 @@ export default function HomePage() {
     <AppShell username={username}>
       <div className="max-w-[1100px] flex flex-col gap-8" data-testid="home">
         <h2 className="flex items-center gap-2.5 text-2xl sm:text-3xl font-bold text-white tracking-tight">
-          {username ? `Hello, ${username}!` : 'Hello!'}
+          {`Hello, ${username || 'Guest'}!`}
           {tier === 'premium' && <PremiumCrown className="w-6 h-6 sm:w-7 sm:h-7" />}
         </h2>
 
