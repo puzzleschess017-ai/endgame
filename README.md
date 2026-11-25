@@ -98,7 +98,7 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | `/login` | Sign in, create an account or play as a guest; the account page (name, email, plan, Sign out) for someone signed in |
 | `/blindfold` | Blindfold: *Checkmate* (mate in 1, 2 or 3: memorize a position for 5, 10 or 20 s, the pieces vanish, type the checkmate in algebraic notation; in a mate in 2 or 3 you type your moves one at a time, the opponent's reply is shown as text after each right one and the board stays empty; checkmate always counts, other moves must be the puzzle's own; levels by number of pieces: up to 6, 7, 8, 10 or any; a round is 10 puzzles; a best score for each length and level) and *Drills* (without a board, for 60 s or with no time limit: the endless run is practice, "Finish and save" adds the answers to Statistics but keeps no record;  square color, check or not, same diagonal, knight route; and *Rebuild position*: a real position is shown for 10, 20 or 30 s, the board is emptied and you put the pieces back by dragging them in or picking a piece and tapping squares; 5 positions per round, up to 6, 7, 8 or 10 pieces, scored by perfect rebuilds; the positions come from the same mate-in-1 puzzles as Blindfold). Best scores saved in the browser |
 | `/editor` | Board Editor: set up any position by dragging pieces in from the palette (or choosing a piece and tapping squares), moving them, or dragging them off the board; side to move, castling rights and en passant; load or copy a FEN; "Check in the Tablebase" opens it on the Tablebase page. The button is only on when the position is legal (both kings, no pawns on the first or last rank, the side not to move is not in check) |
-| `/tablebase` | Endgame Tablebase: perfect play for any position with 7 pieces or fewer (Syzygy tables, through the public Lichess tablebase). Shows who wins (with the mate distance when known), draws by the 50-move rule, and every legal move marked Wins / Draws / Loses, best first; click a move to play it, hover to see it as an arrow. Play on the board, step through the game (buttons, arrow keys, Home/End), try the example positions (K+Q vs K, K+R vs K, K+P vs K, Lucena), load a FEN, import and copy a PGN. `?fen=...` starts from a position. Positions with more than 7 pieces or with castling rights cannot be looked up and say so |
+| `/tablebase` | Endgame Tablebase: perfect play for any position with 7 pieces or fewer (Syzygy tables, through the public Lichess tablebase). Shows who wins (with the mate distance when known), draws by the 50-move rule, and every legal move marked Wins / Draws / Loses, best first; click a move to play it, hover to see it as an arrow. Play on the board, step through the game (buttons, arrow keys, Home/End), try the example positions (K+Q vs K, K+R vs K, K+P vs K, Lucena), load a FEN, import and copy a PGN. `?fen=...` starts from a position. Positions with more than 7 pieces or with castling rights cannot be looked up and say so. **Check with engine** (Premium): a switch that runs Stockfish in the browser on the position of the board and shows the score for White, a bar, the three best lines (click one to play its first move) and an arrow for the best move; it works for any number of pieces (see *Chess engine* below) |
 | `/endgames` | Endgame theory: an index of lessons and one page per lesson (`/endgames/lucena-position`, `philidor-position`, `king-and-pawn-opposition`, `king-and-rook-vs-king`, `king-and-queen-vs-king`, `wrong-colored-bishop`). The text, diagrams (FEN plus arrows) and the "Practise this" position of every lesson are in `src/theory/endgames.ts`; `src/components/DiagramBoard.tsx` draws a diagram as plain SVG with the piece images of `public/pieces`. The pages are public (no welcome window) and article pages in the sitemap. Practise opens the position in the tablebase (`?fen=`) |
 
 Every path is served by the same app (`main.tsx` picks the page from the URL). Logic that can be
@@ -274,3 +274,23 @@ colours and sound stay on the device. On the server they are one row per key in 
 Training sessions and settings are stored in the browser (`localStorage`). Results (not settings or the
 unfinished Woodpecker set) are also saved on the account when someone is signed in; as a guest they live in the
 browser only and are lost if site data is cleared.
+
+## Chess engine (Check with engine)
+
+The engine is Stockfish compiled to WebAssembly, run in a Web Worker in the visitor's browser (no server cost, nothing
+is sent anywhere). Code: `src/engine/` (`uci.ts` reads the engine's answers, `client.ts` talks to the worker one search
+at a time, `files.ts` picks the build, `fakeEngine.ts` is a pretend engine for tests), `src/hooks/useEngine.ts` and
+`src/components/EnginePanel.tsx`. The switch is Premium (`tier === 'premium'` in the browser: the engine runs on the
+visitor's computer, so this is a lock on the page, not a server-side protection). The files are downloaded only the first
+time the switch is turned on.
+
+**Setting it up.** The site serves the engine from `/engine/` (folder `public/engine`, not in git). `npm install` and
+`npm run build` run `scripts/copy-engine.mjs`, which copies the light single-thread build (and writes
+`public/engine/manifest.json`) out of the `stockfish` npm package. The package has to be added once with
+`npm install stockfish`, and `package.json` and `package-lock.json` committed. Until then the script only prints a note,
+and "Check with engine" tells a Premium visitor that the engine is not installed on the server. The light build is used
+because it is small (a few MB) and needs no special server headers (several threads would need cross-origin isolation,
+which can break analytics and images from other sites). The search depth is `ENGINE_DEPTH` in `useEngine.ts`.
+
+Stockfish is under the GPL licence. The source of this site is public; keep it that way, and keep a link to Stockfish's
+source on the About page.

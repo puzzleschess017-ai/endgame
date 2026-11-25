@@ -12,3 +12,6 @@ endgame.db-shm
 endgame.db-wal
 endgame.db-journal
 *.backup
+
+# The chess engine copied from node_modules by scripts/copy-engine.mjs
+public/engine/
