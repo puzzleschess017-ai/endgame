@@ -5,6 +5,18 @@ import { useAuth } from '../auth';
 import { useSyncVersion } from '../sync';
 import { readSavedUsername } from '../utils/profile';
 import { collectHomeStats } from '../utils/stats';
+import LineChart from '../components/LineChart';
+import { formatDuration } from '../utils/chessHelpers';
+import { loadWoodpeckerHistory } from '../utils/woodpeckerHistory';
+import { accuracyAxis, groupSets, speedSummary, type ProgressSet } from '../utils/progress';
+
+const SETS_SHOWN = 20;
+
+function setLabel(set: ProgressSet): string {
+  const date = new Date(set.completedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const cycles = set.cycles.length;
+  return `${date} · ${set.puzzleCount} puzzles · ${cycles} ${cycles === 1 ? 'cycle' : 'cycles'}`;
+}
 
 const CARD_BASE =
   'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
@@ -15,6 +27,9 @@ export default function StatisticsPage() {
   const syncVersion = useSyncVersion();
   const stats = useMemo(() => collectHomeStats(), [syncVersion]);
   const [username] = useState(() => readSavedUsername());
+  const sets = useMemo(() => groupSets(loadWoodpeckerHistory()).slice(0, SETS_SHOWN), [syncVersion]);
+  const [chosenSet, setChosenSet] = useState<string | null>(null);
+  const progressSet = sets.find((s) => s.id === chosenSet) ?? sets[0];
 
   useEffect(() => {
     document.title = 'Statistics | Chess Tactics Guide';
@@ -68,6 +83,71 @@ export default function StatisticsPage() {
             })}
           </div>
         </section>
+
+        {progressSet && (
+          <section className={`${CARD_BASE} p-6 flex flex-col gap-4`} data-testid="progress" aria-label="Woodpecker progress">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-bold text-white tracking-tight">Woodpecker progress</h3>
+                <p className="text-sm font-medium text-white/60" data-testid="progress-summary">
+                  {speedSummary(progressSet) ?? 'Finish a second cycle of the same puzzles to see your progress.'}
+                </p>
+              </div>
+              {sets.length > 1 && (
+                <label className="flex flex-col gap-1 text-xs font-semibold text-white/60">
+                  Set of puzzles
+                  <select
+                    value={progressSet.id}
+                    onChange={(e) => setChosenSet(e.target.value)}
+                    className="rounded-lg bg-[#0d1627] border border-white/15 px-3 py-2 text-sm font-semibold text-white"
+                    data-testid="progress-set"
+                  >
+                    {sets.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {setLabel(s)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <LineChart
+                id="speed"
+                title="Speed"
+                subtitle="Seconds per puzzle in each cycle, lower is faster"
+                points={progressSet.cycles.map((c) => ({
+                  key: `c${c.cycle}`,
+                  label: String(c.cycle),
+                  fullLabel: `Cycle ${c.cycle} (${formatDuration(c.timeMs)})`,
+                  value: c.seconds,
+                }))}
+                color="#38bdf8"
+                unit="s per puzzle"
+                xTitle="Cycle"
+                badge={`Latest: ${progressSet.cycles[progressSet.cycles.length - 1].seconds.toFixed(1)} s`}
+                formatValue={(v) => (Number.isInteger(v) ? String(v) : v.toFixed(1))}
+              />
+              <LineChart
+                id="accuracy"
+                title="Accuracy"
+                subtitle="Puzzles solved without a mistake in each cycle"
+                points={progressSet.cycles.map((c) => ({
+                  key: `c${c.cycle}`,
+                  label: String(c.cycle),
+                  fullLabel: `Cycle ${c.cycle} (${c.solved}/${c.total})`,
+                  value: Math.round(c.accuracy),
+                }))}
+                color="#a78bfa"
+                unit="%"
+                xTitle="Cycle"
+                {...accuracyAxis(progressSet.cycles.map((c) => c.accuracy))}
+                badge={`Latest: ${Math.round(progressSet.cycles[progressSet.cycles.length - 1].accuracy)}%`}
+                formatValue={(v) => `${Math.round(v)}`}
+              />
+            </div>
+          </section>
+        )}
 
         {recentCycles.length > 0 && (
           <section className={`${CARD_BASE} p-6 flex flex-col gap-3`} data-testid="recent" aria-label="Recent Woodpecker cycles">
