@@ -1,7 +1,7 @@
 // What Home shows instead of empty statistics: to a visitor who has not trained yet (a first visit, or after signing
 // out, when this browser holds no results) it says what the site is and where to begin.
 import type { ReactNode } from 'react';
-import { ArrowRight, Check, Crown } from 'lucide-react';
+import { ArrowRight, Check, Crown, LogIn } from 'lucide-react';
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
 
 const CARD = 'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
@@ -40,7 +40,18 @@ export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean;
   return (
     <div className="flex flex-col gap-8" data-testid="welcome">
       <section className={`${CARD} p-6 sm:p-8 flex flex-col gap-4`}>
-        <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">Train your chess, improve every day</h2>
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+          <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">Train your chess, improve every day</h2>
+          {!signedIn && (
+            <a
+              href="/login?next=%2F"
+              data-testid="welcome-signin"
+              className={`${SECONDARY_BUTTON_CLASS} sm:w-auto px-5 flex items-center justify-center gap-2 no-underline shrink-0`}
+            >
+              <LogIn className="w-4 h-4" aria-hidden="true" /> Sign in
+            </a>
+          )}
+        </div>
         <p className="max-w-[62ch] text-base font-medium text-white/80 leading-relaxed">
           Chess Tactics Guide is a free training site for tactics and endgames. Solve puzzles from the Lichess database,
           drill the board until you know it by heart, learn the key endgames and openings, and keep track of how you improve.
@@ -51,7 +62,7 @@ export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean;
           </a>
           {!signedIn && (
             <a
-              href="/login?next=%2F"
+              href="/login?tab=signup&next=%2F"
               data-testid="welcome-signup"
               className={`${SECONDARY_BUTTON_CLASS} sm:w-auto px-6 flex items-center justify-center no-underline`}
             >
