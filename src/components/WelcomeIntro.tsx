@@ -21,7 +21,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export default function WelcomeIntro({ signedIn }: { signedIn: boolean }) {
+export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean; premium: boolean }) {
   return (
     <div className="flex flex-col gap-8" data-testid="welcome">
       <section className={`${CARD} p-6 sm:p-8 flex flex-col gap-4`}>
@@ -44,9 +44,11 @@ export default function WelcomeIntro({ signedIn }: { signedIn: boolean }) {
             </a>
           )}
         </div>
-        <p className="text-sm font-medium text-white/60">
-          No account is needed to try it. With a free account, your results follow you to every device.
-        </p>
+        {!signedIn && (
+          <p className="text-sm font-medium text-white/60">
+            No account is needed to try it. With a free account, your results follow you to every device.
+          </p>
+        )}
       </section>
 
       <Section title="How it works">
@@ -61,24 +63,26 @@ export default function WelcomeIntro({ signedIn }: { signedIn: boolean }) {
         </ol>
       </Section>
 
-      <section className={`${CARD} border-amber-300/30 px-5 py-4 sm:px-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between`} data-testid="welcome-premium">
-        <div className="flex gap-3">
-          <Crown className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" aria-hidden="true" />
-          <div>
-            <h3 className="text-[15px] font-bold text-white">Free to train, Premium to go further</h3>
-            <ul className="mt-1 text-sm font-medium text-white/70 leading-snug flex flex-col gap-0.5">
-              {['Every Woodpecker set and every blindfold level', 'All e-books to download'].map((line) => (
-                <li key={line} className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-amber-300 shrink-0" aria-hidden="true" /> {line}
-                </li>
-              ))}
-            </ul>
+      {!premium && (
+        <section className={`${CARD} border-amber-300/30 px-5 py-4 sm:px-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between`} data-testid="welcome-premium">
+          <div className="flex gap-3">
+            <Crown className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" aria-hidden="true" />
+            <div>
+              <h3 className="text-[15px] font-bold text-white">Free to train, Premium to go further</h3>
+              <ul className="mt-1 text-sm font-medium text-white/70 leading-snug flex flex-col gap-0.5">
+                {['Every Woodpecker set and every blindfold level', 'All e-books to download'].map((line) => (
+                  <li key={line} className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-amber-300 shrink-0" aria-hidden="true" /> {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-        </div>
-        <a href="/pricing" className={`${SECONDARY_BUTTON_CLASS} sm:w-auto px-5 flex items-center justify-center no-underline shrink-0`}>
-          See pricing
-        </a>
-      </section>
+          <a href="/pricing" className={`${SECONDARY_BUTTON_CLASS} sm:w-auto px-5 flex items-center justify-center no-underline shrink-0`}>
+            See pricing
+          </a>
+        </section>
+      )}
     </div>
   );
 }
