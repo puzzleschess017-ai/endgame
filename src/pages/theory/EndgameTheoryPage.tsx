@@ -34,7 +34,7 @@ function Index() {
         <h1 className="text-3xl font-bold tracking-tight text-white">Chess endgame theory</h1>
         <p className={`mt-3 ${PROSE_CLASS}`}>
           Short lessons on the endgames every player should know. Each one has diagrams, the key idea in plain words and a
-          button that opens the position in the Endgame Tablebase, so you can play it against perfect defence.
+          button that opens the position in Board Analysis, so you can play it out and check it with the engine.
         </p>
       </div>
       <ul className="flex flex-col gap-3" data-testid="lesson-list">
@@ -104,11 +104,11 @@ function LessonView({ lesson }: { lesson: Lesson }) {
       >
         <h2 className="text-lg font-bold text-white">Practise this</h2>
         <p className="text-sm font-medium text-white/75">
-          Theory sticks when you play it. Open the position in the Endgame Tablebase and try it against perfect play, or
+          Theory sticks when you play it. Open the position in Board Analysis and check it with the engine, or
           train endgames from real games with the Woodpecker method.
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <a href={practiceHref(lesson)} className={`${START_BUTTON_CLASS} flex items-center justify-center gap-2 no-underline sm:flex-1`} data-testid="practise-tablebase">
+          <a href={practiceHref(lesson)} className={`${START_BUTTON_CLASS} flex items-center justify-center gap-2 no-underline sm:flex-1`} data-testid="practise-analysis">
             <BookOpen className="h-4 w-4" aria-hidden="true" />
             {lesson.practice.label}
           </a>
@@ -123,7 +123,7 @@ function LessonView({ lesson }: { lesson: Lesson }) {
             </span>
           </a>
         </div>
-        <p className="text-xs font-medium text-white/50">The Endgame Tablebase is made for larger screens. Woodpecker endgame puzzles are part of Premium.</p>
+        <p className="text-xs font-medium text-white/50">Board Analysis is made for larger screens. The engine and Woodpecker endgame puzzles are part of Premium.</p>
       </section>
 
       <section aria-label="Read next" data-testid="related">

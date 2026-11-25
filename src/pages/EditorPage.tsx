@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import type { Api } from 'chessground/api';
 import type { Key } from 'chessground/types';
-import { Check, Copy, Database, Eraser, FlipVertical2, Hand, Trash2 } from 'lucide-react';
+import { Check, Copy, Cpu, Eraser, FlipVertical2, Hand, Trash2 } from 'lucide-react';
 import ChessboardPanel from '../components/ChessboardPanel';
 import { COMPACT_CARD_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, segmentClass } from '../components/panelUi';
 import TrainerLayout from '../components/TrainerLayout';
@@ -20,7 +20,6 @@ import {
 } from '../utils/editor';
 import { readSavedUsername } from '../utils/profile';
 import { copyText } from '../utils/clipboard';
-import { lookupProblem } from '../utils/tablebase';
 
 type PieceCode = 'wK' | 'wQ' | 'wR' | 'wB' | 'wN' | 'wP' | 'bK' | 'bQ' | 'bR' | 'bB' | 'bN' | 'bP';
 type Tool = 'pointer' | 'trash' | PieceCode;
@@ -81,7 +80,7 @@ export default function EditorPage() {
       .querySelector('meta[name="description"]')
       ?.setAttribute(
         'content',
-        'Free chess board editor: set up any position, then copy the FEN or check it in the endgame tablebase.',
+        'Free chess board editor: set up any position, then copy the FEN or check it in Board Analysis.',
       );
   }, []);
 
@@ -145,8 +144,7 @@ export default function EditorPage() {
   };
 
   const effectiveEp = enPassantSquare(position.placement, position.turn, position.ep) === '-' ? '' : position.ep ?? '';
-  const tablebaseHref = `/tablebase?fen=${encodeURIComponent(fen)}`;
-  const tablebaseProblem = validation.ok ? lookupProblem(fen) : null;
+  const analysisHref = `/analysis?fen=${encodeURIComponent(fen)}`;
 
   return (
     <TrainerLayout
@@ -377,21 +375,16 @@ export default function EditorPage() {
 
           {validation.ok ? (
             <a
-              href={tablebaseHref}
+              href={analysisHref}
               data-testid="btn-analyze"
               className={`${PRIMARY_BUTTON_CLASS} !min-h-[44px] !py-2.5 flex items-center justify-center gap-2 no-underline`}
             >
-              <Database className="w-5 h-5" aria-hidden="true" /> Check in the Tablebase
+              <Cpu className="w-5 h-5" aria-hidden="true" /> Check in Board Analysis
             </a>
           ) : (
             <button type="button" data-testid="btn-analyze" disabled className={`${PRIMARY_BUTTON_CLASS} !min-h-[44px] !py-2.5 flex items-center justify-center gap-2`}>
-              <Database className="w-5 h-5" aria-hidden="true" /> Check in the Tablebase
+              <Cpu className="w-5 h-5" aria-hidden="true" /> Check in Board Analysis
             </button>
-          )}
-          {tablebaseProblem && (
-            <p data-testid="tablebase-note" className="-mt-1 text-xs font-medium text-amber-300 leading-snug">
-              {tablebaseProblem}
-            </p>
           )}
         </div>
       }

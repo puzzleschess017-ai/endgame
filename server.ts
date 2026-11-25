@@ -566,7 +566,13 @@ async function startServer() {
     }
   });
 
-  // Endgame tablebase (Lichess Syzygy, up to 7 pieces) for the Tablebase page. Answers are kept for a day.
+  // The page of the tablebase became Board Analysis: old links and bookmarks go to the new address.
+  app.get(['/tablebase', '/tablebase/'], (req, res) => {
+    const query = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+    res.redirect(301, `/analysis${query}`);
+  });
+
+  // Endgame tablebase (Lichess Syzygy, up to 7 pieces). The Board Analysis page no longer asks for it; kept for later use. Answers are kept for a day.
   const tablebase = createTablebase({ baseUrl: process.env.TABLEBASE_URL });
   app.get('/api/tablebase', async (req, res) => {
     const lookup = await tablebase.lookup(req.query.fen);

@@ -26,7 +26,7 @@ export interface Lesson {
   kind: 'Win' | 'Draw' | 'Technique';
   intro: string[];
   sections: Section[];
-  /** The position the "practise this" button opens in the Endgame Tablebase. */
+  /** The position the "practise this" button opens in Board Analysis. */
   practice: { fen: string; label: string };
   /** Slugs of lessons to read next. */
   related: string[];
@@ -87,7 +87,7 @@ export const LESSONS: Lesson[] = [
         ],
       },
     ],
-    practice: { fen: '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1', label: 'Play this position against the tablebase' },
+    practice: { fen: '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1', label: 'Check the opposition position in Board Analysis' },
     related: ['wrong-colored-bishop', 'lucena-position'],
   },
   {
@@ -139,7 +139,7 @@ export const LESSONS: Lesson[] = [
         ],
       },
     ],
-    practice: { fen: '8/8/8/4k3/8/8/8/R3K3 w - - 0 1', label: 'Practise the mate against the tablebase' },
+    practice: { fen: '8/8/8/4k3/8/8/8/R3K3 w - - 0 1', label: 'Check the rook mate in Board Analysis' },
     related: ['king-and-queen-vs-king', 'lucena-position'],
   },
   {
@@ -183,7 +183,7 @@ export const LESSONS: Lesson[] = [
         },
       },
     ],
-    practice: { fen: '8/8/8/4k3/8/8/8/Q3K3 w - - 0 1', label: 'Practise the mate against the tablebase' },
+    practice: { fen: '8/8/8/4k3/8/8/8/Q3K3 w - - 0 1', label: 'Check the queen mate in Board Analysis' },
     related: ['king-and-rook-vs-king', 'king-and-pawn-opposition'],
   },
   {
@@ -239,7 +239,7 @@ export const LESSONS: Lesson[] = [
         },
       },
     ],
-    practice: { fen: '3K4/3P1k2/8/8/8/8/r7/4R3 w - - 0 1', label: 'Play the Lucena position against the tablebase' },
+    practice: { fen: '3K4/3P1k2/8/8/8/8/r7/4R3 w - - 0 1', label: 'Check the Lucena position in Board Analysis' },
     related: ['philidor-position', 'king-and-rook-vs-king'],
   },
   {
@@ -284,7 +284,7 @@ export const LESSONS: Lesson[] = [
         ],
       },
     ],
-    practice: { fen: '4k3/8/r7/3KP3/8/8/7R/8 w - - 0 1', label: 'Defend the Philidor position against the tablebase' },
+    practice: { fen: '4k3/8/r7/3KP3/8/8/7R/8 w - - 0 1', label: 'Check the Philidor position in Board Analysis' },
     related: ['lucena-position', 'king-and-pawn-opposition'],
   },
   {
@@ -331,7 +331,7 @@ export const LESSONS: Lesson[] = [
         ],
       },
     ],
-    practice: { fen: '7k/8/5K1P/8/8/8/8/5B2 w - - 0 1', label: 'Try to win it against the tablebase' },
+    practice: { fen: '7k/8/5K1P/8/8/8/8/5B2 w - - 0 1', label: 'Check the wrong-colored bishop in Board Analysis' },
     related: ['king-and-pawn-opposition', 'philidor-position'],
   },
 ];
@@ -351,7 +351,7 @@ export function lessonForPath(pathname: string): Lesson | undefined {
   return lessonBySlug(clean.slice(THEORY_BASE.length + 1));
 }
 
-/** Address of the Endgame Tablebase with the lesson's position loaded. */
+/** Address of Board Analysis with the lesson's position loaded. */
 export function practiceHref(lesson: Lesson): string {
-  return `/tablebase?fen=${encodeURIComponent(lesson.practice.fen)}`;
+  return `/analysis?fen=${encodeURIComponent(lesson.practice.fen)}`;
 }

@@ -24,13 +24,13 @@ export default function AboutPage() {
         </li>
         <li>
           <a href="/coordinates">Coordinate Training</a>, the <a href="/editor">Board Editor</a> and the{' '}
-          <a href="/tablebase">Endgame Tablebase</a> (perfect play for positions with 7 pieces or fewer).
+          <a href="/analysis">Board Analysis</a> (check any position with the Stockfish engine).
         </li>
       </ul>
       <h2>Where the puzzles come from</h2>
       <p>
         The puzzles come from the open <a href="https://database.lichess.org/#puzzles">Lichess puzzle database</a>,
-        which is released under the CC0 licence. Tablebase answers come from the Lichess tablebase service. Thank
+        which is released under the CC0 licence. Thank
         you to Lichess and its community for making this possible.
       </p>
       <h2>Accounts</h2>
