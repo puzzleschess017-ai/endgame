@@ -90,7 +90,7 @@ export const PAGES: PageMeta[] = [
     path: '/endgames',
     title: 'Chess Endgame Theory and Lessons | Chess Tactics Guide',
     description:
-      'Free chess endgame lessons with diagrams: the Lucena and Philidor positions, the opposition, the rule of the square, basic mates and the wrong-colored bishop.',
+      'Free chess endgame lessons with diagrams: the Lucena and Philidor positions, the opposition, the rule of the square, basic mates, stalemate tricks and more.',
     indexable: true,
     kind: 'info',
     priority: 0.8,
@@ -186,10 +186,28 @@ export const PAGES: PageMeta[] = [
     priority: 0.7,
   },
   {
+    path: '/endgames/two-knights-vs-king',
+    title: 'Two Knights vs King: Why It Is a Draw | Chess Tactics Guide',
+    description:
+      'Why two knights cannot force checkmate against a lone king, the one mate that works if the defender errs, and what to do in practice.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/endgames/stalemate-tricks',
+    title: 'Stalemate: Avoid It, or Use It to Draw | Chess Tactics Guide',
+    description:
+      'Typical stalemate traps with a queen, a rook and a pawn, with diagrams: how to avoid them when you are winning and use them when you are losing.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
     path: '/openings',
     title: 'Chess Opening Theory and Lessons | Chess Tactics Guide',
     description:
-      'Free chess opening lessons with diagrams: opening principles, the Italian Game, Ruy Lopez, Sicilian, French, Caro-Kann and the Queen\'s Gambit.',
+      'Free chess opening lessons with diagrams: opening principles, the Italian, Ruy Lopez, Scotch, Sicilian, French, Caro-Kann, Queen\'s Gambit, London and more.',
     indexable: true,
     kind: 'info',
     priority: 0.8,
@@ -253,6 +271,60 @@ export const PAGES: PageMeta[] = [
     title: 'The Queen\'s Gambit: Classic Play With 1.d4 | Chess Tactics Guide',
     description:
       'The Queen\'s Gambit explained with diagrams: how Black declines or accepts the pawn, the main plans for both sides and the key pawn breaks.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings/scotch-game',
+    title: 'The Scotch Game: Open the Centre at Once | Chess Tactics Guide',
+    description:
+      'The Scotch Game explained with diagrams: how 3.d4 opens the centre, the Classical Variation with 4...Bc5 and the Mieses Variation with 4...Nf6.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings/scandinavian-defense',
+    title: 'The Scandinavian Defence: Hit e4 at Once | Chess Tactics Guide',
+    description:
+      'The Scandinavian Defence explained with diagrams: 1...d5, the queen recapture on d5, the modern 2...Nf6 line and the plans for both sides.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings/london-system',
+    title: 'The London System: A Simple Set-Up With 1.d4 | Chess Tactics Guide',
+    description:
+      'The London System explained with diagrams: the Bf4 set-up with e3, c3 and Nbd2, the typical plans and how to meet ...c5 and ...Qb6.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings/kings-indian-defense',
+    title: 'The King\'s Indian Defence: Strike the Centre | Chess Tactics Guide',
+    description:
+      'The King\'s Indian Defence explained with diagrams: how Black lets White take the centre, then attacks it with ...e5 and a kingside pawn storm.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings/nimzo-indian-defense',
+    title: 'The Nimzo-Indian Defence: Pin and Control e4 | Chess Tactics Guide',
+    description:
+      'The Nimzo-Indian Defence explained with diagrams: the pin on c3, the Rubinstein 4.e3 and Classical 4.Qc2 variations and the ideas for both sides.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/openings/english-opening',
+    title: 'The English Opening: Fight From the Flank | Chess Tactics Guide',
+    description:
+      'The English Opening explained with diagrams: 1.c4, the reversed Sicilian after 1...e5, the symmetrical 1...c5 and the typical plans.',
     indexable: true,
     kind: 'article',
     priority: 0.7,

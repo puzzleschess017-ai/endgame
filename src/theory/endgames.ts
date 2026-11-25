@@ -14,6 +14,7 @@ export const LESSONS: Lesson[] = [
     slug: 'king-and-pawn-opposition',
     title: 'Opposition and Key Squares in Pawn Endings',
     summary: 'Why one tempo decides pawn endgames: the opposition, key squares and the same position won or drawn.',
+    group: 'Pawn endings',
     kind: 'Technique',
     intro: [
       'Almost every pawn ending comes down to one question: can the pawn reach the eighth rank? The kings decide it, and their main tool is the opposition.',
@@ -69,6 +70,7 @@ export const LESSONS: Lesson[] = [
     slug: 'king-and-rook-vs-king',
     title: 'King and Rook vs King: The Box Method',
     summary: 'Checkmate with a rook in at most 16 moves: cut the king off, shrink the box and mate on the edge.',
+    group: 'Basic checkmates',
     kind: 'Technique',
     intro: [
       'A king and rook can always checkmate a lone king, as long as you do not stalemate it and do not leave the rook where it can be captured. The standard method has four steps and needs at most 16 moves, even against the best defence.',
@@ -121,6 +123,7 @@ export const LESSONS: Lesson[] = [
     slug: 'king-and-queen-vs-king',
     title: 'King and Queen vs King: Mate Without Stalemate',
     summary: 'Mate in at most 10 moves with a queen, and the stalemate trap that costs half a point.',
+    group: 'Basic checkmates',
     kind: 'Technique',
     intro: [
       'A queen and king win faster than a rook and king, in at most 10 moves. The danger is the opposite one: the queen is so strong that it is easy to take away every square and give a stalemate by accident.',
@@ -165,6 +168,7 @@ export const LESSONS: Lesson[] = [
     slug: 'lucena-position',
     title: 'The Lucena Position: How to Win a Rook Endgame',
     summary: 'The key winning position in rook endgames, and the "bridge" that takes your king out of the checks.',
+    group: 'Rook endings',
     kind: 'Win',
     intro: [
       'The Lucena position is the most important winning position in rook endgames. It is how one extra pawn becomes a win, and it is named after the Spanish writer Luis Ramírez de Lucena, who published it in 1497.',
@@ -221,6 +225,7 @@ export const LESSONS: Lesson[] = [
     slug: 'philidor-position',
     title: 'The Philidor Position: Draw a Rook Endgame',
     summary: 'The standard defence with a rook against a pawn: keep the rook on the sixth rank, then check from behind.',
+    group: 'Rook endings',
     kind: 'Draw',
     intro: [
       'The Philidor position is the Lucena\'s opposite: the standard way to hold a draw when you are a pawn down in a rook endgame. It is named after the 18th-century master François-André Danican Philidor.',
@@ -266,6 +271,7 @@ export const LESSONS: Lesson[] = [
     slug: 'wrong-colored-bishop',
     title: 'Wrong-Colored Bishop: A Draw With an Extra Piece',
     summary: 'Bishop and rook pawn against a lone king: why the colour of the bishop decides between a win and a draw.',
+    group: 'Drawing resources',
     kind: 'Draw',
     intro: [
       'A bishop and a rook pawn (an a- or h-pawn) should win against a lone king, but not always. If the bishop is the wrong colour, the defending king hides in the corner, and the game is a draw.',
@@ -313,6 +319,7 @@ export const LESSONS: Lesson[] = [
     slug: 'rule-of-the-square',
     title: 'The Rule of the Square in Pawn Endings',
     summary: 'See at a glance whether a king can catch a passed pawn: draw the square and remember who is to move.',
+    group: 'Pawn endings',
     kind: 'Technique',
     intro: [
       'A passed pawn racing to the eighth rank while the enemy king is far away decides many endgames. You do not have to count move by move: the rule of the square gives you the answer in one look.',
@@ -374,6 +381,7 @@ export const LESSONS: Lesson[] = [
     slug: 'queen-vs-pawn-on-the-seventh',
     title: 'Queen vs Pawn on the Seventh Rank',
     summary: 'A queen usually beats a pawn, but a bishop pawn or a rook pawn on the seventh rank can draw by stalemate.',
+    group: 'Drawing resources',
     kind: 'Draw',
     intro: [
       'A queen against a pawn looks like an easy win, and it is, until the pawn reaches the seventh rank with its king beside it. Then the stalemate tricks begin. This is one of the most useful endgames to know, because the result depends on which pawn it is.',
@@ -428,6 +436,7 @@ export const LESSONS: Lesson[] = [
     slug: 'bishop-and-knight-mate',
     title: 'Checkmate With Bishop and Knight',
     summary: "The hardest basic mate: drive the king to a corner of your bishop's color and use the knight to close the net.",
+    group: 'Basic checkmates',
     kind: 'Technique',
     intro: [
       'A king, a bishop and a knight against a lone king is a forced win, but it needs a precise method and can take up to 33 moves. Most players learn it once, so it is worth knowing the plan before you need it.',
@@ -479,6 +488,7 @@ export const LESSONS: Lesson[] = [
     slug: 'two-bishops-mate',
     title: 'Checkmate With Two Bishops',
     summary: 'Two bishops of opposite colors can mate with the help of the king: build a wall and push the king to the edge.',
+    group: 'Basic checkmates',
     kind: 'Technique',
     intro: [
       'A king and two bishops can force checkmate against a lone king, but only when the bishops are of opposite colors, one light-squared and one dark-squared. Two bishops of the same color cannot do it, because they never control squares of the other color. The mate takes at most 19 moves.',
@@ -514,6 +524,117 @@ export const LESSONS: Lesson[] = [
     practice: { fen: '7k/8/4B1K1/6B1/8/8/8/8 w - - 0 1', label: 'Check the two bishops mate in Board Analysis' },
     related: ['bishop-and-knight-mate', 'king-and-queen-vs-king'],
   },
+  {
+    slug: 'two-knights-vs-king',
+    title: 'Two Knights vs King: Why It Is a Draw',
+    summary: 'Two knights cannot force checkmate against a lone king. Know the one mate that only works when the defender errs.',
+    group: 'Drawing resources',
+    kind: 'Draw',
+    intro: [
+      'A king and two knights against a lone king looks like plenty of material, but there is no forced checkmate. A defender who plays carefully always escapes. It is useful to know this, so that you do not waste your time trying to win it, or give up when you are the defender.',
+    ],
+    sections: [
+      {
+        heading: 'A mate exists, but it cannot be forced',
+        paragraphs: [
+          'Checkmate with two knights is possible, but only when the defending king walks into it. In the diagram the black king stands in the corner. The king on g6 covers g7 and h7, the knight on e7 covers g8, and 1.Nf7 gives the final check.',
+          'Black would never allow this position. A king that stays in the middle of the board is never forced into the corner.',
+        ],
+        diagram: {
+          fen: '7k/4N3/6K1/6N1/8/8/8/8 w - - 0 1',
+          caption: 'White to move. 1.Nf7 is checkmate, but Black has to walk into the corner first.',
+          arrows: [['g5', 'f7']],
+        },
+      },
+      {
+        heading: 'Why the defender holds',
+        paragraphs: [
+          'The knights and the king cannot build a net that also loses a move. Whatever setup White tries, the lone king finds a free square or a stalemate. Endgame tablebases confirm that the ending is a draw with correct defence.',
+        ],
+      },
+      {
+        heading: 'With a pawn it can change',
+        paragraphs: [
+          'If the defender also has a pawn, two knights can win in some positions, because the defender has to move the pawn or his king and may run out of safe moves. This is a difficult ending, and the result depends on how far the pawn has advanced.',
+        ],
+      },
+      {
+        heading: 'In practice',
+        bullets: [
+          'As the stronger side, do not go for the win with two knights alone: the fifty-move rule will end the game.',
+          'As the defender, keep your king in the centre, away from the edge and the corners, and take your time.',
+          'If you are choosing which pieces to keep in an endgame, a bishop and a knight win against a lone king, but two knights do not.',
+        ],
+      },
+    ],
+    practice: { fen: '7k/4N3/6K1/6N1/8/8/8/8 w - - 0 1', label: 'Check the two knights in Board Analysis' },
+    related: ['bishop-and-knight-mate', 'stalemate-tricks'],
+  },
+  {
+    slug: 'stalemate-tricks',
+    title: 'Stalemate: Avoid It, or Use It to Draw',
+    summary: 'Three typical stalemate patterns with a queen, a rook and a pawn, and how to see them one move early.',
+    group: 'Drawing resources',
+    kind: 'Draw',
+    intro: [
+      'Stalemate is a draw: the side to move has no legal move and is not in check. It saves lost games and spoils won ones. The pattern is nearly always the same: the lone king is on the edge, and a natural move takes away its last square without giving check.',
+    ],
+    sections: [
+      {
+        heading: 'The queen too close',
+        paragraphs: [
+          'A queen a knight\'s move from the king takes away all its squares. Here 1.Qf7 is stalemate. The queen on d8 gives check and mates.',
+        ],
+        diagram: {
+          fen: '7k/8/6K1/3Q4/8/8/8/8 w - - 0 1',
+          caption: 'White to move. 1.Qf7 is stalemate, 1.Qd8 is checkmate.',
+          arrows: [['d5', 'd8']],
+        },
+      },
+      {
+        heading: 'The rook on the seventh rank',
+        paragraphs: [
+          'The same mistake happens with a rook. 1.Rb7 takes the last squares but gives no check. 1.Rh8 gives check along the eighth rank, and the king on b6 covers a7 and b7.',
+        ],
+        diagram: {
+          fen: 'k7/7R/1K6/8/8/8/8/8 w - - 0 1',
+          caption: 'White to move. 1.Rb7 is stalemate, 1.Rh8 is checkmate.',
+          arrows: [['h7', 'h8']],
+        },
+      },
+      {
+        heading: 'The pawn that goes too fast',
+        paragraphs: [
+          'A pawn can stalemate too. With the pawn on g6 and the king on f7 the black king on h8 has no move. Pushing the pawn to g6 before the king is in front of it can throw the win away.',
+        ],
+        diagram: {
+          fen: '7k/5K2/6P1/8/8/8/8/8 b - - 0 1',
+          caption: 'Black to move. Stalemate: the pawn on g6 covers h7, and the king covers g7 and g8.',
+        },
+      },
+      {
+        heading: 'The same position, done right',
+        paragraphs: [
+          'With the pawn still on g5, White wins. The king goes first: 1.Kg6 Kg8 2.Kh6 Kf7 3.g6+ and the pawn promotes.',
+        ],
+        diagram: {
+          fen: '7k/5K2/8/6P1/8/8/8/8 w - - 0 1',
+          caption: 'White to move and win. The king leads and the pawn follows.',
+          arrows: [['f7', 'g6']],
+        },
+      },
+      {
+        heading: 'How to use this',
+        bullets: [
+          'When you are winning: before every quiet move, count the squares the enemy king still has. If the answer is none, check that your move gives check.',
+          'When you are losing: head for the edge or the corner with your king, and look for a move that leaves your opponent only stalemate or a draw by repetition.',
+          'In an endgame with a queen against a pawn on the seventh rank, stalemate is the defender\'s main hope.',
+        ],
+      },
+    ],
+    practice: { fen: '7k/8/6K1/3Q4/8/8/8/8 w - - 0 1', label: 'Check the stalemate trap in Board Analysis' },
+    related: ['queen-vs-pawn-on-the-seventh', 'king-and-queen-vs-king'],
+  },
 ];
 
 export function lessonBySlug(slug: string): Lesson | undefined {
@@ -542,6 +663,7 @@ export const ENDGAMES: TheoryCollection = {
   name: 'Endgame theory',
   allLabel: 'All endgame lessons',
   lessons: LESSONS,
+  groups: ['Pawn endings', 'Basic checkmates', 'Rook endings', 'Drawing resources'],
   bySlug: lessonBySlug,
   forPath: lessonForPath,
   pathFor: lessonPath,

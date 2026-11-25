@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Chess } from 'chess.js';
-import { OPENING_LESSONS, after, openingBySlug, openingForPath, openingPath } from './openings.ts';
+import { OPENINGS, OPENING_LESSONS, after, openingBySlug, openingForPath, openingPath } from './openings.ts';
 import { practiceHref } from './endgames.ts';
 
 const diagrams = OPENING_LESSONS.flatMap((l) => l.sections.flatMap((s) => (s.diagram ? [{ lesson: l.slug, ...s.diagram }] : [])));
@@ -49,4 +49,10 @@ test('lesson paths round trip', () => {
   assert.equal(openingForPath('/openings'), undefined);
   assert.equal(openingForPath('/openings/nope'), undefined);
   assert.equal(openingForPath('/endgames/lucena-position'), undefined);
+});
+
+test('every lesson is in one of the groups of the index, and no group is empty', () => {
+  const groups = OPENINGS.groups;
+  for (const lesson of OPENING_LESSONS) assert.ok(groups.includes(lesson.group), `${lesson.slug}: ${lesson.group}`);
+  for (const group of groups) assert.ok(OPENING_LESSONS.some((l) => l.group === group), group);
 });

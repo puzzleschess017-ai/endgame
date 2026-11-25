@@ -29,6 +29,7 @@ export const OPENING_LESSONS: Lesson[] = [
     slug: 'opening-principles',
     title: 'Opening Principles Every Player Should Know',
     summary: 'Control the centre, develop your pieces, castle early and do not rush your queen: the ideas behind every opening.',
+    group: 'The basics',
     kind: 'Principles',
     intro: [
       'You do not need to memorise long lines to play a good opening. A handful of principles tell you what to do in almost every position of the first ten moves, and they also explain why the famous openings look the way they do.',
@@ -86,6 +87,7 @@ export const OPENING_LESSONS: Lesson[] = [
     slug: 'italian-game',
     title: 'The Italian Game: Quick Development and Attack',
     summary: 'Develop with 1.e4 e5 2.Nf3 Nc6 3.Bc4, aim at f7 and choose between a calm Giuoco Piano and sharper tries.',
+    group: 'Open games: 1.e4 e5',
     kind: 'Opening',
     intro: [
       'The Italian Game is one of the oldest openings and a good first one to learn. White puts the bishop on its most active square, eyes the weak f7 pawn and develops with the principles of the opening in mind.',
@@ -132,12 +134,13 @@ export const OPENING_LESSONS: Lesson[] = [
       '1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d3 d6 6. O-O a6 7. Bb3 Ba7 8. Nbd2 O-O',
       'Step through the Giuoco Piano in Board Analysis',
     ),
-    related: ['ruy-lopez', 'opening-principles'],
+    related: ['ruy-lopez', 'scotch-game'],
   },
   {
     slug: 'ruy-lopez',
     title: 'The Ruy Lopez: The Classic Spanish Opening',
     summary: 'Pin the knight with 3.Bb5, keep long-term pressure on e5 and learn the Closed, Berlin and Exchange variations.',
+    group: 'Open games: 1.e4 e5',
     kind: 'Opening',
     intro: [
       'The Ruy Lopez, also called the Spanish Game, has been a top-level weapon for more than a century. White does not threaten anything at once; the pressure on the knight that defends e5 builds slowly and is felt for the whole game.',
@@ -183,12 +186,13 @@ export const OPENING_LESSONS: Lesson[] = [
       '1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3',
       'Step through the Closed Ruy Lopez in Board Analysis',
     ),
-    related: ['italian-game', 'opening-principles'],
+    related: ['italian-game', 'scotch-game'],
   },
   {
     slug: 'sicilian-defense',
     title: 'The Sicilian Defence: Fight for the Win as Black',
     summary: 'Answer 1.e4 with 1...c5, trade a wing pawn for a central one and learn the Najdorf and Dragon set-ups.',
+    group: 'Answers to 1.e4',
     kind: 'Defence',
     intro: [
       'The Sicilian Defence is one of the most popular answers to 1.e4. Black does not copy White\'s central pawn but attacks the d4 square from the side, which leads to unbalanced positions where both sides have a real chance to win.',
@@ -234,12 +238,13 @@ export const OPENING_LESSONS: Lesson[] = [
       '1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be3 e5 7. Nb3 Be6',
       'Step through the Najdorf in Board Analysis',
     ),
-    related: ['french-defense', 'caro-kann-defense'],
+    related: ['french-defense', 'caro-kann-defense', 'scandinavian-defense'],
   },
   {
     slug: 'french-defense',
     title: 'The French Defence: A Solid Wall With Counterplay',
     summary: 'Meet 1.e4 with 1...e6 and 2...d5: a sturdy pawn chain, a tricky light-squared bishop and a plan with ...c5.',
+    group: 'Answers to 1.e4',
     kind: 'Defence',
     intro: [
       'The French Defence, 1.e4 e6, prepares ...d5 so that the centre is challenged at once. The price is a bishop on c8 that is shut in by its own pawns, and the reward is a solid position with a clear plan.',
@@ -292,6 +297,7 @@ export const OPENING_LESSONS: Lesson[] = [
     slug: 'caro-kann-defense',
     title: 'The Caro-Kann Defence: Solid and Reliable',
     summary: 'Play 1.e4 c6 and 2...d5 to get a sound pawn structure and a bishop that is free to develop before ...e6.',
+    group: 'Answers to 1.e4',
     kind: 'Defence',
     intro: [
       'The Caro-Kann looks like the French, but with one important difference: Black plays ...c6 instead of ...e6, so the bishop on c8 is not locked in. It is a favourite of players who want a healthy structure and are not afraid of a long game.',
@@ -338,12 +344,13 @@ export const OPENING_LESSONS: Lesson[] = [
       '1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Bf5 5. Ng3 Bg6 6. h4 h6 7. Nf3 Nd7 8. h5 Bh7 9. Bd3 Bxd3 10. Qxd3',
       'Step through the Classical Caro-Kann in Board Analysis',
     ),
-    related: ['french-defense', 'sicilian-defense'],
+    related: ['french-defense', 'scandinavian-defense'],
   },
   {
     slug: 'queens-gambit',
     title: "The Queen's Gambit: Classic Play With 1.d4",
     summary: 'Offer a pawn with 1.d4 d5 2.c4 to win control of the centre, and learn how Black accepts or declines.',
+    group: '1.d4 and flank openings',
     kind: 'Opening',
     intro: [
       "The Queen's Gambit is the most famous opening that starts with 1.d4. It is not a true gambit: if Black takes the pawn, White can win it back, and in return gets a strong pawn centre and fast development.",
@@ -389,7 +396,292 @@ export const OPENING_LESSONS: Lesson[] = [
       '1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 6. Nf3 Nbd7',
       "Step through the Queen's Gambit Declined in Board Analysis",
     ),
-    related: ['opening-principles', 'italian-game'],
+    related: ['london-system', 'nimzo-indian-defense'],
+  },
+  {
+    slug: 'scotch-game',
+    title: 'The Scotch Game: Open the Centre at Once',
+    summary: 'Play 3.d4 to open the centre immediately and get an easy, active game with quick development.',
+    group: 'Open games: 1.e4 e5',
+    kind: 'Opening',
+    intro: [
+      'In the Scotch Game White does not prepare d4 slowly, as in the Italian Game. After 1.e4 e5 2.Nf3 Nc6 3.d4 the centre is opened at once, and after 3...exd4 4.Nxd4 both sides can develop their pieces quickly.',
+    ],
+    sections: [
+      {
+        heading: 'The first moves',
+        paragraphs: [
+          'The pawn on d4 attacks e5. Black usually takes it, and White recaptures with the knight, which now stands in the centre. The position is open, so tactics come early.',
+        ],
+        diagram: board('1. e4 e5 2. Nf3 Nc6 3. d4', 'The Scotch Game. The d4 pawn attacks e5.', [['d4', 'e5']]),
+      },
+      {
+        heading: 'Classical Variation: 4...Bc5',
+        paragraphs: [
+          'Black attacks the knight on d4 with the bishop. White defends it with 5.Be3, and after 5...Qf6 6.c3 Nge7 7.Bc4 Ne5 both sides have developed actively.',
+        ],
+        diagram: board(
+          '1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Nxd4 Bc5 5. Be3 Qf6 6. c3 Nge7 7. Bc4 Ne5',
+          'The Classical Scotch. White has more space, Black has active pieces.',
+        ),
+      },
+      {
+        heading: 'Mieses Variation: 4...Nf6',
+        paragraphs: [
+          'After 4...Nf6 5.Nxc6 bxc6 6.e5 Qe7 7.Qe2 Nd5 8.c4 Ba6 White gains space with the pawn on e5. Black has doubled c-pawns, but also active pieces and an open b-file.',
+        ],
+        diagram: board(
+          '1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Nxd4 Nf6 5. Nxc6 bxc6 6. e5 Qe7 7. Qe2 Nd5 8. c4 Ba6',
+          'The Mieses Variation. White has the space, and the bishop on a6 hits the pawn on c4.',
+        ),
+      },
+      {
+        heading: 'Ideas to remember',
+        bullets: [
+          'White gets an open centre and a lead in development, so look for tactics.',
+          'Black\'s usual freeing move is ...d5, so be ready for it.',
+          'Do not bring the queen out early: in the Scotch the pieces come first.',
+        ],
+      },
+    ],
+    practice: practise(
+      '1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Nxd4 Bc5 5. Be3 Qf6 6. c3 Nge7 7. Bc4 Ne5',
+      'Step through the Classical Scotch in Board Analysis',
+    ),
+    related: ['italian-game', 'ruy-lopez'],
+  },
+  {
+    slug: 'scandinavian-defense',
+    title: 'The Scandinavian Defence: Hit e4 at Once',
+    summary: 'Reply 1...d5 to challenge e4 immediately, and learn where to put the queen after 2.exd5 Qxd5.',
+    group: 'Answers to 1.e4',
+    kind: 'Defence',
+    intro: [
+      'The Scandinavian is the most direct answer to 1.e4: Black attacks the pawn on the very first move. White usually takes on d5, Black recaptures and the game begins with a black piece in the centre. There is little theory to learn.',
+    ],
+    sections: [
+      {
+        heading: 'The first moves',
+        paragraphs: [
+          'After 1.e4 d5 2.exd5 Black can recapture with the queen or with the knight. The queen recapture is the main line, the knight recapture is the more modern one.',
+        ],
+        diagram: board('1. e4 d5 2. exd5', 'The Scandinavian Defence. Black recaptures with the queen or the knight.'),
+      },
+      {
+        heading: 'The queen recapture: 2...Qxd5',
+        paragraphs: [
+          'White attacks the queen with 3.Nc3, and Black usually retreats to a5. After 4.d4 Nf6 5.Nf3 c6 6.Bc4 Bf5, Black has a solid structure and a bishop outside the pawn chain.',
+        ],
+        diagram: board(
+          '1. e4 d5 2. exd5 Qxd5 3. Nc3 Qa5 4. d4 Nf6 5. Nf3 c6 6. Bc4 Bf5',
+          'The main line. The queen on a5 is safe, and the bishop on f5 is developed before ...e6.',
+        ),
+      },
+      {
+        heading: 'The knight recapture: 2...Nf6',
+        paragraphs: [
+          'Black can avoid the early queen move: 2...Nf6 3.d4 Nxd5 4.Nf3 g6 5.Bc4 Nb6 6.Bb3 Bg7. Black has a comfortable position with a fianchettoed bishop, and White has more space.',
+        ],
+        diagram: board(
+          '1. e4 d5 2. exd5 Nf6 3. d4 Nxd5 4. Nf3 g6 5. Bc4 Nb6 6. Bb3 Bg7',
+          'The modern line. White has space, and Black has a solid, flexible set-up.',
+        ),
+      },
+      {
+        heading: 'Ideas to remember',
+        bullets: [
+          'The early queen loses a tempo to Nc3, but Black has no weaknesses, so it is hard for White to punish it.',
+          'Develop the c8 bishop before playing ...e6.',
+          'Castle early and keep the queen out of the knight jumps in the centre.',
+        ],
+      },
+    ],
+    practice: practise(
+      '1. e4 d5 2. exd5 Qxd5 3. Nc3 Qa5 4. d4 Nf6 5. Nf3 c6 6. Bc4 Bf5',
+      'Step through the Scandinavian in Board Analysis',
+    ),
+    related: ['caro-kann-defense', 'french-defense'],
+  },
+  {
+    slug: 'london-system',
+    title: 'The London System: A Simple Set-Up With 1.d4',
+    summary: 'Develop with Bf4, e3 and Nf3 against almost anything, and play a solid, flexible position with little theory.',
+    group: '1.d4 and flank openings',
+    kind: 'Opening',
+    intro: [
+      'In the London System White plays the same set-up against nearly every reply: pawns on d4, e3 and c3, the dark-squared bishop outside the pawn chain on f4, and knights on f3 and d2. It is easy to remember and solid, so it is popular at every level.',
+    ],
+    sections: [
+      {
+        heading: 'The key move: Bf4',
+        paragraphs: [
+          'The bishop comes out before the pawn on e3 closes its diagonal. From f4 it looks along the diagonal at b8 and takes part in the fight for e5.',
+        ],
+        diagram: board('1. d4 d5 2. Nf3 Nf6 3. Bf4', 'The bishop develops outside the pawn chain, before e3 closes the diagonal.', [['f4', 'b8']]),
+      },
+      {
+        heading: 'The typical set-up',
+        paragraphs: [
+          'White plays e3, c3, Nbd2 and Bd3, then castles. If Black trades bishops on g3, White recaptures with the h-pawn and gets an open h-file.',
+        ],
+        diagram: board(
+          '1. d4 d5 2. Nf3 Nf6 3. Bf4 e6 4. e3 Bd6 5. Bg3 O-O 6. Nbd2 c5 7. c3 Nc6 8. Bd3',
+          'White has a solid pawn triangle on d4, e3 and c3, and all the pieces are ready.',
+        ),
+      },
+      {
+        heading: 'Ideas to remember',
+        bullets: [
+          'White\'s plans: the central break e4, or a knight jump to e5.',
+          'Black\'s main counter is ...c5 followed by ...Qb6, which attacks the pawn on b2 and the one on d4.',
+          'Against ...c5, support d4 with c3, and keep the b2 pawn protected.',
+        ],
+      },
+    ],
+    practice: practise(
+      '1. d4 d5 2. Nf3 Nf6 3. Bf4 e6 4. e3 Bd6 5. Bg3 O-O 6. Nbd2 c5 7. c3 Nc6 8. Bd3',
+      'Step through the London System in Board Analysis',
+    ),
+    related: ['queens-gambit', 'kings-indian-defense'],
+  },
+  {
+    slug: 'kings-indian-defense',
+    title: "The King's Indian Defence: Strike the Centre",
+    summary: 'Let White build a big centre, then hit it with ...e5 and attack the king with a pawn storm.',
+    group: '1.d4 and flank openings',
+    kind: 'Defence',
+    intro: [
+      'In the King\'s Indian Black does not fight for the centre with pawns at first. The bishop goes to g7, Black castles and lets White take space with e4, d4 and c4. Then ...e5 strikes at the centre and the bishop wakes up. Both sides usually attack on opposite wings.',
+    ],
+    sections: [
+      {
+        heading: 'White takes the centre',
+        paragraphs: [
+          'After 1.d4 Nf6 2.c4 g6 3.Nc3 Bg7 4.e4 d6 White has a broad pawn centre. Black\'s position looks passive, but the pawns are targets.',
+        ],
+        diagram: board('1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6', 'White has taken the centre. Black will castle and then challenge it.'),
+      },
+      {
+        heading: 'The Classical Variation',
+        paragraphs: [
+          'After 5.Nf3 O-O 6.Be2 e5 7.O-O Nc6 8.d5 Ne7 the centre is closed. White attacks on the queenside with c5, and Black attacks on the kingside with ...f5 and a pawn storm. The side that attacks faster wins.',
+        ],
+        diagram: board(
+          '1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 6. Be2 e5 7. O-O Nc6 8. d5 Ne7 9. Ne1 Nd7 10. Be3 f5',
+          'The Mar del Plata set-up. White plays on the queenside, Black on the kingside.',
+        ),
+      },
+      {
+        heading: 'Ideas to remember',
+        bullets: [
+          'Black\'s plans: ...e5 or ...c5 against the centre, then ...f5 and a pawn storm against the king.',
+          'White\'s plans: c5 to open the queenside, or a break in the centre.',
+          'The bishop on g7 is Black\'s best piece, so try not to trade it for nothing.',
+        ],
+      },
+    ],
+    practice: practise(
+      '1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 6. Be2 e5 7. O-O Nc6 8. d5 Ne7 9. Ne1 Nd7 10. Be3 f5',
+      "Step through the King's Indian in Board Analysis",
+    ),
+    related: ['nimzo-indian-defense', 'queens-gambit'],
+  },
+  {
+    slug: 'nimzo-indian-defense',
+    title: 'The Nimzo-Indian Defence: Pin and Control e4',
+    summary: 'After 1.d4 Nf6 2.c4 e6 3.Nc3 Bb4, Black pins the knight, controls e4 and may damage the white pawns.',
+    group: '1.d4 and flank openings',
+    kind: 'Defence',
+    intro: [
+      'The Nimzo-Indian is one of the most respected answers to 1.d4. Black does not occupy the centre with pawns. The bishop pins the knight on c3, the pieces control e4, and Black is ready to give up the bishop for the knight to double White\'s pawns.',
+    ],
+    sections: [
+      {
+        heading: 'The pin',
+        paragraphs: [
+          'The pinned knight on c3 cannot help to control e4, so White cannot easily build a pawn centre with e4. In return White gets the bishop pair if Black takes on c3.',
+        ],
+        diagram: board('1. d4 Nf6 2. c4 e6 3. Nc3 Bb4', 'The Nimzo-Indian. The knight on c3 is pinned, and Black eyes e4.', [['b4', 'c3'], ['f6', 'e4']]),
+      },
+      {
+        heading: 'The solid line: 4.e3',
+        paragraphs: [
+          'White develops simply. After 4...O-O 5.Bd3 d5 6.Nf3 c5 7.O-O Nc6 the centre is under tension, both sides have developed naturally and the game is balanced.',
+        ],
+        diagram: board(
+          '1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 O-O 5. Bd3 d5 6. Nf3 c5 7. O-O Nc6',
+          'A typical position of the Rubinstein Variation. Black fights for the centre with ...d5 and ...c5.',
+        ),
+      },
+      {
+        heading: 'The Classical line: 4.Qc2',
+        paragraphs: [
+          'The queen guards c3, so White can recapture with the queen and keeps the pawn structure healthy. After 4...O-O 5.a3 Bxc3+ 6.Qxc3 b6 7.Bg5 Bb7 White has the bishop pair, and Black controls e4.',
+        ],
+        diagram: board(
+          '1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. Qc2 O-O 5. a3 Bxc3+ 6. Qxc3 b6 7. Bg5 Bb7',
+          'The Classical Nimzo-Indian. White has the bishop pair, Black has the control of e4.',
+        ),
+      },
+      {
+        heading: 'Ideas to remember',
+        bullets: [
+          'Black\'s idea: trade the bishop for the knight when it damages the pawn structure.',
+          'White\'s counters: the bishop pair, the centre, and a quick Qc2 or a3 to avoid the doubled pawns.',
+          'Castle early: both sides do it in nearly every line.',
+        ],
+      },
+    ],
+    practice: practise(
+      '1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 O-O 5. Bd3 d5 6. Nf3 c5 7. O-O Nc6',
+      'Step through the Nimzo-Indian in Board Analysis',
+    ),
+    related: ['kings-indian-defense', 'queens-gambit'],
+  },
+  {
+    slug: 'english-opening',
+    title: 'The English Opening: Fight From the Flank',
+    summary: 'Start with 1.c4 to fight for d5 from the side and choose between a reversed Sicilian and a symmetrical game.',
+    group: '1.d4 and flank openings',
+    kind: 'Opening',
+    intro: [
+      '1.c4 is a flexible first move. White fights for the centre with a flank pawn, aims at d5, and keeps the choice of the next moves open. Many lines are a Sicilian Defence with the colours reversed, and White has an extra move.',
+    ],
+    sections: [
+      {
+        heading: 'The reversed Sicilian: 1...e5',
+        paragraphs: [
+          'After 1.c4 e5 White plays Nc3, Nf3 and g3, then puts the bishop on g2 and castles. If Black takes space with ...d5, White captures and develops.',
+        ],
+        diagram: board(
+          '1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 d5 5. cxd5 Nxd5 6. Bg2 Nb6 7. O-O Be7',
+          'The reversed Sicilian. The bishop on g2 looks along the long diagonal.',
+        ),
+      },
+      {
+        heading: 'The symmetrical game: 1...c5',
+        paragraphs: [
+          'Black can copy White\'s moves. After 1.c4 c5 2.Nc3 Nc6 3.g3 g6 4.Bg2 Bg7 5.Nf3 e6 6.O-O Nge7 the game is slow and manoeuvring, with plans on both wings.',
+        ],
+        diagram: board(
+          '1. c4 c5 2. Nc3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nf3 e6 6. O-O Nge7',
+          'The Symmetrical English. Both sides have the same set-up, and the fight is for the d-file and the centre.',
+        ),
+      },
+      {
+        heading: 'Ideas to remember',
+        bullets: [
+          'The bishop on g2 is White\'s key piece. It presses on d5 and on the long diagonal.',
+          'White can later play d4 and move into a queen\'s-pawn opening, so it is flexible.',
+          'Be patient: the English rewards a slow build-up and a good knowledge of typical plans.',
+        ],
+      },
+    ],
+    practice: practise(
+      '1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 d5 5. cxd5 Nxd5 6. Bg2 Nb6 7. O-O Be7',
+      'Step through the English Opening in Board Analysis',
+    ),
+    related: ['sicilian-defense', 'queens-gambit'],
   },
 ];
 
@@ -413,6 +705,7 @@ export const OPENINGS: TheoryCollection = {
   name: 'Opening theory',
   allLabel: 'All opening lessons',
   lessons: OPENING_LESSONS,
+  groups: ['The basics', 'Open games: 1.e4 e5', 'Answers to 1.e4', '1.d4 and flank openings'],
   bySlug: openingBySlug,
   forPath: openingForPath,
   pathFor: openingPath,

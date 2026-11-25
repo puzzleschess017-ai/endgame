@@ -23,6 +23,8 @@ export interface Lesson {
   title: string;
   /** One or two sentences for the index card. */
   summary: string;
+  /** The heading of the group of cards it is shown under on the index page (one of the collection's `groups`). */
+  group: string;
   /** What the lesson is about: a result to know, a technique to carry out, or an opening to play. */
   kind: LessonKind;
   intro: string[];
@@ -44,6 +46,8 @@ export interface TheoryCollection {
   /** "All endgame lessons" */
   allLabel: string;
   lessons: Lesson[];
+  /** The groups of the index page, in the order they are shown. */
+  groups: string[];
   bySlug: (slug: string) => Lesson | undefined;
   forPath: (pathname: string) => Lesson | undefined;
   pathFor: (slug: string) => string;

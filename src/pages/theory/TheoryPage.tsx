@@ -22,32 +22,56 @@ function setTitle(title: string) {
   document.title = `${title} | Chess Tactics Guide`;
 }
 
+function LessonCard({ lesson, collection }: { lesson: Lesson; collection: TheoryCollection }) {
+  const preview = lesson.sections.find((section) => section.diagram)?.diagram;
+  return (
+    <a
+      href={collection.pathFor(lesson.slug)}
+      className="group flex h-full flex-col gap-3 rounded-xl border border-white/10 bg-[#101b2f] p-3 no-underline transition-colors hover:border-[#39ff88]/60 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+      data-testid="lesson-card"
+    >
+      {preview && (
+        <div className="pointer-events-none flex justify-center" aria-hidden="true">
+          <DiagramBoard fen={preview.fen} label="" />
+        </div>
+      )}
+      <span className="flex flex-1 flex-col gap-1 px-1 pb-1">
+        <span className="text-xs font-bold uppercase tracking-wider text-[#39ff88]">{KIND_TEXT[lesson.kind]}</span>
+        <span className="text-base font-bold leading-snug text-white">{lesson.title}</span>
+        <span className="text-sm font-medium leading-snug text-white/70">{lesson.summary}</span>
+        <span className="mt-auto flex items-center gap-1 pt-2 text-sm font-bold text-white/60 group-hover:text-[#39ff88]">
+          Read the lesson
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </span>
+      </span>
+    </a>
+  );
+}
+
 function Index({ collection }: { collection: TheoryCollection }) {
   useEffect(() => setTitle(collection.index.title), [collection.index.title]);
   return (
-    <article className={`${CARD_CLASS} gap-5`} data-testid="theory-index">
+    <article className={`${CARD_CLASS} gap-6`} data-testid="theory-index">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-white">{collection.index.heading}</h1>
-        <p className={`mt-3 ${PROSE_CLASS}`}>{collection.index.intro}</p>
+        <p className={`mt-3 max-w-[720px] ${PROSE_CLASS}`}>{collection.index.intro}</p>
       </div>
-      <ul className="flex flex-col gap-3" data-testid="lesson-list">
-        {collection.lessons.map((lesson) => (
-          <li key={lesson.slug}>
-            <a
-              href={collection.pathFor(lesson.slug)}
-              className="group flex items-start justify-between gap-4 rounded-xl border border-white/10 bg-[#101b2f] p-4 no-underline hover:border-[#39ff88]/60"
-              data-testid="lesson-card"
-            >
-              <span className="flex flex-col gap-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#39ff88]">{KIND_TEXT[lesson.kind]}</span>
-                <span className="text-base font-bold text-white">{lesson.title}</span>
-                <span className="text-sm font-medium text-white/70">{lesson.summary}</span>
-              </span>
-              <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-white/50 group-hover:text-[#39ff88]" aria-hidden="true" />
-            </a>
-          </li>
-        ))}
-      </ul>
+      {collection.groups.map((group) => {
+        const lessons = collection.lessons.filter((lesson) => lesson.group === group);
+        if (lessons.length === 0) return null;
+        return (
+          <section key={group} aria-label={group} className="flex flex-col gap-3" data-testid="lesson-group">
+            <h2 className="text-lg font-bold text-white">{group}</h2>
+            <ul className="grid grid-cols-[repeat(auto-fill,minmax(215px,1fr))] gap-4" data-testid="lesson-list">
+              {lessons.map((lesson) => (
+                <li key={lesson.slug}>
+                  <LessonCard lesson={lesson} collection={collection} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
     </article>
   );
 }
@@ -150,7 +174,7 @@ export default function TheoryPage({ collection }: { collection: TheoryCollectio
   const lesson = collection.forPath(window.location.pathname);
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-[760px]">
+      <div className={`mx-auto w-full ${lesson ? 'max-w-[760px]' : 'max-w-[1080px]'}`}>
         {lesson ? <LessonView lesson={lesson} collection={collection} /> : <Index collection={collection} />}
       </div>
     </AppShell>
