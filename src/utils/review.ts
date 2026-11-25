@@ -39,20 +39,28 @@ export function reviewPuzzles(puzzles: Puzzle[], items: ReviewItem[]): Puzzle[] 
   return puzzles.filter((p) => wanted.has(p.puzzleId));
 }
 
-/** How many cycles a review run has: two, so a puzzle is seen again straight away (the minimum of the trainer). */
-export const REVIEW_CYCLES = 2;
+/** A review run is one cycle of the picked puzzles. It is not one of the cycles of the run it came from. */
+export const REVIEW_CYCLES = 1;
 
 /** Keeps the attempts of the latest result only, so a long session does not fill the browser's storage. */
 export function trimOldAttempts<T extends { attempts?: PuzzleAttempt[] }>(results: T[]): T[] {
   return results.map((r, i) => (i === results.length - 1 || !r.attempts ? r : { ...r, attempts: undefined }));
 }
 
-/** A fresh session for practising only the puzzles of `items`. */
-export function reviewSession(from: Pick<TrainingSession, 'config' | 'puzzles'>, items: ReviewItem[], id: string): TrainingSession {
+/**
+ * A fresh session for practising only the puzzles of `items`. `resume` is the run to come back to afterwards
+ * (kept as it is); without it the review stands alone.
+ */
+export function reviewSession(
+  from: Pick<TrainingSession, 'config' | 'puzzles'>,
+  items: ReviewItem[],
+  id: string,
+  resume?: TrainingSession,
+): TrainingSession {
   const puzzles = reviewPuzzles(from.puzzles, items);
   return {
     id,
-    config: { ...from.config, puzzleCount: puzzles.length as TrainingSession['config']['puzzleCount'], totalCycles: REVIEW_CYCLES },
+    config: { ...from.config, puzzleCount: puzzles.length as TrainingSession['config']['puzzleCount'], totalCycles: REVIEW_CYCLES as unknown as TrainingSession['config']['totalCycles'] },
     puzzles,
     currentCycle: 1,
     currentPuzzleIndex: 0,
@@ -65,5 +73,32 @@ export function reviewSession(from: Pick<TrainingSession, 'config' | 'puzzles'>,
     cycleResults: [],
     cycleAttempts: [],
     review: true,
+    ...(resume ? { resume } : {}),
   };
+}
+
+/** The same run with its next cycle started (the cycle that was just finished stays in the results). */
+export function nextCycle(session: TrainingSession): TrainingSession {
+  return {
+    ...session,
+    currentCycle: session.currentCycle + 1,
+    currentPuzzleIndex: 0,
+    cycleAttempts: [],
+    cycleCorrect: 0,
+    cycleIncorrect: 0,
+    cycleElapsedMs: 0,
+    puzzleElapsedMs: 0,
+    currentPuzzleFailed: false,
+    status: 'training',
+  };
+}
+
+/**
+ * Where a review leads back to: the run it came from, exactly as it was. With `startNext`, a run that was
+ * between two cycles goes straight on with the next one. Null when the review has nothing to go back to.
+ */
+export function resumeAfterReview(review: TrainingSession, startNext: boolean): TrainingSession | null {
+  const parent = review.resume;
+  if (!parent) return null;
+  return startNext && parent.status === 'cycle_complete' ? nextCycle(parent) : parent;
 }

@@ -23,6 +23,8 @@ interface TrainingSidebarProps {
   onRepeatSameSet: () => void;
   /** Starts a run with only the given puzzles (the missed and the slowest of the last cycle). */
   onStartReview: (items: ReviewItem[]) => void;
+  /** Leaves a review for the run it came from: straight into its next cycle (true) or as it was left (false). */
+  onResumeAfterReview: (startNext: boolean) => void;
 }
 
 export default function TrainingSidebar({
@@ -37,6 +39,7 @@ export default function TrainingSidebar({
   onStartNextCycleNow,
   onRepeatSameSet,
   onStartReview,
+  onResumeAfterReview,
 }: TrainingSidebarProps) {
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -101,6 +104,69 @@ export default function TrainingSidebar({
           <span>Start Cycle {nextCycleNum}</span>
           <ArrowRight className="w-4 h-4" />
         </button>
+      </div>
+    );
+  }
+
+  if (session.status === 'all_complete' && session.review) {
+    const result: CycleResult | undefined = session.cycleResults[session.cycleResults.length - 1];
+    const parent = session.resume;
+    const goOn = parent?.status === 'cycle_complete';
+
+    return (
+      <div className="bg-[#16233b] border border-white/10 rounded-2xl p-6 flex flex-col gap-5 shadow-[0_16px_44px_rgba(4,9,20,0.45)]" data-testid="review-complete">
+        <div>
+          <div className="text-xs font-bold text-[#39ff88] uppercase tracking-wider">Review Complete</div>
+          <h2 className="text-xl font-bold text-white mt-1">
+            {result ? `${result.correct} of ${result.correct + result.incorrect} solved` : 'Review finished'}
+          </h2>
+          {parent && (
+            <p className="text-sm font-medium text-white/80 mt-1.5">
+              This review is not one of your {parent.config.totalCycles} cycles
+              {parent.status === 'cycle_complete'
+                ? ` (${parent.cycleResults.length} done).`
+                : ' (they are all done).'}
+            </p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-[#101b2f] border border-white/10 rounded-xl p-3.5">
+            <div className="text-xs font-semibold text-white/70">Accuracy</div>
+            <div className="text-2xl font-bold text-white tabular-nums mt-0.5">{(result?.accuracy ?? 0).toFixed(1)}%</div>
+          </div>
+          <div className="bg-[#101b2f] border border-white/10 rounded-xl p-3.5">
+            <div className="text-xs font-semibold text-white/70">Total Time</div>
+            <div className="text-2xl font-bold text-white tabular-nums mt-0.5">{formatDuration(result?.totalTimeMs ?? 0)}</div>
+          </div>
+        </div>
+
+        <ReviewBox result={result} onStart={onStartReview} />
+
+        <div className="flex flex-col gap-2.5 pt-1">
+          {parent && (
+            <button
+              type="button"
+              data-testid="review-resume"
+              onClick={() => onResumeAfterReview(true)}
+              className="w-full py-3 px-4 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-sm flex items-center justify-center gap-2 transition-all duration-150 shadow-[0_4px_16px_rgba(57,255,136,0.2)] cursor-pointer min-h-[44px]"
+            >
+              <span>
+                {goOn
+                  ? `Continue with Cycle ${parent.currentCycle + 1} of ${parent.config.totalCycles}`
+                  : 'Back to your results'}
+              </span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onResetSession}
+            className="w-full py-3 px-4 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold transition-all duration-150 cursor-pointer min-h-[44px]"
+          >
+            {parent ? 'End Training & New Settings' : 'New Settings'}
+          </button>
+        </div>
       </div>
     );
   }
@@ -294,6 +360,17 @@ export default function TrainingSidebar({
         )}
       </div>
 
+      {session.review && session.resume && (
+        <button
+          type="button"
+          data-testid="review-leave"
+          onClick={() => onResumeAfterReview(false)}
+          className="w-full py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold cursor-pointer min-h-[42px]"
+        >
+          Leave review and go back to your cycles
+        </button>
+      )}
+
       <div className="border-t border-white/10 pt-3 flex items-center justify-between">
         {!confirmReset ? (
           <button
@@ -385,7 +462,7 @@ function ReviewBox({ result, onStart, midRun }: { result: CycleResult | undefine
         Practise these {review.items.length}
         {midRun ? ' now' : ''}
       </button>
-      {midRun && <p className="text-xs font-medium text-white/60">This ends the current run.</p>}
+      {midRun && <p className="text-xs font-medium text-white/60">One cycle, then you go on with your cycles.</p>}
     </div>
   );
 }

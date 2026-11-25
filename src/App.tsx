@@ -23,7 +23,7 @@ import { authHeaders, useAuth } from './auth';
 import { checkWoodpecker, defaultWoodpecker } from './utils/access';
 import { playMoveSound } from './utils/sound';
 import { recordFinishedCycles } from './utils/woodpeckerHistory';
-import { reviewSession, trimOldAttempts, type ReviewItem } from './utils/review';
+import { nextCycle, resumeAfterReview, reviewSession, trimOldAttempts, type ReviewItem } from './utils/review';
 import { readSavedUsername } from './utils/profile';
 
 const PREVIEW_FEN = '1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1';
@@ -223,21 +223,7 @@ export default function App() {
 
   const startNextCycle = useCallback(() => {
     clearScheduledTimeouts();
-    setSession((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        currentCycle: prev.currentCycle + 1,
-        currentPuzzleIndex: 0,
-        cycleAttempts: [],
-        cycleCorrect: 0,
-        cycleIncorrect: 0,
-        cycleElapsedMs: 0,
-        puzzleElapsedMs: 0,
-        currentPuzzleFailed: false,
-        status: 'training',
-      };
-    });
+    setSession((prev) => (prev ? nextCycle(prev) : prev));
   }, [clearScheduledTimeouts]);
 
   const advanceToNextPuzzle = useCallback(
@@ -582,14 +568,32 @@ export default function App() {
     });
   }, [clearScheduledTimeouts]);
 
-  /** "Practise these": a new run with only the missed and the slowest puzzles of the cycle that just ended. */
+  /**
+   * "Practise these": one cycle with only the missed and the slowest puzzles of the cycle that just ended. The
+   * run it started from waits (as it is) and comes back afterwards; a review started from a review keeps
+   * pointing at that same run.
+   */
   const handleStartReview = useCallback(
     (items: ReviewItem[]) => {
       if (!session || items.length === 0) return;
       clearScheduledTimeouts();
       const id =
         typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
-      setSession(reviewSession(session, items, id));
+      setSession(reviewSession(session, items, id, session.resume ?? (session.review ? undefined : session)));
+    },
+    [session, clearScheduledTimeouts],
+  );
+
+  /** Back to the run a review came from: straight into its next cycle (startNext), or as it was left. */
+  const handleResumeAfterReview = useCallback(
+    (startNext: boolean) => {
+      if (!session) return;
+      const back = resumeAfterReview(session, startNext);
+      if (!back) return;
+      clearScheduledTimeouts();
+      setPendingPromotion(null);
+      setHintArrow(null);
+      setSession(back);
     },
     [session, clearScheduledTimeouts],
   );
@@ -644,6 +648,7 @@ export default function App() {
               onStartNextCycleNow={startNextCycle}
               onRepeatSameSet={handleRepeatSameSet}
               onStartReview={handleStartReview}
+              onResumeAfterReview={handleResumeAfterReview}
             />
           )}
         </>
