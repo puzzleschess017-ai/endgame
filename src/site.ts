@@ -6,9 +6,18 @@ export const CONTACT_EMAIL = 'puzzleschess017@gmail.com';
 /** Shown on the Privacy page; change it whenever the text changes. */
 export const PRIVACY_UPDATED = '25 November 2026';
 
+/** Shown on the Terms and Refund pages; change it whenever their text changes. */
+export const TERMS_UPDATED = '25 November 2026';
+export const REFUND_UPDATED = '25 November 2026';
+
+/** How many days after a payment the buyer may ask for the money back (the Refund page and the Pricing FAQ say it). */
+export const REFUND_DAYS = 14;
+
 export const LEGAL_LINKS = [
   { href: '/about', label: 'About' },
   { href: '/privacy', label: 'Privacy' },
+  { href: '/terms', label: 'Terms' },
+  { href: '/refunds', label: 'Refunds' },
   { href: '/contact', label: 'Contact' },
 ] as const;
 
