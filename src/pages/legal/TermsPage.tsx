@@ -50,7 +50,8 @@ export default function TermsPage() {
 
       <h2>Refunds and cancelling</h2>
       <p>
-        You may ask for a refund within {REFUND_DAYS} days of a payment. The details, and how to cancel, are on the{' '}
+        You may ask for a refund within {REFUND_DAYS} days of your first Premium payment. Renewals are not refunded, so cancel
+        before the renewal date if you do not want to continue. The details, and how to cancel, are on the{' '}
         <a href="/refunds">Refund and Cancellation Policy</a> page.
       </p>
 
