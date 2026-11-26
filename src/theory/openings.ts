@@ -184,7 +184,7 @@ export const OPENING_LESSONS: Lesson[] = [
   },
   {
     slug: 'french-defense',
-    title: 'The French Defence: A Solid Wall With Counterplay',
+    title: 'The French Defence: Solid With Counterplay',
     summary: 'Meet 1.e4 with 1...e6 and 2...d5: a sturdy pawn chain, a tricky light-squared bishop and a plan with ...c5.',
     group: 'Answers to 1.e4',
     kind: 'Defence',
