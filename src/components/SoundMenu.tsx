@@ -5,7 +5,7 @@ import { useSoundSettings } from '../hooks/useSoundSettings';
 import { isSilent, playSoundPreview, type SoundStyle } from '../utils/sound';
 
 const STYLE_LABELS: { value: SoundStyle; label: string }[] = [
-  { value: 'classic', label: 'Classic board' },
+  { value: 'pop', label: 'Soft pop' },
   { value: 'electronic', label: 'Electronic' },
 ];
 
