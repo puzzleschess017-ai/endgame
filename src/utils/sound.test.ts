@@ -16,8 +16,12 @@ test('no saved sound settings gives the defaults: half volume, not muted', () =>
 });
 
 test('saved settings are read back', () => {
-  const saved = JSON.stringify({ volume: 0.8, muted: true, style: 'classic' });
-  assert.deepEqual(parseSoundSettings(saved), { volume: 0.8, muted: true, style: 'classic' });
+  const saved = JSON.stringify({ volume: 0.8, muted: true, style: 'pop' });
+  assert.deepEqual(parseSoundSettings(saved), { volume: 0.8, muted: true, style: 'pop' });
+});
+
+test('the old "classic" style name becomes pop', () => {
+  assert.equal(parseSoundSettings(JSON.stringify({ volume: 0.4, style: 'classic' })).style, 'pop');
 });
 
 test('settings saved without a style, or with an unknown one, get the default style', () => {
@@ -42,9 +46,9 @@ test('volumeToGain: 50 % is the old loudness, 100 % four times that, 0 % silence
 });
 
 test('isSilent when muted or at zero volume', () => {
-  assert.equal(isSilent({ volume: 0.5, muted: false, style: 'classic' }), false);
-  assert.equal(isSilent({ volume: 0.5, muted: true, style: 'classic' }), true);
-  assert.equal(isSilent({ volume: 0, muted: false, style: 'classic' }), true);
+  assert.equal(isSilent({ volume: 0.5, muted: false, style: 'pop' }), false);
+  assert.equal(isSilent({ volume: 0.5, muted: true, style: 'pop' }), true);
+  assert.equal(isSilent({ volume: 0, muted: false, style: 'pop' }), true);
 });
 
 test('setSoundSettings changes only what it is given, validates it and tells the listeners', () => {
@@ -58,8 +62,8 @@ test('setSoundSettings changes only what it is given, validates it and tells the
   setSoundSettings({ muted: true });
   assert.equal(getSoundSettings().muted, true);
   assert.equal(calls, 3);
-  setSoundSettings({ style: 'classic' });
-  assert.equal(getSoundSettings().style, 'classic');
+  setSoundSettings({ style: 'pop' });
+  assert.equal(getSoundSettings().style, 'pop');
   assert.equal(calls, 4);
   setSoundSettings({ style: 'electronic' });
   stop();
