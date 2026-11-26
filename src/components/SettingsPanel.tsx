@@ -6,7 +6,7 @@ import type {
   TrainingConfig,
 } from '../types';
 import { tierFor, unlockHint, type Tier } from '../utils/access';
-import { GetPremiumLink, LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from './locks';
+import { UnlockLinks, LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from './locks';
 import { COMPACT_CARD_CLASS, SETUP_TEXT_CLASS, START_BUTTON_CLASS } from './panelUi';
 import WoodpeckerExplainer from './WoodpeckerExplainer';
 
@@ -201,7 +201,7 @@ export default function SettingsPanel({
       </div>
 
       <UnlockNotice notice={locks.notice} />
-      <GetPremiumLink tier={tier} />
+      <UnlockLinks tier={tier} />
 
       {error && (
         <div

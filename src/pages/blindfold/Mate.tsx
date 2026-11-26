@@ -11,7 +11,7 @@ import {
   segmentClass,
 } from '../../components/panelUi';
 import TrainerLayout from '../../components/TrainerLayout';
-import { GetPremiumLink, LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
+import { UnlockLinks, LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
 import { authHeaders, useAuth } from '../../auth';
 import { canOpenBlindfold, clampBlindfold, tierFor, unlockHint } from '../../utils/access';
 import { PREVIEW_FEN } from '../../hooks/usePuzzleSolver';
@@ -407,7 +407,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
               </div>
 
               <UnlockNotice notice={locks.notice} />
-              <GetPremiumLink tier={tier} />
+              <UnlockLinks tier={tier} />
 
               {error && (
                 <div

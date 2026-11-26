@@ -10,7 +10,7 @@ import {
   segmentClass,
 } from '../../components/panelUi';
 import TrainerLayout from '../../components/TrainerLayout';
-import { GetPremiumLink, LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
+import { UnlockLinks, LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
 import { useAuth } from '../../auth';
 import { canOpenBlindfold, clampDrill, clampDrillLimit, tierFor, unlockHint } from '../../utils/access';
 import { useAppearance } from '../../hooks/useAppearance';
@@ -323,7 +323,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
                 </div>
                 <UnlockNotice notice={limitLocks.notice} />
               </div>
-              <GetPremiumLink tier={tier} />
+              <UnlockLinks tier={tier} />
 
               <p className="text-[13px] font-semibold text-white/75 tabular-nums leading-snug">
                 {limit === 'endless'
