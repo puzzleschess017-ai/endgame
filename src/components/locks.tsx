@@ -7,7 +7,7 @@ import { unlockHint, type Tier } from '../utils/access';
 export interface LockNotice {
   /** What was clicked, e.g. "4 cycles". */
   what: string;
-  /** "Sign in to unlock" or "Premium". */
+  /** "Login to unlock" or "Premium". */
   hint: string;
 }
 
@@ -48,7 +48,7 @@ function currentPath(): string {
   return typeof window === 'undefined' ? '/' : window.location.pathname;
 }
 
-/** "Sign in" link that comes back to the current page afterwards. */
+/** "Login" link that comes back to the current page afterwards. */
 function signInHref(): string {
   return `/login?next=${encodeURIComponent(currentPath())}`;
 }
@@ -61,7 +61,7 @@ function signUpHref(): string {
 /** The message under the choices after a click on a locked one. */
 export function UnlockNotice({ notice }: { notice: LockNotice | null }) {
   if (!notice) return null;
-  const signIn = notice.hint === 'Sign in to unlock';
+  const signIn = notice.hint === 'Login to unlock';
   const what = notice.what.charAt(0).toUpperCase() + notice.what.slice(1);
   return (
     <div
@@ -73,8 +73,8 @@ export function UnlockNotice({ notice }: { notice: LockNotice | null }) {
       {signIn ? (
         <span>
           {what} is free once you have an account.{' '}
-          <a href={signInHref()} data-testid="unlock-sign-in" className="font-bold text-[#39ff88] underline underline-offset-2">
-            Sign in or create an account
+          <a href={signInHref()} data-testid="unlock-sign-in" className="font-bold text-sky-300 underline underline-offset-2">
+            Login or create an account
           </a>
           .
         </span>

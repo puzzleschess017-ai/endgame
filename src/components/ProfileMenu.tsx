@@ -66,7 +66,7 @@ export default function ProfileMenu({ guestName, align, className = '', testId =
           href="/login"
           data-testid={testId}
           aria-label={guestName || 'Guest'}
-          title="Sign in or create an account"
+          title="Login or create an account"
           className={`${buttonClass} no-underline`}
         >
           {icon}

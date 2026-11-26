@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Crown, LogOut, UserRound } from 'lucide-react';
 import AppShell from '../components/AppShell';
-import { CARD_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, segmentClass } from '../components/panelUi';
+import { CARD_CLASS, LOGIN_BUTTON_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, segmentClass } from '../components/panelUi';
 import { auth, useAuth } from '../auth';
 import { chooseGuest } from '../auth/guest';
 import { signOutAndSync, useSyncState } from '../sync';
@@ -125,13 +125,13 @@ export default function LoginPage() {
             <div>
               <h2 className="text-2xl font-bold text-white tracking-tight">Welcome</h2>
               <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
-                Sign in to keep your results on every device and unlock more training options.
+                Login to keep your results on every device and unlock more training options.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10" role="group" aria-label="Sign in or create an account">
-              <button type="button" data-testid="tab-signin" aria-pressed={mode === 'signin'} onClick={() => { setMode('signin'); setError(null); }} className={segmentClass(mode === 'signin')}>
-                Sign in
+            <div className="grid grid-cols-2 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10" role="group" aria-label="Login or create an account">
+              <button type="button" data-testid="tab-signin" aria-pressed={mode === 'signin'} onClick={() => { setMode('signin'); setError(null); }} className={segmentClass(mode === 'signin', false, false, 'blue')}>
+                Login
               </button>
               <button type="button" data-testid="tab-signup" aria-pressed={mode === 'signup'} onClick={() => { setMode('signup'); setError(null); setNotice(null); }} className={segmentClass(mode === 'signup')}>
                 Create account
@@ -199,8 +199,8 @@ export default function LoginPage() {
                 </p>
               )}
 
-              <button type="submit" data-testid="auth-submit" disabled={busy} className={PRIMARY_BUTTON_CLASS}>
-                {busy ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
+              <button type="submit" data-testid="auth-submit" disabled={busy} className={mode === 'signin' ? LOGIN_BUTTON_CLASS : PRIMARY_BUTTON_CLASS}>
+                {busy ? 'Please wait…' : mode === 'signin' ? 'Login' : 'Create account'}
               </button>
             </form>
 

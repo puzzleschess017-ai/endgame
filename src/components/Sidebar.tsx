@@ -235,22 +235,23 @@ function NavLink({ item, active, hideOnPhone }: { item: NavItem; active: boolean
   );
 }
 
-/** Sign in for a guest; the account link and sign out for someone signed in. */
+/** Login for a guest; the account link and sign out for someone signed in. */
 export function AccountControls({ compact }: { compact?: boolean }) {
   const { session } = useAuth();
   const button =
     'rounded-xl text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 cursor-pointer flex items-center justify-center shrink-0 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[#39ff88]';
   if (!session) {
+    // Login is light blue, so it is not taken for the green Start buttons.
     return (
       <a
         href="/login"
         data-testid="sign-in-link"
-        className={`${button} gap-1.5 min-h-[40px] ${compact ? 'min-w-[40px]' : 'px-3 border-white/15'}`}
-        aria-label="Sign in"
-        title="Sign in or create an account"
+        className={`${button} !text-sky-300 hover:!text-sky-200 hover:!bg-sky-300/10 hover:!border-sky-300/30 gap-1.5 min-h-[40px] ${compact ? 'min-w-[40px]' : 'px-3 border-sky-300/30'}`}
+        aria-label="Login"
+        title="Login or create an account"
       >
         <LogIn className="w-4 h-4" aria-hidden="true" />
-        {!compact && 'Sign in'}
+        {!compact && 'Login'}
       </a>
     );
   }

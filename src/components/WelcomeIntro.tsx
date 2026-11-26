@@ -2,7 +2,7 @@
 // out, when this browser holds no results) it says what the site is and where to begin.
 import type { ReactNode } from 'react';
 import { ArrowRight, Check, Crown, LogIn } from 'lucide-react';
-import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
+import { LOGIN_BUTTON_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
 
 const CARD = 'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
 
@@ -46,7 +46,7 @@ export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean;
             <a
               href="/login?next=%2F"
               data-testid="welcome-signin"
-              className="min-h-[42px] rounded-xl border border-sky-300/30 bg-sky-300/10 px-5 py-2.5 text-sm font-semibold text-sky-300 sm:w-auto flex items-center justify-center gap-2 no-underline shrink-0 hover:bg-sky-300/15 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+              className={`${LOGIN_BUTTON_CLASS} !min-h-[42px] !py-2.5 !text-sm sm:!w-auto px-5 flex items-center justify-center gap-2 no-underline shrink-0`}
             >
               <LogIn className="w-4 h-4" aria-hidden="true" /> Login
             </a>
