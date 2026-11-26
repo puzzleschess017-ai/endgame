@@ -46,7 +46,7 @@ export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean;
             <a
               href="/login?next=%2F"
               data-testid="welcome-signin"
-              className={`${LOGIN_BUTTON_CLASS} !min-h-[42px] !py-2.5 !text-sm sm:!w-auto px-5 flex items-center justify-center gap-2 no-underline shrink-0`}
+              className={`${LOGIN_BUTTON_CLASS} btn-shine btn-shine-late [--glow:125,211,252] !min-h-[42px] !py-2.5 !text-sm sm:!w-auto px-5 flex items-center justify-center gap-2 no-underline shrink-0`}
             >
               <LogIn className="w-4 h-4" aria-hidden="true" /> Login
             </a>
@@ -57,7 +57,7 @@ export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean;
           drill the board until you know it by heart, learn the key endgames and openings, and keep track of how you improve.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 pt-1">
-          <a href="/woodpecker" data-testid="welcome-start" className={`${PRIMARY_BUTTON_CLASS} sm:w-auto px-6 flex items-center justify-center gap-2 no-underline`}>
+          <a href="/woodpecker" data-testid="welcome-start" className={`${PRIMARY_BUTTON_CLASS} btn-shine [--glow:57,255,136] sm:w-auto px-6 flex items-center justify-center gap-2 no-underline`}>
             Start training <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </a>
           {!signedIn && (
