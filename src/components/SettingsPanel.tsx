@@ -8,6 +8,7 @@ import type {
 import { tierFor, unlockHint, type Tier } from '../utils/access';
 import { GetPremiumLink, LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from './locks';
 import { COMPACT_CARD_CLASS, SETUP_TEXT_CLASS, START_BUTTON_CLASS } from './panelUi';
+import WoodpeckerExplainer from './WoodpeckerExplainer';
 
 const PUZZLE_COUNTS: PuzzleCountOption[] = [10, 50, 100, 200, 300, 500];
 const CYCLE_COUNTS: CycleCountOption[] = [2, 3, 4, 5, 6, 7, 8, 9];
@@ -58,6 +59,7 @@ export default function SettingsPanel({
             ? 'Solve the same set of puzzles again and again.'
             : 'Solve the same endgame set again and again.'}
         </p>
+        <WoodpeckerExplainer />
       </div>
 
       <div className="space-y-1.5">

@@ -9,7 +9,7 @@ const CARD = 'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44p
 const STEPS: Array<{ title: string; text: string; image: string; alt: string }> = [
   {
     title: 'Pick a mode',
-    text: 'Start with Woodpecker or Puzzle Streak. Every mode starts easy.',
+    text: 'Start with Woodpecker (the same puzzle set again and again, faster every cycle) or Puzzle Streak. Every mode starts easy.',
     image: '/welcome/pick-a-mode.webp',
     alt: 'The Woodpecker Method page: the board on the left and the setup panel on the right',
   },
