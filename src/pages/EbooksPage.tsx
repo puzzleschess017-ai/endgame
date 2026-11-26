@@ -47,13 +47,20 @@ function BookCard({ book, premium }: { book: EbookInfo; premium: boolean }) {
 
   return (
     <article className={`${CARD} p-5 sm:p-6 flex flex-col sm:flex-row gap-5 sm:gap-6`} data-testid={`ebook-${book.slug}`}>
-      <img
-        src={`/covers/${book.slug}.webp`}
-        alt={`Cover of ${book.title}`}
-        width={240}
-        height={360}
-        className="w-40 sm:w-44 shrink-0 self-center sm:self-start rounded-lg border border-white/10 shadow-[0_10px_30px_rgba(4,9,20,0.5)]"
-      />
+      <div className="book3d self-center sm:self-start shrink-0">
+        <div className="book3d-body">
+          <img
+            src={`/covers/${book.slug}.webp`}
+            alt={`Cover of ${book.title}`}
+            width={240}
+            height={360}
+            className="book3d-front"
+          />
+          <span className="book3d-spine" aria-hidden="true" />
+          <span className="book3d-pages" aria-hidden="true" />
+        </div>
+        <span className="book3d-shadow" aria-hidden="true" />
+      </div>
       <div className="flex flex-col gap-3 min-w-0">
         <div>
           <h2 className="text-xl font-bold text-white tracking-tight">{book.title}</h2>
