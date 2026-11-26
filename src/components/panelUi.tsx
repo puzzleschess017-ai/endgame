@@ -31,10 +31,9 @@ export const SECONDARY_BUTTON_CLASS =
   'w-full py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20 text-white text-sm font-semibold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]';
 
 /** Button inside a segmented control (time, side...). `dense` is the lowest one, for setup panels that must fit on a screen. */
-export function segmentClass(active: boolean, compact = false, dense = false, tone: 'green' | 'blue' = 'green'): string {
-  const on = tone === 'blue' ? 'bg-sky-300 text-[#0b1a33] shadow-sm' : 'bg-[#39ff88] text-[#101b2f] shadow-sm';
+export function segmentClass(active: boolean, compact = false, dense = false): string {
   return `${dense ? 'py-1 px-2 min-h-[32px]' : compact ? 'py-1.5 px-2 min-h-[36px]' : 'py-2 px-2 min-h-[40px]'} rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
-    active ? on : 'text-white/85 hover:text-white hover:bg-white/10'
+    active ? 'bg-[#39ff88] text-[#101b2f] shadow-sm' : 'text-white/85 hover:text-white hover:bg-white/10'
   }`;
 }
 

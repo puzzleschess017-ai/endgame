@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Crown, LogOut, UserRound } from 'lucide-react';
 import AppShell from '../components/AppShell';
-import { CARD_CLASS, LOGIN_BUTTON_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, segmentClass } from '../components/panelUi';
+import { CARD_CLASS, LOGIN_BUTTON_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from '../components/panelUi';
 import { auth, useAuth } from '../auth';
 import { chooseGuest } from '../auth/guest';
 import { signOutAndSync, useSyncState } from '../sync';
@@ -21,6 +21,20 @@ export function nextPath(search: string): string {
 }
 
 /** Sign in, create an account, or carry on as a guest; and, for someone signed in, the account. */
+/**
+ * The Login / Create account switch: the chosen tab is tinted and outlined (blue for Login, green for Create account),
+ * so it never looks like a second copy of the solid button under the form.
+ */
+function tabClass(active: boolean, tone: 'blue' | 'green'): string {
+  const on =
+    tone === 'blue'
+      ? 'bg-sky-300/15 text-sky-300 ring-1 ring-inset ring-sky-300/50'
+      : 'bg-[#39ff88]/15 text-[#39ff88] ring-1 ring-inset ring-[#39ff88]/50';
+  return `py-2 px-2 min-h-[40px] rounded-lg text-sm font-bold transition-all duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+    active ? on : 'text-white/85 hover:text-white hover:bg-white/10'
+  }`;
+}
+
 export default function LoginPage() {
   const state = useAuth();
   const syncState = useSyncState();
@@ -130,10 +144,10 @@ export default function LoginPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10" role="group" aria-label="Login or create an account">
-              <button type="button" data-testid="tab-signin" aria-pressed={mode === 'signin'} onClick={() => { setMode('signin'); setError(null); }} className={segmentClass(mode === 'signin', false, false, 'blue')}>
+              <button type="button" data-testid="tab-signin" aria-pressed={mode === 'signin'} onClick={() => { setMode('signin'); setError(null); }} className={tabClass(mode === 'signin', 'blue')}>
                 Login
               </button>
-              <button type="button" data-testid="tab-signup" aria-pressed={mode === 'signup'} onClick={() => { setMode('signup'); setError(null); setNotice(null); }} className={segmentClass(mode === 'signup')}>
+              <button type="button" data-testid="tab-signup" aria-pressed={mode === 'signup'} onClick={() => { setMode('signup'); setError(null); setNotice(null); }} className={tabClass(mode === 'signup', 'green')}>
                 Create account
               </button>
             </div>
