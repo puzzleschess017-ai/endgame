@@ -306,8 +306,13 @@ function main() {
       byDifficulty: endgameByDifficulty,
     }),
   );
+  // Every run leaves its own record (extension_v1, extension_v2, ...); earlier ones are never overwritten.
+  const lastRun = db
+    .prepare("SELECT key FROM db_meta WHERE key LIKE 'extension_v%'")
+    .all()
+    .reduce((max, r) => Math.max(max, Number(r.key.slice('extension_v'.length)) || 0), 0);
   setMeta.run(
-    'extension_v1',
+    `extension_v${lastRun + 1}`,
     JSON.stringify({ source: 'Lichess puzzle database (CC0)', added: picked.length, ...counts }),
   );
 
