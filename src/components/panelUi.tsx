@@ -23,13 +23,18 @@ export const START_BUTTON_CLASS =
 export const PRIMARY_BUTTON_CLASS =
   'w-full py-3.5 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] disabled:opacity-60 disabled:cursor-not-allowed text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(57,255,136,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]';
 
+/** The Login button: the same shape as the green primary button, in light blue, so "Login" is never taken for "Start". */
+export const LOGIN_BUTTON_CLASS =
+  'w-full py-3.5 px-5 rounded-xl bg-sky-300 hover:bg-sky-200 disabled:opacity-60 disabled:cursor-not-allowed text-[#0b1a33] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(125,211,252,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
+
 export const SECONDARY_BUTTON_CLASS =
   'w-full py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20 text-white text-sm font-semibold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]';
 
 /** Button inside a segmented control (time, side...). `dense` is the lowest one, for setup panels that must fit on a screen. */
-export function segmentClass(active: boolean, compact = false, dense = false): string {
+export function segmentClass(active: boolean, compact = false, dense = false, tone: 'green' | 'blue' = 'green'): string {
+  const on = tone === 'blue' ? 'bg-sky-300 text-[#0b1a33] shadow-sm' : 'bg-[#39ff88] text-[#101b2f] shadow-sm';
   return `${dense ? 'py-1 px-2 min-h-[32px]' : compact ? 'py-1.5 px-2 min-h-[36px]' : 'py-2 px-2 min-h-[40px]'} rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
-    active ? 'bg-[#39ff88] text-[#101b2f] shadow-sm' : 'text-white/85 hover:text-white hover:bg-white/10'
+    active ? on : 'text-white/85 hover:text-white hover:bg-white/10'
   }`;
 }
 

@@ -94,7 +94,7 @@ describe('the three tiers', () => {
     assert.equal(canUseEngine('guest'), false);
     assert.equal(canUseEngine('free'), true);
     assert.equal(canUseEngine('premium'), true);
-    assert.equal(unlockHint('guest', ENGINE_TIER), 'Sign in to unlock');
+    assert.equal(unlockHint('guest', ENGINE_TIER), 'Login to unlock');
     assert.equal(unlockHint('free', ENGINE_TIER), '');
   });
   it('every e-book is free with Premium; everybody else must have bought it', () => {
@@ -172,7 +172,7 @@ describe('helpers', () => {
     assert.equal(tierFor((a) => a.blindfold.levels, 7), 'free');
   });
   it('unlockHint', () => {
-    assert.equal(unlockHint('guest', 'free'), 'Sign in to unlock');
+    assert.equal(unlockHint('guest', 'free'), 'Login to unlock');
     assert.equal(unlockHint('guest', 'premium'), 'Premium');
     assert.equal(unlockHint('free', 'premium'), 'Premium');
     assert.equal(unlockHint('free', 'free'), '');

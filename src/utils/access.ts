@@ -90,7 +90,7 @@ export const TIER_NAME: Record<Tier, string> = { guest: 'guest', free: 'a signed
 /** What the person must do to get a choice: sign in, or go Premium. Empty when they already have it. */
 export function unlockHint(tier: Tier, needed: Tier | null): string {
   if (needed === null || TIERS.indexOf(needed) <= TIERS.indexOf(tier)) return '';
-  return needed === 'free' ? 'Sign in to unlock' : 'Premium';
+  return needed === 'free' ? 'Login to unlock' : 'Premium';
 }
 
 export type Check = { ok: true } | { ok: false; reason: string; needs: Tier };
