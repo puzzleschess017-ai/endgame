@@ -1,7 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, Flame } from 'lucide-react';
 import type { ActivityLog } from '../utils/activity';
-import { GOAL_OPTIONS, goalProgress, goalStreak, loadGoal, saveGoal } from '../utils/goal';
+import {
+  GOAL_OPTIONS,
+  celebrationDue,
+  goalProgress,
+  goalStreak,
+  loadCelebratedDay,
+  loadGoal,
+  saveCelebratedDay,
+  saveGoal,
+} from '../utils/goal';
 import { segmentClass } from './panelUi';
 
 /** "Today you solved 12 of 20", a bar, the days in a row the goal was reached, and the choice of goal. */
@@ -9,6 +18,13 @@ export default function DailyGoalCard({ log }: { log: ActivityLog }) {
   const [goal, setGoal] = useState(() => loadGoal());
   const progress = goalProgress(log, goal);
   const streak = goalStreak(log, goal);
+  const [celebrate, setCelebrate] = useState(false);
+  // Reaching the goal (also when it was reached on another page): a short glow and a small shake, once a day.
+  useEffect(() => {
+    if (!celebrationDue(progress.reached, loadCelebratedDay())) return;
+    saveCelebratedDay();
+    setCelebrate(true);
+  }, [progress.reached]);
   const pick = (value: number) => {
     setGoal(value);
     saveGoal(value);
@@ -17,7 +33,8 @@ export default function DailyGoalCard({ log }: { log: ActivityLog }) {
     <section
       aria-label="Daily goal"
       data-testid="daily-goal"
-      className="bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)] px-5 py-4 flex flex-col gap-3"
+      onAnimationEnd={() => setCelebrate(false)}
+      className={`bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)] px-5 py-4 flex flex-col gap-3 ${celebrate ? 'goal-celebrate' : ''}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
         <div>

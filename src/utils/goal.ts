@@ -70,3 +70,26 @@ export function goalStreak(log: ActivityLog, goal: number, now: number = Date.no
   }
   return { current, best };
 }
+
+export const GOAL_CELEBRATED_KEY = 'ctg_goal_celebrated_v1';
+
+/** The goal card plays its short animation once per day, the first time it shows the goal as reached. */
+export function celebrationDue(reached: boolean, celebratedDay: string | null, now: number = Date.now()): boolean {
+  return reached && celebratedDay !== dayKey(now);
+}
+
+export function loadCelebratedDay(): string | null {
+  try {
+    return localStorage.getItem(GOAL_CELEBRATED_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function saveCelebratedDay(now: number = Date.now()): void {
+  try {
+    localStorage.setItem(GOAL_CELEBRATED_KEY, dayKey(now));
+  } catch {
+    // storage blocked: the animation may play again on the next visit today
+  }
+}
