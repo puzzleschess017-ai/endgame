@@ -15,6 +15,12 @@ test('a guest is told that a free account unlocks some options, before the Premi
   assert.ok(html.indexOf('create-account-link') < html.indexOf('get-premium-link'));
 });
 
+test('a page with its own create-account button can leave the account link out', () => {
+  const html = renderToStaticMarkup(createElement(UnlockLinks, { tier: 'guest', accountLink: false }));
+  assert.doesNotMatch(html, /create-account-link/);
+  assert.match(html, /data-testid="get-premium-link"/);
+});
+
 test('a signed-in free account only sees the Premium link', () => {
   const html = render('free');
   assert.doesNotMatch(html, /create-account-link/);

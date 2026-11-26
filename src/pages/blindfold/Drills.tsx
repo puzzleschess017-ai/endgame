@@ -323,7 +323,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
                 </div>
                 <UnlockNotice notice={limitLocks.notice} />
               </div>
-              <UnlockLinks tier={tier} />
+              <UnlockLinks tier={tier} accountLink={false} />
 
               <p className="text-[13px] font-semibold text-white/75 tabular-nums leading-snug">
                 {limit === 'endless'
