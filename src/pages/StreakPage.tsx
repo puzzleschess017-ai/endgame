@@ -9,7 +9,15 @@ import { LadderFeed } from '../utils/ladderFeed';
 import { readSavedUsername } from '../utils/profile';
 import { playMoveSound } from '../utils/sound';
 import { recordActivity } from '../utils/activity';
-import { STREAK_LADDER, STREAK_SKIPS_ALLOWED, loadBestStreak, saveBestStreak } from '../utils/streak';
+import {
+  STREAK_LADDER,
+  STREAK_SKIPS_ALLOWED,
+  clearStreakRun,
+  loadBestStreak,
+  loadStreakRun,
+  saveBestStreak,
+  saveStreakRun,
+} from '../utils/streak';
 
 type Phase = 'setup' | 'loading' | 'running' | 'finished';
 type EndReason = 'wrong' | 'ended' | 'cleared';
@@ -46,10 +54,25 @@ export default function StreakPage() {
   const skipsRef = useRef(STREAK_SKIPS_ALLOWED);
   const advanceTimerRef = useRef<number | undefined>(undefined);
   const advancingRef = useRef(false);
+  /** Puzzles taken from the ladder so far in this run (the next feed after a return starts there). */
+  const rungRef = useRef(0);
+  const puzzleRef = useRef<Puzzle | null>(null);
 
   const setPhaseBoth = (next: Phase) => {
     phaseRef.current = next;
     setPhase(next);
+  };
+
+  /** Remembers the run in progress, so leaving the page and coming back does not lose the streak. */
+  const persistRun = () => {
+    if (phaseRef.current !== 'running') return;
+    saveStreakRun({
+      streak: streakRef.current,
+      skipsLeft: skipsRef.current,
+      rung: rungRef.current,
+      puzzle: puzzleRef.current,
+      activeMs: Date.now() - runStartedAtRef.current,
+    });
   };
 
   useEffect(() => {
@@ -67,6 +90,7 @@ export default function StreakPage() {
     window.clearTimeout(advanceTimerRef.current);
     runIdRef.current += 1; // anything still loading belongs to a finished run
     advancingRef.current = false;
+    clearStreakRun();
     const { best, isNewBest } = saveBestStreak(streakRef.current);
     recordActivity({
       mode: 'streak',
@@ -91,6 +115,8 @@ export default function StreakPage() {
     if (phaseRef.current !== 'running') return;
     streakRef.current += 1;
     setStreak(streakRef.current);
+    puzzleRef.current = null;
+    persistRun();
     advancingRef.current = true;
     setAdvancing(true);
     const runId = runIdRef.current;
@@ -123,6 +149,9 @@ export default function StreakPage() {
         return;
       }
       setPuzzle(next);
+      rungRef.current += 1;
+      puzzleRef.current = next;
+      persistRun();
       advancingRef.current = false;
       setAdvancing(false);
       solver.loadPuzzle(next);
@@ -144,6 +173,9 @@ export default function StreakPage() {
     const feed = new LadderFeed({ ...STREAK_LADDER });
     feedRef.current = feed;
     streakRef.current = 0;
+    rungRef.current = 0;
+    puzzleRef.current = null;
+    clearStreakRun();
     skipsRef.current = STREAK_SKIPS_ALLOWED;
     setStreak(0);
     setSkipsLeft(STREAK_SKIPS_ALLOWED);
@@ -159,17 +191,18 @@ export default function StreakPage() {
       await feed.prepare();
     } catch (err) {
       if (runId !== runIdRef.current) return;
-    runStartedAtRef.current = Date.now();
       setError(err instanceof Error ? err.message : 'Could not load puzzles. Check your connection.');
       setPhaseBoth('setup');
       return;
     }
     if (runId !== runIdRef.current) return;
+    runStartedAtRef.current = Date.now();
     setPhaseBoth('running');
     void showNextPuzzleRef.current();
   }, [solver]);
 
   const backToStart = useCallback(() => {
+    clearStreakRun();
     window.clearTimeout(advanceTimerRef.current);
     runIdRef.current += 1;
     solver.reset();
@@ -183,6 +216,7 @@ export default function StreakPage() {
     if (phaseRef.current !== 'running' || skipsRef.current <= 0 || advancingRef.current) return;
     skipsRef.current -= 1;
     setSkipsLeft(skipsRef.current);
+    persistRun();
     playMoveSound('move');
     void showNextPuzzleRef.current();
   }, []);
@@ -193,6 +227,36 @@ export default function StreakPage() {
   }, [finishRun, solver]);
 
   useEffect(() => () => window.clearTimeout(advanceTimerRef.current), []);
+
+  // Coming back to a run that was still going: same streak, same skips, same puzzle.
+  const resumedRef = useRef(false);
+  useEffect(() => {
+    if (resumedRef.current) return;
+    resumedRef.current = true;
+    const saved = loadStreakRun();
+    if (!saved) return;
+    runIdRef.current += 1;
+    feedRef.current = new LadderFeed({
+      ...STREAK_LADDER,
+      start: STREAK_LADDER.start + STREAK_LADDER.step * saved.rung,
+    });
+    streakRef.current = saved.streak;
+    skipsRef.current = saved.skipsLeft;
+    rungRef.current = saved.rung;
+    puzzleRef.current = saved.puzzle;
+    runStartedAtRef.current = Date.now() - saved.activeMs;
+    setStreak(saved.streak);
+    setSkipsLeft(saved.skipsLeft);
+    setResult(null);
+    setPhaseBoth('running');
+    if (saved.puzzle) {
+      setPuzzle(saved.puzzle);
+      solver.loadPuzzle(saved.puzzle);
+    } else {
+      void showNextPuzzleRef.current();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const best = loadBestStreak();
   const sideName = solver.playerColor === 'white' ? 'White' : 'Black';
