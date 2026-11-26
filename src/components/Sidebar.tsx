@@ -335,7 +335,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         <nav
           ref={navRef}
           aria-label="Training modes"
-          className="side-nav w-full xl:flex-1 xl:min-h-0 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-x-visible xl:overflow-y-auto pb-3 xl:py-2"
+          className="side-nav w-full xl:flex-1 xl:min-h-0 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-x-visible xl:overflow-y-auto pb-3 xl:pt-5 xl:pb-2"
         >
           <div className="contents xl:block xl:mb-6 nav-home">
             <NavLink item={session ? DASHBOARD_ITEM : HOME_ITEM} active={HOME_ITEM.href === path} />
