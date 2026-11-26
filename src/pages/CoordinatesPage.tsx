@@ -270,7 +270,7 @@ export default function CoordinatesPage() {
           <button
             type="button"
             onClick={startRun}
-            className="w-full py-3.5 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(57,255,136,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]"
+            className="w-full py-3.5 px-5 rounded-xl btn-shine bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(57,255,136,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]"
           >
             Start
           </button>
@@ -347,7 +347,7 @@ export default function CoordinatesPage() {
             <button
               type="button"
               onClick={startRun}
-              className="w-full py-3.5 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]"
+              className="w-full py-3.5 px-5 rounded-xl btn-shine bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]"
             >
               Play again
             </button>

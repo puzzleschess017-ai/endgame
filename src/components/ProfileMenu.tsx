@@ -159,7 +159,7 @@ export default function ProfileMenu({ guestName, align, className = '', testId =
                   type="submit"
                   disabled={busy}
                   data-testid="profile-save"
-                  className="flex-1 rounded-lg bg-[#39ff88] text-[#06210f] text-sm font-bold py-2 min-h-[40px] cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5"
+                  className="flex-1 rounded-lg btn-shine bg-[#39ff88] text-[#06210f] text-sm font-bold py-2 min-h-[40px] cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5"
                 >
                   <Check className="w-4 h-4" aria-hidden="true" /> Save
                 </button>

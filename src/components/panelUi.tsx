@@ -18,14 +18,14 @@ export const SETUP_TEXT_CLASS = 'mt-1 text-[13px] font-medium text-white/75 lead
 
 /** Start button of a setup panel (a little lower than the usual one). */
 export const START_BUTTON_CLASS =
-  'w-full py-3 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] disabled:opacity-60 disabled:cursor-not-allowed text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(57,255,136,0.22)] cursor-pointer min-h-[44px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]';
+  'btn-shine w-full py-3 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] disabled:opacity-60 disabled:cursor-not-allowed text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(57,255,136,0.22)] cursor-pointer min-h-[44px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]';
 
 export const PRIMARY_BUTTON_CLASS =
-  'w-full py-3.5 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] disabled:opacity-60 disabled:cursor-not-allowed text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(57,255,136,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]';
+  'btn-shine w-full py-3.5 px-5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] disabled:opacity-60 disabled:cursor-not-allowed text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(57,255,136,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]';
 
 /** The Login button: the same shape as the green primary button, in light blue, so "Login" is never taken for "Start". */
 export const LOGIN_BUTTON_CLASS =
-  'w-full py-3.5 px-5 rounded-xl bg-sky-300 hover:bg-sky-200 disabled:opacity-60 disabled:cursor-not-allowed text-[#0b1a33] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(125,211,252,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
+  'btn-shine [--glow:125,211,252] w-full py-3.5 px-5 rounded-xl bg-sky-300 hover:bg-sky-200 disabled:opacity-60 disabled:cursor-not-allowed text-[#0b1a33] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(125,211,252,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300';
 
 export const SECONDARY_BUTTON_CLASS =
   'w-full py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20 text-white text-sm font-semibold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]';

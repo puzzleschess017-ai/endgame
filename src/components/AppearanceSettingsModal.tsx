@@ -149,7 +149,7 @@ export default function AppearanceSettingsModal({
           <button
             type="button"
             onClick={handleDone}
-            className="px-5 py-2.5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] text-sm font-bold transition-all duration-150 cursor-pointer min-h-[40px]"
+            className="px-5 py-2.5 rounded-xl btn-shine bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] text-sm font-bold transition-all duration-150 cursor-pointer min-h-[40px]"
           >
             Done
           </button>
