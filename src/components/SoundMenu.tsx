@@ -6,7 +6,6 @@ import { isSilent, playSoundPreview, type SoundStyle } from '../utils/sound';
 
 const STYLE_LABELS: { value: SoundStyle; label: string }[] = [
   { value: 'board', label: 'Board' },
-  { value: 'pop', label: 'Soft pop' },
   { value: 'electronic', label: 'Electronic' },
 ];
 
@@ -146,7 +145,7 @@ export default function SoundMenu() {
 
             <div className="mt-4">
               <span className="text-sm font-bold text-white">Sound</span>
-              <div className="mt-2 grid grid-cols-3 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10" role="group" aria-label="Sound style">
+              <div className="mt-2 grid grid-cols-2 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10" role="group" aria-label="Sound style">
                 {STYLE_LABELS.map(({ value, label }) => (
                   <button
                     key={value}

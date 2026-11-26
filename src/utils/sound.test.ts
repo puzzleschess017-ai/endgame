@@ -12,16 +12,17 @@ import {
 
 test('no saved sound settings gives the defaults: half volume, not muted', () => {
   assert.deepEqual(parseSoundSettings(null), DEFAULT_SOUND_SETTINGS);
-  assert.deepEqual(DEFAULT_SOUND_SETTINGS, { volume: 0.5, muted: false, style: 'electronic' });
+  assert.deepEqual(DEFAULT_SOUND_SETTINGS, { volume: 0.5, muted: false, style: 'board' });
 });
 
 test('saved settings are read back', () => {
-  const saved = JSON.stringify({ volume: 0.8, muted: true, style: 'pop' });
-  assert.deepEqual(parseSoundSettings(saved), { volume: 0.8, muted: true, style: 'pop' });
+  const saved = JSON.stringify({ volume: 0.8, muted: true, style: 'electronic' });
+  assert.deepEqual(parseSoundSettings(saved), { volume: 0.8, muted: true, style: 'electronic' });
 });
 
-test('the old "classic" style name becomes pop', () => {
-  assert.equal(parseSoundSettings(JSON.stringify({ volume: 0.4, style: 'classic' })).style, 'pop');
+test('the removed "classic" and "pop" styles become the board style', () => {
+  assert.equal(parseSoundSettings(JSON.stringify({ volume: 0.4, style: 'classic' })).style, 'board');
+  assert.equal(parseSoundSettings(JSON.stringify({ volume: 0.4, style: 'pop' })).style, 'board');
 });
 
 test('the board style is a saved style', () => {
@@ -29,8 +30,8 @@ test('the board style is a saved style', () => {
 });
 
 test('settings saved without a style, or with an unknown one, get the default style', () => {
-  assert.equal(parseSoundSettings(JSON.stringify({ volume: 0.3, muted: true })).style, 'electronic');
-  assert.equal(parseSoundSettings(JSON.stringify({ volume: 0.3, style: 'tuba' })).style, 'electronic');
+  assert.equal(parseSoundSettings(JSON.stringify({ volume: 0.3, muted: true })).style, 'board');
+  assert.equal(parseSoundSettings(JSON.stringify({ volume: 0.3, style: 'tuba' })).style, 'board');
 });
 
 test('broken or strange saved settings fall back safely', () => {
@@ -50,26 +51,26 @@ test('volumeToGain: 50 % is the old loudness, 100 % four times that, 0 % silence
 });
 
 test('isSilent when muted or at zero volume', () => {
-  assert.equal(isSilent({ volume: 0.5, muted: false, style: 'pop' }), false);
-  assert.equal(isSilent({ volume: 0.5, muted: true, style: 'pop' }), true);
-  assert.equal(isSilent({ volume: 0, muted: false, style: 'pop' }), true);
+  assert.equal(isSilent({ volume: 0.5, muted: false, style: 'electronic' }), false);
+  assert.equal(isSilent({ volume: 0.5, muted: true, style: 'electronic' }), true);
+  assert.equal(isSilent({ volume: 0, muted: false, style: 'electronic' }), true);
 });
 
 test('setSoundSettings changes only what it is given, validates it and tells the listeners', () => {
   let calls = 0;
   const stop = subscribeSoundSettings(() => calls++);
   setSoundSettings({ volume: 0.8 });
-  assert.deepEqual(getSoundSettings(), { volume: 0.8, muted: false, style: 'electronic' });
+  assert.deepEqual(getSoundSettings(), { volume: 0.8, muted: false, style: 'board' });
   setSoundSettings({ volume: 2 });
   assert.equal(getSoundSettings().volume, 1);
   assert.equal(getSoundSettings().muted, false);
   setSoundSettings({ muted: true });
   assert.equal(getSoundSettings().muted, true);
   assert.equal(calls, 3);
-  setSoundSettings({ style: 'pop' });
-  assert.equal(getSoundSettings().style, 'pop');
-  assert.equal(calls, 4);
   setSoundSettings({ style: 'electronic' });
+  assert.equal(getSoundSettings().style, 'electronic');
+  assert.equal(calls, 4);
+  setSoundSettings({ style: 'board' });
   stop();
   setSoundSettings({ muted: false, volume: 0.5 });
   assert.equal(calls, 5);
