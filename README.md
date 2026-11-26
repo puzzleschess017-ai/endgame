@@ -33,7 +33,7 @@ that exposes the puzzle API and serves the Vite dev server as middleware). Runni
 | `src/` | React frontend (`App.tsx` is the Woodpecker trainer, `pages/` has one component per extra page such as `/coordinates` or `/editor`, plus `components/` and `utils/`) |
 | `server.ts` | Express server: `/api/puzzles/sample`, `/api/puzzles/ladder`, `/api/puzzles`, `/api/stats`, `/api/health` |
 | `server/ladder.ts` | Builds the easy-to-hard puzzle ladder for Streak and Survival |
-| `endgame.db` | SQLite database with about 80,000 Lichess puzzles, 18.6 MB (read-only at runtime) |
+| `endgame.db` | SQLite database with about 120,000 Lichess puzzles, 28 MB (read-only at runtime) |
 | `scripts/build-endgame-db.mjs` | Original build of the database from the Lichess CSV dump |
 | `scripts/extend-db.mjs` | Adds more puzzles to the existing database (see "What is in the database") |
 | `scripts/lib/endgame-rule.mjs` | The material rule that decides what counts as a real endgame (used by both scripts) |
