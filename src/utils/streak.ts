@@ -99,3 +99,28 @@ export function loadStreakRun(now = Date.now()): SavedStreakRun | null {
     return null;
   }
 }
+
+export const STREAK_BEST_SEEN_KEY = 'ctg_streak_best_seen_v1';
+
+/** The Best Puzzle Streak tile lights up once for every new best value, the first time it is shown. */
+export function bestStreakGlowDue(best: number, seen: number | null): boolean {
+  return best > 0 && best !== seen;
+}
+
+export function loadBestStreakSeen(): number | null {
+  try {
+    const raw = localStorage.getItem(STREAK_BEST_SEEN_KEY);
+    const value = raw === null ? NaN : Number(raw);
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveBestStreakSeen(best: number): void {
+  try {
+    localStorage.setItem(STREAK_BEST_SEEN_KEY, String(best));
+  } catch {
+    // storage blocked: the glow may play again on the next visit
+  }
+}

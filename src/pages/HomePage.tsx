@@ -10,6 +10,7 @@ import { dailySeries } from '../utils/activity';
 import { useSyncVersion } from '../sync';
 import { readSavedUsername } from '../utils/profile';
 import { collectOverview } from '../utils/stats';
+import { bestStreakGlowDue, loadBestStreak, loadBestStreakSeen, saveBestStreakSeen } from '../utils/streak';
 
 const RANGES = [7, 30, 90] as const;
 type Range = (typeof RANGES)[number];
@@ -40,6 +41,15 @@ export default function HomePage() {
   const { session, tier } = useAuth();
   // Nothing trained in this browser yet (a first visit, or right after signing out): tell about the site, not zeros.
   const hasTrained = Object.keys(overview.log).length > 0;
+  // A new Best Puzzle Streak lights its tile up once, the first time it is shown.
+  const [glowBest, setGlowBest] = useState(false);
+  useEffect(() => {
+    if (!hasTrained) return;
+    const best = loadBestStreak();
+    if (!bestStreakGlowDue(best, loadBestStreakSeen())) return;
+    saveBestStreakSeen(best);
+    setGlowBest(true);
+  }, [hasTrained, overview]);
 
   useEffect(() => {
     document.title = 'Chess Tactics Guide | Chess training: endgames, puzzles and blindfold';
@@ -81,7 +91,8 @@ export default function HomePage() {
                   <div
                     key={tile.id}
                     data-testid={`tile-${tile.id}`}
-                    className={`${CARD_BASE} px-5 py-4 flex flex-col gap-1.5`}
+                    className={`${CARD_BASE} px-5 py-4 flex flex-col gap-1.5 ${tile.id === 'bestStreak' && glowBest ? 'goal-celebrate' : ''}`}
+                    onAnimationEnd={tile.id === 'bestStreak' ? () => setGlowBest(false) : undefined}
                   >
                     <span className="text-sm font-semibold text-white leading-snug">{tile.label}</span>
                     <span
