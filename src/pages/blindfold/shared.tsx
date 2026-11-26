@@ -2,7 +2,7 @@ import type { Key } from 'chessground/types';
 import { Lock } from 'lucide-react';
 import ChessboardPanel from '../../components/ChessboardPanel';
 import { LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
-import { PRIMARY_BUTTON_CLASS, segmentClass } from '../../components/panelUi';
+import { SEGMENT_FRAME_CLASS, START_BUTTON_CLASS, segmentClass } from '../../components/panelUi';
 import { useAuth } from '../../auth';
 import { tierFor, unlockHint } from '../../utils/access';
 import { DRILL_KINDS, drillDescription, drillLabel, type DrillKind } from '../../utils/drills';
@@ -87,9 +87,9 @@ export function DrillPicker({ kind, onChange }: { kind: DrillKind; onChange: (ki
   const { tier } = useAuth();
   const locks = useLocks(tier);
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       <span className="text-sm font-semibold text-white">Drill</span>
-      <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+      <div className={`grid grid-cols-2 ${SEGMENT_FRAME_CLASS}`}>
         {DRILL_KINDS.map((k) => {
           const needs = tierFor((a) => a.blindfold.drills, k);
           const locked = locks.isLocked(needs);
@@ -102,10 +102,10 @@ export function DrillPicker({ kind, onChange }: { kind: DrillKind; onChange: (ki
               aria-disabled={locked || undefined}
               title={locked ? unlockHint(tier, needs) : undefined}
               onClick={locks.choose(`The “${drillLabel(k)}” drill`, needs, () => onChange(k))}
-              className={`${segmentClass(kind === k, true)} ${locked ? LOCKED_CLASS : ''} !whitespace-normal leading-tight`}
+              className={`${segmentClass(kind === k, true, true)} ${locked ? LOCKED_CLASS : ''} !whitespace-normal !text-[13px] leading-tight`}
             >
               {drillLabel(k)}
-              {locked && <LockMark />}
+              {locked && <LockMark small />}
             </button>
           );
         })}
@@ -129,25 +129,24 @@ export interface BlindfoldModeProps {
 export function GuestStart() {
   const next = encodeURIComponent('/blindfold');
   return (
-    <div className="flex flex-col gap-2.5" data-testid="blindfold-guest">
-      <p className="flex items-start gap-2 text-sm font-semibold text-white/85 leading-snug">
-        <Lock aria-hidden="true" className="h-4 w-4 mt-0.5 shrink-0 text-[#39ff88]" />
-        Blindfold training is free with an account: create one in a minute, no card needed.
-      </p>
+    <div className="flex flex-col gap-1.5" data-testid="blindfold-guest">
       <a
         href={`/login?tab=signup&next=${next}`}
         data-testid="blindfold-create"
-        className={`${PRIMARY_BUTTON_CLASS} flex items-center justify-center gap-2 no-underline`}
+        className={`${START_BUTTON_CLASS} flex items-center justify-center gap-2 no-underline`}
       >
         <Lock aria-hidden="true" className="h-4 w-4" /> Create a free account to play
       </a>
-      <a
-        href={`/login?next=${next}`}
-        data-testid="blindfold-sign-in"
-        className="text-center text-sm font-semibold text-white/75 hover:text-white underline underline-offset-4 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]"
-      >
-        I already have an account
-      </a>
+      <p className="text-center text-[13px] font-semibold text-white/75">
+        Free, no card needed.{' '}
+        <a
+          href={`/login?next=${next}`}
+          data-testid="blindfold-sign-in"
+          className="text-white/85 hover:text-white underline underline-offset-4 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+        >
+          I already have an account
+        </a>
+      </p>
     </div>
   );
 }

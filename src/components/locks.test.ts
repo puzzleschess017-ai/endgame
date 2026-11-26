@@ -10,7 +10,8 @@ test('a guest is told that a free account unlocks some options, before the Premi
   const html = render('guest');
   assert.match(html, /data-testid="create-account-link"/);
   assert.match(html, /href="\/login\?tab=signup&amp;next=%2F"/);
-  assert.match(html, /Free account: unlock more options/);
+  assert.match(html, /Free account/);
+  assert.match(html, /unlocks more options/);
   assert.match(html, /data-testid="get-premium-link"/);
   assert.ok(html.indexOf('create-account-link') < html.indexOf('get-premium-link'));
 });

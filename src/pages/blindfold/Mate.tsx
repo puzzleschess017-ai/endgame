@@ -3,7 +3,10 @@ import type { Key } from 'chessground/types';
 import {
   CARD_CLASS,
   COMPACT_CARD_CLASS,
+  SEGMENT_FRAME_CLASS,
+  SETUP_CARD_CLASS,
   SETUP_TEXT_CLASS,
+  SettingRow,
   START_BUTTON_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -307,7 +310,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
       panel={
         <>
           {(phase === 'setup' || phase === 'loading') && (
-            <div className={COMPACT_CARD_CLASS}>
+            <div className={SETUP_CARD_CLASS}>
               <ModeTabs mode={mode} onChange={onModeChange} />
               <div>
                 <h2 className="text-xl font-bold text-white tracking-tight">Blindfold: mate in {settings.mateIn}</h2>
@@ -321,15 +324,14 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                   ) : (
                     <>
                       Memorize the position. Then the pieces vanish and you type the checkmating move, for
-                      example <span className="font-bold text-white">Qh7#</span>. The + and # are optional.
+                      example <span className="font-bold text-white">Qh7#</span>.
                     </>
                   )}
                 </p>
               </div>
 
-              <div className="space-y-1.5">
-                <span className="text-sm font-semibold text-white">Mate in</span>
-                <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+              <SettingRow label="Mate in">
+                <div className={`grid grid-cols-3 ${SEGMENT_FRAME_CLASS}`}>
                   {MATE_IN_OPTIONS.map((moves) => {
                     const needs = tierFor((a) => a.blindfold.mateIn, moves);
                     const locked = locks.isLocked(needs);
@@ -343,19 +345,18 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                         title={locked ? unlockHint(tier, needs) : undefined}
                         disabled={phase === 'loading'}
                         onClick={locks.choose(`Mate in ${moves}`, needs, () => setSettings({ ...settings, mateIn: moves }))}
-                        className={`${segmentClass(settings.mateIn === moves, true)} ${locked ? LOCKED_CLASS : ''}`}
+                        className={`${segmentClass(settings.mateIn === moves, true, true)} ${locked ? LOCKED_CLASS : ''}`}
                       >
                         {moves}
-                        {locked && <LockMark />}
+                        {locked && <LockMark small />}
                       </button>
                     );
                   })}
                 </div>
-              </div>
+              </SettingRow>
 
-              <div className="space-y-1.5">
-                <span className="text-sm font-semibold text-white">Pieces on the board</span>
-                <div className="grid grid-cols-5 gap-1 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+              <SettingRow label="Pieces">
+                <div className={`grid grid-cols-5 ${SEGMENT_FRAME_CLASS}`}>
                   {BLINDFOLD_LEVELS.map((level) => {
                     const needs = tierFor((a) => a.blindfold.levels, level);
                     const locked = locks.isLocked(needs);
@@ -369,20 +370,19 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                         title={locked ? unlockHint(tier, needs) : undefined}
                         disabled={phase === 'loading'}
                         onClick={locks.choose(levelDescription(level), needs, () => setSettings({ ...settings, level }))}
-                        className={`${segmentClass(settings.level === level, true)} ${locked ? LOCKED_CLASS : ''}`}
+                        className={`${segmentClass(settings.level === level, true, true)} ${locked ? LOCKED_CLASS : ''}`}
                         aria-label={levelDescription(level)}
                       >
                         {level === 32 ? 'Any' : `≤ ${level}`}
-                        {locked && <LockMark />}
+                        {locked && <LockMark small />}
                       </button>
                     );
                   })}
                 </div>
-              </div>
+              </SettingRow>
 
-              <div className="space-y-1.5">
-                <span className="text-sm font-semibold text-white">Memorize time</span>
-                <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+              <SettingRow label="Memorize">
+                <div className={`grid grid-cols-3 ${SEGMENT_FRAME_CLASS}`}>
                   {MEMORIZE_OPTIONS.map((seconds) => {
                     const needs = tierFor((a) => a.blindfold.memorize, seconds);
                     const locked = locks.isLocked(needs);
@@ -396,15 +396,15 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                         title={locked ? unlockHint(tier, needs) : undefined}
                         disabled={phase === 'loading'}
                         onClick={locks.choose(`${seconds} seconds to memorize`, needs, () => setSettings({ ...settings, memorize: seconds }))}
-                        className={`${segmentClass(settings.memorize === seconds, true)} ${locked ? LOCKED_CLASS : ''}`}
+                        className={`${segmentClass(settings.memorize === seconds, true, true)} ${locked ? LOCKED_CLASS : ''}`}
                       >
                         {seconds} s
-                        {locked && <LockMark />}
+                        {locked && <LockMark small />}
                       </button>
                     );
                   })}
                 </div>
-              </div>
+              </SettingRow>
 
               <UnlockNotice notice={locks.notice} />
               <UnlockLinks tier={tier} accountLink={false} />

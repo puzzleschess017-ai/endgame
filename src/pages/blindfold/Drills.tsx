@@ -2,7 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CARD_CLASS,
   COMPACT_CARD_CLASS,
+  SEGMENT_FRAME_CLASS,
+  SETUP_CARD_CLASS,
   SETUP_TEXT_CLASS,
+  SettingRow,
   START_BUTTON_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -285,22 +288,22 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
       panel={
         <>
           {phase === 'setup' && (
-            <div className={COMPACT_CARD_CLASS}>
+            <div className={SETUP_CARD_CLASS}>
               <ModeTabs mode={mode} onChange={onModeChange} />
               <div>
                 <h2 className="text-xl font-bold text-white tracking-tight">Visualization drills</h2>
                 <p className={SETUP_TEXT_CLASS}>
                   {limit === 'minute'
-                    ? '60 seconds, no board. Answer as many questions as you can.'
-                    : 'No board and no time limit. Answer for as long as you like, then finish.'}
+                    ? '60 seconds, no board: answer as many as you can.'
+                    : 'No board, no time limit: answer until you finish.'}
                 </p>
               </div>
 
               <DrillPicker kind={kind} onChange={setKind} />
 
               <div className="space-y-1.5">
-                <span className="text-sm font-semibold text-white">Time</span>
-                <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+                <SettingRow label="Time">
+                <div className={`grid grid-cols-2 ${SEGMENT_FRAME_CLASS}`}>
                   {DRILL_LIMITS.map((l) => {
                     const needs = tierFor((a) => a.blindfold.drillLimits, l);
                     const locked = limitLocks.isLocked(needs);
@@ -313,14 +316,15 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
                         aria-disabled={locked || undefined}
                         title={locked ? unlockHint(tier, needs) : undefined}
                         onClick={limitLocks.choose(l === 'endless' ? 'No time limit' : 'The 1 minute run', needs, () => setLimit(l))}
-                        className={`${segmentClass(limit === l, true)} ${locked ? LOCKED_CLASS : ''}`}
+                        className={`${segmentClass(limit === l, true, true)} ${locked ? LOCKED_CLASS : ''}`}
                       >
                         {drillLimitLabel(l)}
-                        {locked && <LockMark />}
+                        {locked && <LockMark small />}
                       </button>
                     );
                   })}
                 </div>
+                </SettingRow>
                 <UnlockNotice notice={limitLocks.notice} />
               </div>
               <UnlockLinks tier={tier} accountLink={false} />
