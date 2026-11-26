@@ -127,6 +127,12 @@ export const NAV_GROUPS: NavGroup[] = [
         iconClass: 'text-cyan-300',
         chipClass: 'bg-cyan-400/15',
       },
+    ],
+  },
+  {
+    id: 'library',
+    label: 'Library',
+    items: [
       {
         id: 'theory',
         href: '/endgames',
@@ -143,12 +149,6 @@ export const NAV_GROUPS: NavGroup[] = [
         iconClass: 'text-orange-300',
         chipClass: 'bg-orange-400/15',
       },
-    ],
-  },
-  {
-    id: 'library',
-    label: 'Library',
-    items: [
       {
         id: 'ebooks',
         href: '/ebooks',
@@ -361,7 +361,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
                 </button>
                 <div id={`nav-group-${group.id}`} className={`contents xl:flex xl:flex-col xl:gap-1 ${open ? '' : 'xl:hidden'}`}>
                   {group.items.map((item) => (
-                    <NavLink key={item.id} item={item} active={isActive(item, path)} hideOnPhone={group.id === 'tools' && item.id !== 'theory' && item.id !== 'openings'} />
+                    <NavLink key={item.id} item={item} active={isActive(item, path)} hideOnPhone={group.id === 'tools'} />
                   ))}
                 </div>
               </div>

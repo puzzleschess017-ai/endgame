@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { ActivityLog } from './activity.ts';
-import { DEFAULT_GOAL, goalProgress, goalStreak, parseGoal } from './goal.ts';
+import { dayKey } from './activity.ts';
+import { DEFAULT_GOAL, celebrationDue, goalProgress, goalStreak, parseGoal } from './goal.ts';
 
 // Noon on 2026-11-25 (local time), so the day keys are the same in every time zone.
 const NOW = new Date(2026, 10, 25, 12).getTime();
@@ -48,4 +49,12 @@ test('streaks work across a month and a year change', () => {
   const l = log(day('2027-01-01', 20), day('2026-12-31', 20), day('2026-12-30', 20));
   const now = new Date(2027, 0, 1, 12).getTime();
   assert.deepEqual(goalStreak(l, 20, now), { current: 3, best: 3 });
+});
+
+test('the goal animation is due once per day, only when the goal is reached', () => {
+  const day = (n: number) => new Date(2026, 10, n, 12).getTime();
+  assert.equal(celebrationDue(false, null, day(26)), false);
+  assert.equal(celebrationDue(true, null, day(26)), true);
+  assert.equal(celebrationDue(true, dayKey(day(25)), day(26)), true);
+  assert.equal(celebrationDue(true, dayKey(day(26)), day(26)), false);
 });
