@@ -10,7 +10,11 @@ import { readSavedUsername } from '../utils/profile';
 type Mode = 'signin' | 'signup';
 
 const INPUT_CLASS =
-  'w-full rounded-xl bg-[#101b2f] border border-white/20 focus:border-[#39ff88] focus:ring-2 focus:ring-[#39ff88]/25 focus:outline-none px-4 py-3 text-base font-semibold text-white placeholder:text-white/40 min-h-[48px]';
+  'w-full rounded-xl bg-[#101b2f] border border-white/20 focus:border-[#39ff88] focus:ring-2 focus:ring-[#39ff88]/25 focus:outline-none px-3.5 py-2 text-[15px] font-semibold text-white placeholder:text-white/40 min-h-[42px]';
+
+/** The card of the Login / Create account form: tighter than the usual card, so the whole form fits on one screen. */
+const FORM_CARD_CLASS =
+  'bg-[#16233b] border border-white/10 rounded-2xl p-5 flex flex-col gap-3.5 shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
 
 const PLAN_NAME = { free: 'Free', premium: 'Premium' } as const;
 
@@ -30,7 +34,7 @@ function tabClass(active: boolean, tone: 'blue' | 'green'): string {
     tone === 'blue'
       ? 'bg-sky-300/15 text-sky-300 ring-1 ring-inset ring-sky-300/50'
       : 'bg-[#39ff88]/15 text-[#39ff88] ring-1 ring-inset ring-[#39ff88]/50';
-  return `py-2 px-2 min-h-[40px] rounded-lg text-sm font-bold transition-all duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+  return `py-1.5 px-2 min-h-[36px] rounded-lg text-sm font-bold transition-all duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
     active ? on : 'text-white/85 hover:text-white hover:bg-white/10'
   }`;
 }
@@ -135,10 +139,10 @@ export default function LoginPage() {
             </button>
           </div>
         ) : (
-          <div className={CARD_CLASS}>
+          <div className={FORM_CARD_CLASS}>
             <div>
-              <h2 className="text-2xl font-bold text-white tracking-tight">Welcome</h2>
-              <p className="mt-1.5 text-sm font-medium text-white/75 leading-relaxed">
+              <h2 className="text-xl font-bold text-white tracking-tight">Welcome</h2>
+              <p className="mt-1 text-[13px] font-medium text-white/75 leading-snug">
                 Login to keep your results on every device and unlock more training options.
               </p>
             </div>
@@ -152,10 +156,10 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <form onSubmit={submit} noValidate className="flex flex-col gap-3.5">
+            <form onSubmit={submit} noValidate className="flex flex-col gap-2.5">
               {mode === 'signup' && (
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="auth-name" className="text-sm font-bold text-white">
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="auth-name" className="text-[13px] font-bold text-white">
                     Your name
                   </label>
                   <input
@@ -171,8 +175,8 @@ export default function LoginPage() {
                   />
                 </div>
               )}
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="auth-email" className="text-sm font-bold text-white">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="auth-email" className="text-[13px] font-bold text-white">
                   Email
                 </label>
                 <input
@@ -186,8 +190,8 @@ export default function LoginPage() {
                   className={INPUT_CLASS}
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="auth-password" className="text-sm font-bold text-white">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="auth-password" className="text-[13px] font-bold text-white">
                   Password
                 </label>
                 <input
@@ -213,7 +217,7 @@ export default function LoginPage() {
                 </p>
               )}
 
-              <button type="submit" data-testid="auth-submit" disabled={busy} className={mode === 'signin' ? LOGIN_BUTTON_CLASS : PRIMARY_BUTTON_CLASS}>
+              <button type="submit" data-testid="auth-submit" disabled={busy} className={`${mode === 'signin' ? LOGIN_BUTTON_CLASS : PRIMARY_BUTTON_CLASS} mt-1 !min-h-[44px] !py-2.5`}>
                 {busy ? 'Please wait…' : mode === 'signin' ? 'Login' : 'Create account'}
               </button>
             </form>
@@ -222,13 +226,12 @@ export default function LoginPage() {
               <span className="h-px flex-1 bg-white/15" /> or <span className="h-px flex-1 bg-white/15" />
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <a href="/" data-testid="play-as-guest" onClick={chooseGuest} className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center no-underline`}>
                 Play as a guest
               </a>
-              <p className="text-xs font-medium text-white/60 leading-relaxed">
-                Guests can use Woodpecker (Classic puzzles, easy and medium), Puzzle Streak, Puzzle Survival, Coordinate
-                Training, the Board Editor and Board Analysis. Results stay in this browser.
+              <p className="text-xs font-medium text-white/60 leading-snug">
+                Guests can use most of the training modes (see Pricing for the limits). Results stay in this browser.
               </p>
             </div>
           </div>
