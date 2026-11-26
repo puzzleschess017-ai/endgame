@@ -66,3 +66,15 @@ test('an old or damaged saved run is ignored', () => {
   store.set(s.STREAK_RUN_STORAGE_KEY, JSON.stringify({ streak: 1, skipsLeft: 1, rung: 1, puzzle: { fen: 1 }, activeMs: 0, savedAt: Date.now() }));
   assert.equal(s.loadStreakRun(), null);
 });
+
+test('the best streak tile glows once for every new best value', () => {
+  assert.equal(s.bestStreakGlowDue(0, null), false);
+  assert.equal(s.bestStreakGlowDue(5, null), true);
+  assert.equal(s.bestStreakGlowDue(5, 5), false);
+  assert.equal(s.bestStreakGlowDue(9, 5), true);
+  assert.equal(s.loadBestStreakSeen(), null);
+  s.saveBestStreakSeen(9);
+  assert.equal(s.loadBestStreakSeen(), 9);
+  store.set(s.STREAK_BEST_SEEN_KEY, 'junk');
+  assert.equal(s.loadBestStreakSeen(), null);
+});

@@ -483,15 +483,14 @@
   .book3d-body { transition: none; }
 }
 
-/* Daily goal reached: the card shakes a little and its border glows green, once. */
+/* A card that "lights up": shakes a little and its border glows green, once (daily goal, best puzzle streak).
+   Without 0% and 100% the animation starts and ends at the card's own border and shadow. */
 @keyframes goal-celebrate {
-  0%   { transform: translateX(0);    border-color: rgba(255,255,255,0.1); box-shadow: 0 16px 44px rgba(4,9,20,0.45); }
   12%  { transform: translateX(-4px); }
   24%  { transform: translateX(4px); }
   36%  { transform: translateX(-3px); border-color: rgba(57,255,136,0.9); box-shadow: 0 0 0 1px rgba(57,255,136,0.55), 0 0 28px rgba(57,255,136,0.35), 0 16px 44px rgba(4,9,20,0.45); }
   48%  { transform: translateX(2px); }
   60%  { transform: translateX(0); }
-  100% { transform: translateX(0);    border-color: rgba(255,255,255,0.1); box-shadow: 0 16px 44px rgba(4,9,20,0.45); }
 }
 .goal-celebrate { animation: goal-celebrate 1.6s ease-in-out 1; }
 @media (prefers-reduced-motion: reduce) {
