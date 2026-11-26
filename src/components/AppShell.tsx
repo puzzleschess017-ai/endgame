@@ -26,7 +26,7 @@ export default function AppShell({ username, heading, hideAccountBar = false, ch
       <Sidebar username={username} />
       <main className="flex-1 min-w-0 px-4 sm:px-6 py-5 xl:py-7">
         {/* On big screens the account buttons sit at the top right of the page (on small screens they are in the top bar). */}
-        <div className={`${hideAccountBar && !heading ? 'hidden' : 'hidden xl:flex'} items-center justify-between gap-4 ${heading ? 'mb-6' : 'mb-2'} min-h-10`} data-testid="topright">
+        <div className={`${hideAccountBar && !heading ? 'hidden' : 'hidden xl:flex'} items-center justify-between gap-4 ${heading ? 'mb-11' : 'mb-2'} min-h-10`} data-testid="topright">
           <div className="min-w-0">{heading}</div>
           <div className="flex items-center gap-1 shrink-0">
             <ProfileMenu guestName={username} align="right" />
