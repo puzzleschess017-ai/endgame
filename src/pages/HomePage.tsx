@@ -66,7 +66,7 @@ export default function HomePage() {
 
   return (
     <AppShell username={username} heading={session ? greeting : undefined} hideAccountBar={!session}>
-      <div className="max-w-[1100px] flex flex-col gap-8" data-testid="home">
+      <div className="max-w-[880px] flex flex-col gap-8" data-testid="home">
 
         {!hasTrained ? (
           <WelcomeIntro signedIn={session !== null} premium={tier === 'premium'} />
@@ -76,7 +76,7 @@ export default function HomePage() {
 
             <section className="flex flex-col gap-4" aria-label="Training overview">
               <h3 className="text-xl font-bold text-white tracking-tight">Training Overview</h3>
-              <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3" data-testid="overview">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3" data-testid="overview">
                 {overview.tiles.map((tile) => (
                   <div
                     key={tile.id}
