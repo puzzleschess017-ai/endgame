@@ -1,14 +1,15 @@
 /**
- * Sounds of the site, in three styles: "board" (recordings of a piece on a board, for move, capture and
- * check), "pop" (soft, round pops made with the Web Audio API) and "electronic" (short blips, also made with it).
+ * Sounds of the site, in two styles: "board" (recordings of a piece on a board for move, capture and check;
+ * soft pops, made with the Web Audio API, for error and success and while the recordings load) and
+ * "electronic" (short blips, also made with the Web Audio API).
  * Volume, mute and style are one setting for the whole site, saved in the browser, and read by
  * `useSoundSettings` for the sound menu.
  */
 
 export type SoundType = 'move' | 'capture' | 'check' | 'error' | 'success';
 
-export type SoundStyle = 'board' | 'pop' | 'electronic';
-export const SOUND_STYLES: readonly SoundStyle[] = ['board', 'pop', 'electronic'];
+export type SoundStyle = 'board' | 'electronic';
+export const SOUND_STYLES: readonly SoundStyle[] = ['board', 'electronic'];
 
 export interface SoundSettings {
   /** 0 (silent) to 1. */
@@ -18,7 +19,7 @@ export interface SoundSettings {
 }
 
 export const SOUND_STORAGE_KEY = 'ctg_sound_v1';
-export const DEFAULT_SOUND_SETTINGS: SoundSettings = { volume: 0.5, muted: false, style: 'electronic' };
+export const DEFAULT_SOUND_SETTINGS: SoundSettings = { volume: 0.5, muted: false, style: 'board' };
 
 /** The volume slider's 50 % is the loudness the site always had; 100 % is four times that (the curve is quadratic). */
 const LOUDNESS_AT_FULL_VOLUME = 4;
@@ -31,8 +32,8 @@ export function parseSoundSettings(raw: string | null): SoundSettings {
       typeof data?.volume === 'number' && Number.isFinite(data.volume)
         ? Math.min(1, Math.max(0, data.volume))
         : DEFAULT_SOUND_SETTINGS.volume;
-    // 'classic' was the name of an earlier wooden style that is gone; whoever chose it gets the pop style.
-    const saved = (data?.style as string) === 'classic' ? 'pop' : data?.style;
+    // 'classic' and 'pop' were earlier styles that are gone; whoever chose one of them gets the board style.
+    const saved = (data?.style as string) === 'classic' || (data?.style as string) === 'pop' ? 'board' : data?.style;
     const style = SOUND_STYLES.includes(saved as SoundStyle) ? (saved as SoundStyle) : DEFAULT_SOUND_SETTINGS.style;
     return { volume, muted: data?.muted === true, style };
   } catch {
