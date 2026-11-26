@@ -1,6 +1,6 @@
 /**
- * Sounds of the site, in two styles: "board" (recordings of a piece on a board for move, capture and check;
- * soft pops, made with the Web Audio API, for error and success and while the recordings load) and
+ * Sounds of the site, in two styles: "board" (recordings for move, capture, check and success;
+ * a soft pop, made with the Web Audio API, for error and while the recordings load) and
  * "electronic" (short blips, also made with the Web Audio API).
  * Volume, mute and style are one setting for the whole site, saved in the browser, and read by
  * `useSoundSettings` for the sound menu.
@@ -149,11 +149,13 @@ export function scheduleSound(
   else blip(ctx, master, type, when);
 }
 
-/** Recordings for the "board" style (move, capture, check); error and success use the pop sounds. */
-const BOARD_SOUND_URLS: Partial<Record<SoundType, string>> = {
+/** Recordings for the "board" style (move, capture, check, success); error uses the pop sound. */
+export const BOARD_SOUND_URLS: Partial<Record<SoundType, string>> = {
   move: '/sounds/board/move.mp3',
   capture: '/sounds/board/capture.mp3',
   check: '/sounds/board/check.mp3',
+  // A one second chime ("level up", Pixabay, trimmed and set to the level of the others), so it peaks lower.
+  success: '/sounds/board/success.mp3',
 };
 /** The recordings are loud (peak about -2 dB): this brings them to the level of the other styles. */
 const BOARD_GAIN = 0.25;
