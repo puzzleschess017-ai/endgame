@@ -46,9 +46,9 @@ export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean;
             <a
               href="/login?next=%2F"
               data-testid="welcome-signin"
-              className={`${SECONDARY_BUTTON_CLASS} sm:w-auto px-5 flex items-center justify-center gap-2 no-underline shrink-0`}
+              className="min-h-[42px] rounded-xl border border-sky-300/30 bg-sky-300/10 px-5 py-2.5 text-sm font-semibold text-sky-300 sm:w-auto flex items-center justify-center gap-2 no-underline shrink-0 hover:bg-sky-300/15 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]"
             >
-              <LogIn className="w-4 h-4" aria-hidden="true" /> Sign in
+              <LogIn className="w-4 h-4" aria-hidden="true" /> Login
             </a>
           )}
         </div>
