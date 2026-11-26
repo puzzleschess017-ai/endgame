@@ -6,9 +6,9 @@ import {
   celebrationDue,
   goalProgress,
   goalStreak,
-  loadCelebratedDay,
+  loadCelebrated,
   loadGoal,
-  saveCelebratedDay,
+  saveCelebrated,
   saveGoal,
 } from '../utils/goal';
 import { segmentClass } from './panelUi';
@@ -19,12 +19,12 @@ export default function DailyGoalCard({ log }: { log: ActivityLog }) {
   const progress = goalProgress(log, goal);
   const streak = goalStreak(log, goal);
   const [celebrate, setCelebrate] = useState(false);
-  // Reaching the goal (also when it was reached on another page): a short glow and a small shake, once a day.
+  // Reaching the goal (also when it was reached on another page): a short glow and a small shake, once for each goal reached.
   useEffect(() => {
-    if (!celebrationDue(progress.reached, loadCelebratedDay())) return;
-    saveCelebratedDay();
+    if (!celebrationDue(progress.reached, loadCelebrated(), progress.goal)) return;
+    saveCelebrated(progress.goal);
     setCelebrate(true);
-  }, [progress.reached]);
+  }, [progress.reached, progress.goal]);
   const pick = (value: number) => {
     setGoal(value);
     saveGoal(value);
