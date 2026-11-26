@@ -15,6 +15,12 @@ export interface PageMeta {
   /** Page type for structured data: the home page is the website itself, the rest are free web apps, text pages or lessons. */
   kind: 'website' | 'app' | 'info' | 'article';
   priority: number;
+  /**
+   * The day (YYYY-MM-DD) the text of the page last changed, for the sitemap. Only the theory pages have one:
+   * their text is what a search engine reads. Change it when you edit a lesson; a date that is too new
+   * teaches the search engine to ignore all of them.
+   */
+  lastmod?: string;
 }
 
 export const PAGES: PageMeta[] = [
@@ -397,6 +403,13 @@ export const PAGES: PageMeta[] = [
   },
 ];
 
+// The day the lessons (src/theory) last changed. One date for each collection: bump it when you edit a lesson.
+const THEORY_LASTMOD: Record<string, string> = { '/endgames': '2026-11-25', '/openings': '2026-11-26' };
+for (const page of PAGES) {
+  const lastmod = THEORY_LASTMOD['/' + page.path.split('/')[1]];
+  if (lastmod) page.lastmod = lastmod;
+}
+
 const UNKNOWN_TITLE = `Page not found | ${SITE_NAME}`;
 
 /** "/streak/" and "/streak" are the same page. */
@@ -461,8 +474,12 @@ function jsonLd(page: PageMeta, siteUrl: string): string {
   return JSON.stringify(data).replace(/</g, '\\u003c');
 }
 
-/** Replaces the generic tags of index.html with the ones of the page (or "not found" for an unknown path). */
-export function renderPage(template: string, page: PageMeta | undefined, siteUrl: string): string {
+/**
+ * Replaces the generic tags of index.html with the ones of the page (or "not found" for an unknown path).
+ * `content` is the text of the page (see prerender.ts): it goes into the empty root element, which the app
+ * replaces when it starts.
+ */
+export function renderPage(template: string, page: PageMeta | undefined, siteUrl: string, content?: string): string {
   const title = escapeHtml(page ? page.title : UNKNOWN_TITLE);
   const description = escapeHtml(page ? page.description : 'This page does not exist.');
   const url = page ? siteUrl + (page.path === '/' ? '/' : page.path) : null;
@@ -488,10 +505,12 @@ export function renderPage(template: string, page: PageMeta | undefined, siteUrl
     .filter(Boolean)
     .join('\n    ');
 
+  // Function replacers: a "$" in the text (a price, say) must not be read as a replacement pattern.
   return template
-    .replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`)
+    .replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${title}</title>`)
     .replace(/\s*<meta\s+(?:name|property)="(?:description|og:title|og:description|og:type|twitter:card)"[^>]*>/gi, '')
-    .replace(/<\/head>/i, `    ${tags}\n  </head>`);
+    .replace(/<\/head>/i, () => `    ${tags}\n  </head>`)
+    .replace(/<div id="root"><\/div>/, () => `<div id="root">${content ?? ''}</div>`);
 }
 
 export function robotsTxt(siteUrl: string): string {
@@ -502,7 +521,7 @@ export function sitemapXml(siteUrl: string): string {
   const entries = PAGES.filter((page) => page.indexable)
     .map(
       (page) =>
-        `  <url>\n    <loc>${escapeHtml(siteUrl + (page.path === '/' ? '/' : page.path))}</loc>\n    <priority>${page.priority.toFixed(1)}</priority>\n  </url>`,
+        `  <url>\n    <loc>${escapeHtml(siteUrl + (page.path === '/' ? '/' : page.path))}</loc>\n${page.lastmod ? `    <lastmod>${page.lastmod}</lastmod>\n` : ''}    <priority>${page.priority.toFixed(1)}</priority>\n  </url>`,
     )
     .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;

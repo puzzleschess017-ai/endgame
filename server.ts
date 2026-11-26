@@ -12,6 +12,7 @@ import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './src/auth/project.t
 import { checkBlindfoldLevel, checkBlindfoldMateIn, checkWoodpecker, getsEbooksFree } from './src/utils/access.ts';
 import type { BlindfoldLevel, MateIn } from './src/utils/blindfold.ts';
 import type { PuzzleCountOption } from './src/types.ts';
+import { contentFor } from './server/prerender.ts';
 import { cleanSiteUrl, pageFor, renderPage, robotsTxt, sitemapXml } from './server/seo.ts';
 import {
   RATING_BANDS,
@@ -832,7 +833,7 @@ async function startServer() {
     const template = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
     app.get('*', (req, res) => {
       const page = pageFor(req.path);
-      res.status(page ? 200 : 404).set('Cache-Control', 'no-cache').type('html').send(renderPage(template, page, siteUrl));
+      res.status(page ? 200 : 404).set('Cache-Control', 'no-cache').type('html').send(renderPage(template, page, siteUrl, page ? contentFor(req.path) : undefined));
     });
   }
 

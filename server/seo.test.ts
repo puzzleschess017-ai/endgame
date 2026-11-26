@@ -159,3 +159,23 @@ describe('theory lessons', () => {
     });
   }
 });
+
+describe('the sitemap dates', () => {
+  it('only the theory pages have a date, and it is a real day that is not in the future', () => {
+    const today = new Date().toISOString().slice(0, 10);
+    for (const page of PAGES) {
+      if (!page.lastmod) {
+        assert.ok(!page.path.startsWith('/endgames') && !page.path.startsWith('/openings'), `${page.path} has no lastmod`);
+        continue;
+      }
+      assert.match(page.lastmod, /^\d{4}-\d{2}-\d{2}$/, page.path);
+      assert.ok(!Number.isNaN(Date.parse(page.lastmod)), page.path);
+      assert.ok(page.lastmod <= today, `${page.path} is dated in the future`);
+    }
+  });
+  it('the sitemap writes <lastmod> for a theory page and leaves it out for the others', () => {
+    const xml = sitemapXml(SITE);
+    assert.match(xml, /<loc>https:\/\/example\.org\/endgames\/lucena-position<\/loc>\n\s+<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
+    assert.match(xml, /<loc>https:\/\/example\.org\/streak<\/loc>\n\s+<priority>/);
+  });
+});

@@ -181,6 +181,12 @@ serves `/robots.txt` and `/sitemap.xml` (the indexable pages). `/statistics` is 
 sitemap. **A new page needs one entry in `PAGES`** (plus its route in `src/main.tsx`). Descriptions
 should stay 50-170 characters and titles under 70; `server/seo.test.ts` checks that.
 
+The theory pages (`/endgames`, `/openings` and every lesson) also get their text in the HTML: `server/prerender.ts`
+builds the headings, paragraphs, lists and links of the lesson from `src/theory` and the server writes it into the
+empty `<div id="root">`, so a crawler that has not run the JavaScript yet still reads the lesson. The app replaces it
+when it starts. Nothing to do when you edit a lesson, but **bump `THEORY_LASTMOD` in `server/seo.ts`** (the `<lastmod>`
+of those pages in the sitemap) to the day you changed one; the other pages have no `<lastmod>` on purpose.
+
 ### About, Privacy, Contact and cookies
 
 To add an endgame lesson: add an object to `LESSONS` in `src/theory/endgames.ts` (check every position in the Lichess
