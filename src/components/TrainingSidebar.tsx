@@ -99,7 +99,7 @@ export default function TrainingSidebar({
           type="button"
           onClick={onStartNextCycleNow}
           data-testid="start-next-cycle"
-          className="w-full py-3 px-4 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-sm flex items-center justify-center gap-2 transition-all duration-150 shadow-[0_4px_16px_rgba(57,255,136,0.2)] cursor-pointer min-h-[44px] whitespace-nowrap"
+          className="w-full py-3 px-4 rounded-xl btn-shine bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-sm flex items-center justify-center gap-2 transition-all duration-150 shadow-[0_4px_16px_rgba(57,255,136,0.2)] cursor-pointer min-h-[44px] whitespace-nowrap"
         >
           <span>Start Cycle {nextCycleNum}</span>
           <ArrowRight className="w-4 h-4" />
@@ -149,7 +149,7 @@ export default function TrainingSidebar({
               type="button"
               data-testid="review-resume"
               onClick={() => onResumeAfterReview(true)}
-              className="w-full py-3 px-4 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-sm flex items-center justify-center gap-2 transition-all duration-150 shadow-[0_4px_16px_rgba(57,255,136,0.2)] cursor-pointer min-h-[44px]"
+              className="w-full py-3 px-4 rounded-xl btn-shine bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-sm flex items-center justify-center gap-2 transition-all duration-150 shadow-[0_4px_16px_rgba(57,255,136,0.2)] cursor-pointer min-h-[44px]"
             >
               <span>
                 {goOn
@@ -200,7 +200,7 @@ export default function TrainingSidebar({
           <button
             type="button"
             onClick={onRepeatSameSet}
-            className="w-full py-3 px-4 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-sm transition-all duration-150 shadow-[0_4px_16px_rgba(57,255,136,0.2)] cursor-pointer min-h-[44px]"
+            className="w-full py-3 px-4 rounded-xl btn-shine bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-sm transition-all duration-150 shadow-[0_4px_16px_rgba(57,255,136,0.2)] cursor-pointer min-h-[44px]"
           >
             Repeat Same Puzzle Set
           </button>
@@ -352,7 +352,7 @@ export default function TrainingSidebar({
           <button
             type="button"
             onClick={onNextPuzzle}
-            className="flex-1 py-2.5 px-3.5 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] text-sm font-bold flex items-center justify-center gap-1.5 transition-all duration-150 shadow-[0_4px_14px_rgba(57,255,136,0.2)] cursor-pointer min-h-[42px] whitespace-nowrap"
+            className="flex-1 py-2.5 px-3.5 rounded-xl btn-still bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] text-sm font-bold flex items-center justify-center gap-1.5 transition-all duration-150 shadow-[0_4px_14px_rgba(57,255,136,0.2)] cursor-pointer min-h-[42px] whitespace-nowrap"
           >
             <span>Next Puzzle</span>
             <ArrowRight className="w-4 h-4" />

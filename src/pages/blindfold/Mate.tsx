@@ -516,7 +516,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                       {hint}
                     </p>
                   )}
-                  <button type="submit" disabled={!text.trim()} className={PRIMARY_BUTTON_CLASS}>
+                  <button type="submit" disabled={!text.trim()} className={`${PRIMARY_BUTTON_CLASS} btn-still`}>
                     Check
                   </button>
                   <button type="button" onClick={giveUp} className={SECONDARY_BUTTON_CLASS}>
@@ -553,7 +553,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                       checkmate is always accepted).
                     </p>
                   )}
-                  <button type="button" onClick={next} autoFocus className={PRIMARY_BUTTON_CLASS}>
+                  <button type="button" onClick={next} autoFocus className={`${PRIMARY_BUTTON_CLASS} btn-still`}>
                     {index + 1 >= items.length ? 'See result' : 'Next puzzle'}
                   </button>
                 </div>

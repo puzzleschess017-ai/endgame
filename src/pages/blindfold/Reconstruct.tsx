@@ -510,7 +510,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
                     Drag a piece onto the board, or pick one and tap squares. Tap the same piece again to take it
                     off.
                   </p>
-                  <button type="button" onClick={check} data-testid="rebuild-check" className={PRIMARY_BUTTON_CLASS}>
+                  <button type="button" onClick={check} data-testid="rebuild-check" className={`${PRIMARY_BUTTON_CLASS} btn-still`}>
                     Check
                   </button>
                   <button
@@ -547,7 +547,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
                     </p>
                   )}
                   <p className="text-xs font-medium text-white/60">The board shows the real position.</p>
-                  <button type="button" onClick={next} autoFocus className={PRIMARY_BUTTON_CLASS}>
+                  <button type="button" onClick={next} autoFocus className={`${PRIMARY_BUTTON_CLASS} btn-still`}>
                     {index + 1 >= items.length ? 'See result' : 'Next position'}
                   </button>
                 </div>

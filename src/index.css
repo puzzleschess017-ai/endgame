@@ -497,28 +497,41 @@
   .goal-celebrate { animation-duration: 0.01ms; }
 }
 
-/* A soft shine on a main button: a light sweeps across it now and then and its glow breathes a little (the Start
-   training and Login buttons of Home). --glow is the button's colour as "r,g,b"; give the second button
-   .btn-shine-late so the two do not flash together. Switched off for people who ask for less motion. */
-.btn-shine {
-  position: relative;
-  overflow: hidden;
-  animation: btn-glow 3.6s ease-in-out infinite;
+/* A soft shine on a main (filled) button: a light sweeps across it now and then and its glow breathes a little. The
+   shared button classes in src/components/panelUi.tsx carry it, and the few filled buttons written by hand have
+   .btn-shine too. --glow is the button's colour as "r,g,b" (green unless a class like [--glow:125,211,252] says
+   otherwise). .btn-shine-late delays it (so two buttons side by side do not flash together) and .btn-still turns it
+   off for a button that is pressed again and again while someone plays. It also stops on a disabled button and
+   for people who ask for less motion. In the components layer, so a utility such as "absolute" or "overflow-visible"
+   on the same element still wins. */
+@layer components {
+  .btn-shine {
+    --glow: 57, 255, 136;
+    position: relative;
+    overflow: hidden;
+    animation: btn-glow 3.6s ease-in-out infinite;
+  }
+  .btn-shine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 40%;
+    background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0) 100%);
+    transform: translateX(-140%) skewX(-18deg);
+    animation: btn-sweep 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .btn-shine-late,
+  .btn-shine-late::after { animation-delay: 1.8s; }
+  .btn-still,
+  .btn-shine:disabled,
+  .btn-shine[aria-disabled='true'] { animation: none; }
+  .btn-still::after,
+  .btn-shine:disabled::after,
+  .btn-shine[aria-disabled='true']::after { animation: none; display: none; }
 }
-.btn-shine::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 40%;
-  background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0) 100%);
-  transform: translateX(-140%) skewX(-18deg);
-  animation: btn-sweep 5s ease-in-out infinite;
-  pointer-events: none;
-}
-.btn-shine-late,
-.btn-shine-late::after { animation-delay: 1.8s; }
 @keyframes btn-sweep {
   0%, 62% { transform: translateX(-140%) skewX(-18deg); }
   100%    { transform: translateX(380%) skewX(-18deg); }
