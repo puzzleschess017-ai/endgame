@@ -2,7 +2,12 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom';
 import { Volume1, Volume2, VolumeX } from 'lucide-react';
 import { useSoundSettings } from '../hooks/useSoundSettings';
-import { isSilent, playSoundPreview } from '../utils/sound';
+import { isSilent, playSoundPreview, type SoundStyle } from '../utils/sound';
+
+const STYLE_LABELS: { value: SoundStyle; label: string }[] = [
+  { value: 'classic', label: 'Classic board' },
+  { value: 'electronic', label: 'Electronic' },
+];
 
 const POPOVER_WIDTH = 280;
 const GAP = 10;
@@ -135,6 +140,29 @@ export default function SoundMenu() {
                   className="flex-1 min-w-0 accent-[#39ff88] cursor-pointer"
                   aria-valuetext={`${percent}%`}
                 />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <span className="text-sm font-bold text-white">Sound</span>
+              <div className="mt-2 grid grid-cols-2 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10" role="group" aria-label="Sound style">
+                {STYLE_LABELS.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    data-testid={`sound-style-${value}`}
+                    aria-pressed={settings.style === value}
+                    onClick={() => {
+                      update({ style: value });
+                      playSoundPreview();
+                    }}
+                    className={`px-2 py-2 rounded-lg text-xs font-bold cursor-pointer ${
+                      settings.style === value ? 'bg-[#39ff88] text-[#08150d]' : 'text-white/80 hover:text-white'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>,
