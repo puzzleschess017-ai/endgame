@@ -31,9 +31,14 @@ export function useLocks(tier: Tier) {
   };
 }
 
-/** Small lock in the corner of a locked choice (the button must be `relative`). */
-export function LockMark() {
-  return <Lock aria-hidden="true" className="absolute top-1 right-1 h-2.5 w-2.5 text-white/60" />;
+/** Small lock in the corner of a locked choice (the button must be `relative`). `small` is for the low, dense buttons. */
+export function LockMark({ small = false }: { small?: boolean }) {
+  return (
+    <Lock
+      aria-hidden="true"
+      className={`absolute text-white/60 ${small ? 'top-0.5 right-0.5 h-2 w-2' : 'top-1 right-1 h-2.5 w-2.5'}`}
+    />
+  );
 }
 
 /** Extra classes of a locked choice. */
@@ -87,30 +92,49 @@ export function UnlockNotice({ notice }: { notice: LockNotice | null }) {
 
 /**
  * The links under the settings of Woodpecker and Blindfold, so nobody thinks every locked choice needs Premium:
- * a guest is first told that a free account opens some of them, and everybody without Premium gets a small
+ * a guest is first told that a free account opens some of them, and everybody without Premium gets a
  * "Get Premium" link to the Pricing tab for the rest. A Premium account sees nothing.
- * `accountLink` is false where the page already has its own "create an account" button for guests (Blindfold).
+ * A guest sees both side by side, to keep the panel short; `accountLink` is false where the page already has its
+ * own "create an account" button for guests (Blindfold), and then only the Premium link is shown.
  */
 export function UnlockLinks({ tier, accountLink = true }: { tier: Tier; accountLink?: boolean }) {
   if (tier === 'premium') return null;
-  return (
-    <div className="flex flex-col gap-2">
-      {tier === 'guest' && accountLink && (
+  const focus = 'focus-visible:outline-2 focus-visible:outline-[#39ff88]';
+  if (tier === 'guest' && accountLink) {
+    return (
+      <div className="grid grid-cols-2 gap-1.5">
         <a
           href={signUpHref()}
           data-testid="create-account-link"
-          className="flex items-center justify-center gap-2 rounded-xl border border-sky-300/30 bg-sky-300/10 px-3.5 py-2 text-sm font-bold text-sky-300 no-underline hover:bg-sky-300/15 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+          className={`flex items-center justify-center gap-2 rounded-xl border border-sky-300/30 bg-sky-300/10 px-2 py-1.5 text-sky-300 no-underline hover:bg-sky-300/15 ${focus}`}
         >
-          <UserPlus aria-hidden="true" className="h-4 w-4" /> Free account: unlock more options
+          <UserPlus aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <span className="text-left leading-tight">
+            <span className="block text-[13px] font-bold">Free account</span>
+            <span className="block text-[11px] font-semibold opacity-80">unlocks more options</span>
+          </span>
         </a>
-      )}
-      <a
-        href="/pricing"
-        data-testid="get-premium-link"
-        className="flex items-center justify-center gap-2 rounded-xl border border-amber-300/30 bg-amber-300/10 px-3.5 py-2 text-sm font-bold text-amber-300 no-underline hover:bg-amber-300/15 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
-      >
-        <Crown aria-hidden="true" className="h-4 w-4" /> Get Premium: unlock every option
-      </a>
-    </div>
+        <a
+          href="/pricing"
+          data-testid="get-premium-link"
+          className={`flex items-center justify-center gap-2 rounded-xl border border-amber-300/30 bg-amber-300/10 px-2 py-1.5 text-amber-300 no-underline hover:bg-amber-300/15 ${focus}`}
+        >
+          <Crown aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <span className="text-left leading-tight">
+            <span className="block text-[13px] font-bold">Get Premium</span>
+            <span className="block text-[11px] font-semibold opacity-80">unlocks every option</span>
+          </span>
+        </a>
+      </div>
+    );
+  }
+  return (
+    <a
+      href="/pricing"
+      data-testid="get-premium-link"
+      className={`flex items-center justify-center gap-2 rounded-xl border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-[13px] font-bold text-amber-300 no-underline hover:bg-amber-300/15 ${focus}`}
+    >
+      <Crown aria-hidden="true" className="h-4 w-4" /> Get Premium: unlock every option
+    </a>
   );
 }
