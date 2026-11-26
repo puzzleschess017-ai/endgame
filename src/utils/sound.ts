@@ -1,14 +1,14 @@
 /**
- * Sounds of the site, made with the Web Audio API (no audio files), in two styles: "pop"
- * (soft, round pops) and "electronic" (short blips).
+ * Sounds of the site, in three styles: "board" (recordings of a piece on a board, for move, capture and
+ * check), "pop" (soft, round pops made with the Web Audio API) and "electronic" (short blips, also made with it).
  * Volume, mute and style are one setting for the whole site, saved in the browser, and read by
  * `useSoundSettings` for the sound menu.
  */
 
 export type SoundType = 'move' | 'capture' | 'check' | 'error' | 'success';
 
-export type SoundStyle = 'pop' | 'electronic';
-export const SOUND_STYLES: readonly SoundStyle[] = ['pop', 'electronic'];
+export type SoundStyle = 'board' | 'pop' | 'electronic';
+export const SOUND_STYLES: readonly SoundStyle[] = ['board', 'pop', 'electronic'];
 
 export interface SoundSettings {
   /** 0 (silent) to 1. */
@@ -73,6 +73,7 @@ export function setSoundSettings(patch: Partial<SoundSettings>): void {
   } catch {
     // Storage full or blocked: the setting still works until the page is closed.
   }
+  if (settings.style === 'board') void loadBoardSounds();
   listeners.forEach((listener) => listener());
 }
 
@@ -105,6 +106,7 @@ function getAudioContext(): AudioContext | null {
 /** Plays a sound in the saved style and volume, unless the site is muted. */
 export function playMoveSound(type: SoundType): void {
   if (isSilent(settings)) return;
+  if (settings.style === 'board') void loadBoardSounds();
   const ctx = getAudioContext();
   if (!ctx) return;
   scheduleSound(ctx, ctx.destination, type, ctx.currentTime, volumeToGain(settings.volume), settings.style);
@@ -114,6 +116,7 @@ export function playMoveSound(type: SoundType): void {
 export function playSoundPreview(): void {
   const ctx = getAudioContext();
   if (!ctx) return;
+  if (settings.style === 'board') void loadBoardSounds();
   const gain = volumeToGain(settings.volume > 0 ? settings.volume : DEFAULT_SOUND_SETTINGS.volume);
   scheduleSound(ctx, ctx.destination, 'move', ctx.currentTime, gain, settings.style);
 }
@@ -131,10 +134,53 @@ export function scheduleSound(
   style: SoundStyle = 'electronic',
 ): void {
   const master = ctx.createGain();
-  master.gain.setValueAtTime(style === 'pop' ? level * POP_GAIN : level, when);
+  const buffer = style === 'board' ? boardBuffers[type] : undefined;
+  // The recordings are louder than the synthesized sounds, so each source has its own gain.
+  const gain = buffer ? BOARD_GAIN : style === 'electronic' ? 1 : POP_GAIN;
+  master.gain.setValueAtTime(level * gain, when);
   master.connect(destination);
-  if (style === 'pop') pops(ctx, master, type, when);
+  if (buffer) {
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(master);
+    source.start(when);
+  } else if (style !== 'electronic') pops(ctx, master, type, when);
   else blip(ctx, master, type, when);
+}
+
+/** Recordings for the "board" style (move, capture, check); error and success use the pop sounds. */
+const BOARD_SOUND_URLS: Partial<Record<SoundType, string>> = {
+  move: '/sounds/board/move.mp3',
+  capture: '/sounds/board/capture.mp3',
+  check: '/sounds/board/check.mp3',
+};
+/** The recordings are loud (peak about -2 dB): this brings them to the level of the other styles. */
+const BOARD_GAIN = 0.25;
+
+const boardBuffers: Partial<Record<SoundType, AudioBuffer>> = {};
+let boardLoading: Promise<void> | null = null;
+
+/** Fetches and decodes the recordings once. Until they are ready the board style plays the pop sounds. */
+export function loadBoardSounds(): Promise<void> {
+  if (boardLoading) return boardLoading;
+  if (typeof window === 'undefined' || typeof fetch === 'undefined' || typeof OfflineAudioContext === 'undefined') {
+    return Promise.resolve();
+  }
+  // An offline context decodes without needing a click first, and its buffers play on the normal context.
+  const decoder = new OfflineAudioContext(1, 1, 44100);
+  boardLoading = Promise.all(
+    (Object.entries(BOARD_SOUND_URLS) as [SoundType, string][]).map(async ([type, url]) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Could not load ${url}`);
+      boardBuffers[type] = await decoder.decodeAudioData(await response.arrayBuffer());
+    }),
+  ).then(
+    () => undefined,
+    () => {
+      boardLoading = null; // try again the next time a sound is played
+    },
+  );
+  return boardLoading;
 }
 
 /** Gain of the "pop" style: its tones last longer than the blips, so they get less gain for the same loudness. */
@@ -225,3 +271,6 @@ function blip(ctx: BaseAudioContext, out: AudioNode, type: SoundType, now: numbe
     osc.stop(now + 0.23);
   }
 }
+
+// Whoever chose the board style gets the recordings ready before the first move.
+if (settings.style === 'board') void loadBoardSounds();

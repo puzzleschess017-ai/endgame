@@ -24,6 +24,10 @@ test('the old "classic" style name becomes pop', () => {
   assert.equal(parseSoundSettings(JSON.stringify({ volume: 0.4, style: 'classic' })).style, 'pop');
 });
 
+test('the board style is a saved style', () => {
+  assert.equal(parseSoundSettings(JSON.stringify({ style: 'board' })).style, 'board');
+});
+
 test('settings saved without a style, or with an unknown one, get the default style', () => {
   assert.equal(parseSoundSettings(JSON.stringify({ volume: 0.3, muted: true })).style, 'electronic');
   assert.equal(parseSoundSettings(JSON.stringify({ volume: 0.3, style: 'tuba' })).style, 'electronic');
