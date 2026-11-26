@@ -1,7 +1,7 @@
 // Choices a visitor may not use yet: they stay visible with a small lock, and clicking one says
 // what to do (sign in, or Premium). The rules themselves live in src/utils/access.ts.
 import { useState } from 'react';
-import { Crown, Lock } from 'lucide-react';
+import { Crown, Lock, UserPlus } from 'lucide-react';
 import { unlockHint, type Tier } from '../utils/access';
 
 export interface LockNotice {
@@ -39,10 +39,18 @@ export function LockMark() {
 /** Extra classes of a locked choice. */
 export const LOCKED_CLASS = 'relative opacity-55';
 
+function currentPath(): string {
+  return typeof window === 'undefined' ? '/' : window.location.pathname;
+}
+
 /** "Sign in" link that comes back to the current page afterwards. */
 function signInHref(): string {
-  const path = typeof window === 'undefined' ? '/' : window.location.pathname;
-  return `/login?next=${encodeURIComponent(path)}`;
+  return `/login?next=${encodeURIComponent(currentPath())}`;
+}
+
+/** "Create an account" link (the sign-up tab) that comes back to the current page afterwards. */
+function signUpHref(): string {
+  return `/login?tab=signup&next=${encodeURIComponent(currentPath())}`;
 }
 
 /** The message under the choices after a click on a locked one. */
@@ -78,18 +86,30 @@ export function UnlockNotice({ notice }: { notice: LockNotice | null }) {
 }
 
 /**
- * A small "Get Premium" link to the Pricing tab, shown under the settings of Woodpecker and Blindfold to everybody
- * who does not have Premium yet (it is not shown to a Premium account).
+ * The links under the settings of Woodpecker and Blindfold, so nobody thinks every locked choice needs Premium:
+ * a guest is first told that a free account opens some of them, and everybody without Premium gets a small
+ * "Get Premium" link to the Pricing tab for the rest. A Premium account sees nothing.
  */
-export function GetPremiumLink({ tier }: { tier: Tier }) {
+export function UnlockLinks({ tier }: { tier: Tier }) {
   if (tier === 'premium') return null;
   return (
-    <a
-      href="/pricing"
-      data-testid="get-premium-link"
-      className="flex items-center justify-center gap-2 rounded-xl border border-amber-300/30 bg-amber-300/10 px-3.5 py-2 text-sm font-bold text-amber-300 no-underline hover:bg-amber-300/15 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
-    >
-      <Crown aria-hidden="true" className="h-4 w-4" /> Get Premium: unlock every option
-    </a>
+    <div className="flex flex-col gap-2">
+      {tier === 'guest' && (
+        <a
+          href={signUpHref()}
+          data-testid="create-account-link"
+          className="flex items-center justify-center gap-2 rounded-xl border border-[#39ff88]/30 bg-[#39ff88]/10 px-3.5 py-2 text-sm font-bold text-[#39ff88] no-underline hover:bg-[#39ff88]/15 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+        >
+          <UserPlus aria-hidden="true" className="h-4 w-4" /> Free account: unlock more options
+        </a>
+      )}
+      <a
+        href="/pricing"
+        data-testid="get-premium-link"
+        className="flex items-center justify-center gap-2 rounded-xl border border-amber-300/30 bg-amber-300/10 px-3.5 py-2 text-sm font-bold text-amber-300 no-underline hover:bg-amber-300/15 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+      >
+        <Crown aria-hidden="true" className="h-4 w-4" /> Get Premium: unlock every option
+      </a>
+    </div>
   );
 }
