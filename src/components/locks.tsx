@@ -89,16 +89,17 @@ export function UnlockNotice({ notice }: { notice: LockNotice | null }) {
  * The links under the settings of Woodpecker and Blindfold, so nobody thinks every locked choice needs Premium:
  * a guest is first told that a free account opens some of them, and everybody without Premium gets a small
  * "Get Premium" link to the Pricing tab for the rest. A Premium account sees nothing.
+ * `accountLink` is false where the page already has its own "create an account" button for guests (Blindfold).
  */
-export function UnlockLinks({ tier }: { tier: Tier }) {
+export function UnlockLinks({ tier, accountLink = true }: { tier: Tier; accountLink?: boolean }) {
   if (tier === 'premium') return null;
   return (
     <div className="flex flex-col gap-2">
-      {tier === 'guest' && (
+      {tier === 'guest' && accountLink && (
         <a
           href={signUpHref()}
           data-testid="create-account-link"
-          className="flex items-center justify-center gap-2 rounded-xl border border-[#39ff88]/30 bg-[#39ff88]/10 px-3.5 py-2 text-sm font-bold text-[#39ff88] no-underline hover:bg-[#39ff88]/15 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+          className="flex items-center justify-center gap-2 rounded-xl border border-sky-300/30 bg-sky-300/10 px-3.5 py-2 text-sm font-bold text-sky-300 no-underline hover:bg-sky-300/15 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
         >
           <UserPlus aria-hidden="true" className="h-4 w-4" /> Free account: unlock more options
         </a>

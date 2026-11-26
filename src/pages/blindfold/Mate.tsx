@@ -407,7 +407,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
               </div>
 
               <UnlockNotice notice={locks.notice} />
-              <UnlockLinks tier={tier} />
+              <UnlockLinks tier={tier} accountLink={false} />
 
               {error && (
                 <div
