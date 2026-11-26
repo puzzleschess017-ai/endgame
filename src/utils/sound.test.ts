@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import { existsSync, statSync } from 'node:fs';
 import { test } from 'node:test';
 import {
+  BOARD_SOUND_URLS,
   DEFAULT_SOUND_SETTINGS,
   getSoundSettings,
   isSilent,
@@ -74,4 +76,13 @@ test('setSoundSettings changes only what it is given, validates it and tells the
   stop();
   setSoundSettings({ muted: false, volume: 0.5 });
   assert.equal(calls, 5);
+});
+
+test('the board style has a recording for move, capture, check and success, and each file is small and exists', () => {
+  assert.deepEqual(Object.keys(BOARD_SOUND_URLS).sort(), ['capture', 'check', 'move', 'success']);
+  for (const url of Object.values(BOARD_SOUND_URLS)) {
+    const file = new URL(`../../public${url}`, import.meta.url);
+    assert.ok(existsSync(file), `${url} is missing from public/`);
+    assert.ok(statSync(file).size < 30_000, `${url} should stay small: it is loaded before the first move`);
+  }
 });
