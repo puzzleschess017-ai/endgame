@@ -89,6 +89,11 @@ export default function App() {
     if (!checkWoodpecker(tier, config).ok) setConfig(defaultWoodpecker(tier));
   }, [tier, config]);
 
+  // The tab title: the server writes it for the first page load, and a click from another page does not load it again.
+  useEffect(() => {
+    document.title = 'Woodpecker Method: Chess Endgame Training | Chess Tactics Guide';
+  }, []);
+
   // Persist the session whenever it changes and on beforeunload (the appearance saves itself).
   useEffect(() => {
     saveSessionToStorage(session);

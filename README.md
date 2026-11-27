@@ -202,6 +202,15 @@ of the page asked for and `<link rel="prefetch">` for the files of all the other
 parallel with the main bundle and the next tab is already in the cache. **A new page needs a line in `ROUTE_SOURCES`**
 (`server/preload.ts`); `server/preload.test.ts` compares the table with `src/main.tsx`.
 
+A click on a link to another page of the app does not load the site again: `src/main.tsx` handles it (`internalTarget` in
+`src/utils/navigation.ts` decides which clicks are its own: not a new tab, a download, another site, `/api/...` or the
+redirected `/tablebase`), changes the address with `history.pushState` and mounts the new page from scratch inside a React
+transition, so the old page stays on the screen until the new one and its files are ready (no blank screen between tabs).
+Consequences for a page: it must set its own `document.title` in an effect (the server writes the title only for the first
+load), read `window.location` when it mounts (it is mounted again for every address, query included) and clean up its
+listeners, timers and workers when it unmounts. A page file that cannot be loaded (a tab left open over a deploy) makes the
+site reload once. A new page needs its line in `PAGES` of `src/main.tsx` and nothing else.
+
 ### About, Privacy, Contact and cookies
 
 To add an endgame lesson: add an object to `LESSONS` in `src/theory/endgames.ts` (check every position in the Lichess
