@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import AccessGate, { useGateOpen } from './AccessGate';
 import CookieBanner from './CookieBanner';
 import SiteLinks from './SiteLinks';
-import Sidebar, { AccountControls } from './Sidebar';
+import Sidebar, { AccountControls, currentPath } from './Sidebar';
+import SignUpPrompt from './SignUpPrompt';
 import ProfileMenu from './ProfileMenu';
 import SoundMenu from './SoundMenu';
 
@@ -21,6 +22,7 @@ interface AppShellProps {
  */
 export default function AppShell({ username, heading, hideAccountBar = false, children }: AppShellProps) {
   const gateOpen = useGateOpen();
+  const path = currentPath();
   return (
     <div className="min-h-screen app-bg text-white xl:flex">
       <Sidebar username={username} />
@@ -28,12 +30,15 @@ export default function AppShell({ username, heading, hideAccountBar = false, ch
         {/* On big screens the account buttons sit at the top right of the page (on small screens they are in the top bar). */}
         <div className={`${hideAccountBar && !heading ? 'hidden' : 'hidden xl:flex'} items-center justify-between gap-4 ${heading ? 'mb-11' : 'mb-2'} min-h-10`} data-testid="topright">
           <div className="min-w-0">{heading}</div>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            <SignUpPrompt path={path} />
             <ProfileMenu guestName={username} align="right" />
             <AccountControls />
             <SoundMenu />
           </div>
         </div>
+        {/* On small screens (where the account buttons are in the top bar) the button gets a row of its own. */}
+        <SignUpPrompt path={path} className="xl:hidden ml-auto mb-4 w-fit" />
         {heading && <div className="xl:hidden mb-6">{heading}</div>}
         {children}
         <SiteLinks className="flex mt-10 pt-3 border-t border-white/10" />
