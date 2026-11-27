@@ -136,6 +136,11 @@ PUZZLES, TRAINING, TOOLS (Board Editor, Board Analysis) and PROGRESS that can be
 on smaller screens it is a bar on top of the page with one scrolling row. Every page sits inside
 `AppShell.tsx`, so the menu never moves. Each entry has a coloured icon.
 
+A guest sees a green, shining **Create account** button at the top right of the training pages, the tools and the whole library
+(`SignUpPrompt.tsx`; the pages are listed in `src/utils/signup.ts`, with a test). It opens the sign-up tab of the login page and
+comes back to the same page afterwards. On a phone it is a row of its own above the page. Home, Blindfold, Pricing, Statistics and
+the legal pages do not have it. Someone signed in never sees it.
+
 Home and Statistics read the browser's data only:
 `ctg_activity_v1` holds one total per day (sessions, time, answers, puzzles; the last 400 days) and
 feeds the tiles and charts, it starts empty the first time the site is opened after this feature;
