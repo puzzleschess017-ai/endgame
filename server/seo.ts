@@ -479,7 +479,8 @@ function jsonLd(page: PageMeta, siteUrl: string): string {
  * `content` is the text of the page (see prerender.ts): it goes into the empty root element, which the app
  * replaces when it starts.
  */
-export function renderPage(template: string, page: PageMeta | undefined, siteUrl: string, content?: string): string {
+/** `head` is extra markup for the end of the head (the preload links of server/preload.ts). */
+export function renderPage(template: string, page: PageMeta | undefined, siteUrl: string, content?: string, head?: string): string {
   const title = escapeHtml(page ? page.title : UNKNOWN_TITLE);
   const description = escapeHtml(page ? page.description : 'This page does not exist.');
   const url = page ? siteUrl + (page.path === '/' ? '/' : page.path) : null;
@@ -501,6 +502,7 @@ export function renderPage(template: string, page: PageMeta | undefined, siteUrl
     `<meta name="twitter:description" content="${description}" />`,
     `<meta name="twitter:image" content="${image}" />`,
     page && page.indexable ? `<script type="application/ld+json">${jsonLd(page, siteUrl)}</script>` : '',
+    head ?? '',
   ]
     .filter(Boolean)
     .join('\n    ');

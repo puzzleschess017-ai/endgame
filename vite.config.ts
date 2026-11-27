@@ -28,6 +28,11 @@ export default defineConfig(() => {
         },
       },
     ],
+    build: {
+      // dist/.vite/manifest.json lists the files of every page, so the server can tell the browser to load the
+      // chunk of the page it asks for together with the main bundle (server/preload.ts).
+      manifest: true,
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
