@@ -1,9 +1,9 @@
 // The comparison table of the Pricing page: what a guest, a free account and Premium get. Every row is worked out from
 // the same rules the browser and the server use (src/utils/access.ts), so the table cannot say something else than the
 // site does when a limit changes.
-import { ACCESS, getsEbooksFree, TIERS, type Tier } from './access';
-import { levelDescription } from './blindfold';
-import { drillLabel, drillLimitLabel, DRILL_KINDS } from './drills';
+import { ACCESS, getsEbooksFree, TIERS, type Tier } from './access.ts';
+import { levelDescription } from './blindfold.ts';
+import { drillLabel, drillLimitLabel, DRILL_KINDS } from './drills.ts';
 
 /** One cell: text, a tick (true) or "not included" (false). */
 export type Cell = string | boolean;
