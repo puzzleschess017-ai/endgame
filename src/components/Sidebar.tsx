@@ -16,6 +16,7 @@ import {
   LogOut,
   PencilLine,
   Repeat,
+  Swords,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../auth';
@@ -149,6 +150,14 @@ export const NAV_GROUPS: NavGroup[] = [
         chipClass: 'bg-orange-400/15',
       },
       {
+        id: 'tactics',
+        href: '/tactics',
+        label: 'Tactics Theory',
+        icon: Swords,
+        iconClass: 'text-emerald-300',
+        chipClass: 'bg-emerald-400/15',
+      },
+      {
         id: 'ebooks',
         href: '/ebooks',
         label: 'eBooks',
@@ -181,12 +190,13 @@ export const NAV_ITEMS: NavItem[] = [HOME_ITEM, ...NAV_GROUPS.flatMap((g) => g.i
 
 export const COLLAPSED_STORAGE_KEY = 'ctg_sidebar_collapsed_v1';
 
-/** The theory entries stay marked on every lesson (/endgames/<name>, /openings/<name>). */
+/** The theory entries stay marked on every lesson (/endgames/<name>, /openings/<name>, /tactics/<name>). */
 function isActive(item: NavItem, path: string): boolean {
   return (
     item.href === path ||
     (item.id === 'theory' && path.startsWith('/endgames/')) ||
-    (item.id === 'openings' && path.startsWith('/openings/'))
+    (item.id === 'openings' && path.startsWith('/openings/')) ||
+    (item.id === 'tactics' && path.startsWith('/tactics/'))
   );
 }
 

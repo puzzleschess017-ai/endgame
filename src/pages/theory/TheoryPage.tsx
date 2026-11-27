@@ -16,6 +16,7 @@ const KIND_TEXT: Record<Lesson['kind'], string> = {
   Opening: 'An opening',
   Defence: 'A defence',
   Principles: 'The basics',
+  Tactic: 'A tactic',
 };
 
 function setTitle(title: string) {
@@ -126,6 +127,12 @@ function LessonView({ lesson, collection }: { lesson: Lesson; collection: Theory
             <BookOpen className="h-4 w-4" aria-hidden="true" />
             {lesson.practice.label}
           </a>
+          {collection.training?.map((link) => (
+            <a key={link.href} href={link.href} className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2 no-underline sm:w-auto`} data-testid="practise-training">
+              <Repeat className="h-4 w-4" aria-hidden="true" />
+              {link.label}
+            </a>
+          ))}
           {collection.woodpecker && (
             <a href="/woodpecker" className={`${SECONDARY_BUTTON_CLASS} relative flex items-center justify-center gap-2 no-underline sm:w-auto`} data-testid="practise-woodpecker">
               <Repeat className="h-4 w-4" aria-hidden="true" />

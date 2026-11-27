@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import fs from 'node:fs';
 import { LESSONS, lessonPath } from '../src/theory/endgames.ts';
 import { OPENING_LESSONS, openingPath } from '../src/theory/openings.ts';
+import { TACTICS_LESSONS, tacticPath } from '../src/theory/tactics.ts';
 import {
   PAGES,
   cleanSiteUrl,
@@ -136,6 +137,7 @@ describe('theory lessons', () => {
   const collections = [
     { name: 'endgame', base: '/endgames', lessons: LESSONS, pathFor: lessonPath },
     { name: 'opening', base: '/openings', lessons: OPENING_LESSONS, pathFor: openingPath },
+    { name: 'tactics', base: '/tactics', lessons: TACTICS_LESSONS, pathFor: tacticPath },
   ];
   for (const { name, base, lessons, pathFor } of collections) {
     it(`the title of a ${name} page is the title of the lesson and the site name`, () => {
@@ -165,7 +167,7 @@ describe('the sitemap dates', () => {
     const today = new Date().toISOString().slice(0, 10);
     for (const page of PAGES) {
       if (!page.lastmod) {
-        assert.ok(!page.path.startsWith('/endgames') && !page.path.startsWith('/openings'), `${page.path} has no lastmod`);
+        assert.ok(!['/endgames', '/openings', '/tactics'].some((base) => page.path.startsWith(base)), `${page.path} has no lastmod`);
         continue;
       }
       assert.match(page.lastmod, /^\d{4}-\d{2}-\d{2}$/, page.path);

@@ -30,6 +30,7 @@ export const ROUTE_SOURCES: Record<string, string> = {
   '/login': 'src/pages/LoginPage.tsx',
   '/endgames': 'src/pages/theory/EndgameTheoryPage.tsx',
   '/openings': 'src/pages/theory/OpeningTheoryPage.tsx',
+  '/tactics': 'src/pages/theory/TacticsTheoryPage.tsx',
   '/ebooks': 'src/pages/EbooksPage.tsx',
   '/pricing': 'src/pages/PricingPage.tsx',
   '/about': 'src/pages/legal/AboutPage.tsx',
@@ -40,7 +41,7 @@ export const ROUTE_SOURCES: Record<string, string> = {
 };
 
 /** A lesson (/endgames/<name>) is shown by the page of its index. */
-const LESSON_BASES = ['/endgames', '/openings'];
+const LESSON_BASES = ['/endgames', '/openings', '/tactics'];
 
 /** The manifest of the build, or undefined when there is none (the dev server, an old build). */
 export function readManifest(distDir: string): Manifest | undefined {

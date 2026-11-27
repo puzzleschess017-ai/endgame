@@ -101,6 +101,7 @@ a dependency, run `bun install` and commit `bun.lock` together with
 | `/analysis` | Board Analysis: play on the board, step through the game (buttons, arrow keys, Home/End), load a FEN, import and copy a PGN (both sit under the board and are always visible, not in the scrolling panel). It opens on the starting position. `?fen=...` starts from a position and `?pgn=...` from a line of moves (the opening lessons use it). **Check with engine** (needs an account; a guest sees it locked, Premium is not needed): a switch that runs Stockfish in the browser on the position of the board and shows the score for White, a bar, the three best lines (click one to play its first move) and an arrow for the best move; it works for any number of pieces (see *Chess engine* below). The old address `/tablebase` redirects here (301, the `?fen=` is kept) |
 | `/endgames` | Endgame theory: an index of lessons and one page per lesson (`/endgames/lucena-position`, `philidor-position`, `king-and-pawn-opposition`, `king-and-rook-vs-king`, `king-and-queen-vs-king`, `wrong-colored-bishop`, `rule-of-the-square`, `queen-vs-pawn-on-the-seventh`, `bishop-and-knight-mate`, `two-bishops-mate`, `two-knights-vs-king`, `stalemate-tricks`). The index shows the lessons as cards (with a small board) under the group headings of `groups` in each collection; a lesson names its group in `group`. The text, diagrams (FEN plus arrows) and the "Practise this" position of every lesson are in `src/theory/endgames.ts`; `src/components/DiagramBoard.tsx` draws a diagram as plain SVG with the piece images of `public/pieces`. The pages are public (no welcome window) and article pages in the sitemap. Practise opens the position in Board Analysis (`?fen=`) |
 | `/openings` | Opening theory, built like the endgame lessons from `src/theory/openings.ts` and the same page (`src/pages/theory/TheoryPage.tsx`): `italian-game`, `ruy-lopez`, `sicilian-defense`, `french-defense`, `caro-kann-defense`, `queens-gambit`, `scotch-game`, `scandinavian-defense`, `london-system`, `kings-indian-defense`, `nimzo-indian-defense`, `english-opening`. A lesson is written as lines of moves; the diagrams and the position of the Practise button are computed from them with chess.js, and Practise opens the whole line in Board Analysis (`?pgn=`), ready to step through |
+| `/tactics` | Tactics lessons from `src/theory/tactics.ts`, shown by the same page as the endgames and openings: `fork`, `pin`, `skewer`, `discovered-attack`, `double-check`, `deflection`, `attraction`, `zugzwang`, `back-rank-mate`, `smothered-mate`. Every diagram is a FEN (or a line of moves for a real game) that was checked with chess.js and Stockfish, and `src/theory/tactics.test.ts` plays the tactic of each lesson out (the mates are mates, the queen is really lost). The Practise box opens the position in Board Analysis and links to Puzzle Streak and Puzzle Survival (`training` in the collection) |
 
 Every path is served by the same app (`main.tsx` picks the page from the URL). Logic that can be
 tested without a browser lives in `src/utils/`; run all its tests with
@@ -181,7 +182,7 @@ serves `/robots.txt` and `/sitemap.xml` (the indexable pages). `/statistics` is 
 sitemap. **A new page needs one entry in `PAGES`** (plus its route in `src/main.tsx`). Descriptions
 should stay 50-170 characters and titles under 70; `server/seo.test.ts` checks that.
 
-The theory pages (`/endgames`, `/openings` and every lesson) also get their text in the HTML: `server/prerender.ts`
+The theory pages (`/endgames`, `/openings`, `/tactics` and every lesson) also get their text in the HTML: `server/prerender.ts`
 builds the headings, paragraphs, lists and links of the lesson from `src/theory` and the server writes it into the
 empty `<div id="root">`, so a crawler that has not run the JavaScript yet still reads the lesson. The app replaces it
 when it starts. A visitor with JavaScript never sees it: `index.html` adds a `js` class to `<html>` in the head and hides
@@ -209,6 +210,7 @@ stalemate and mate diagrams are real). To add an opening lesson, add an object t
 `src/theory/openings.ts` and write its diagrams and practice line as moves (`board('1. e4 e5 ...', caption)`), so an
 illegal move fails the test. Both kinds also need an entry in `PAGES` of `server/seo.ts` with the same title (`<lesson title> | Chess Tactics Guide`)
 and a description of at least 100 characters; a test fails if one of the two is missing.
+To add a tactics lesson, add it to `TACTICS_LESSONS` in `src/theory/tactics.ts` the same way (two or three diagrams as FENs, about 400-650 words), check the position with chess.js and Stockfish, and add a test for its tactic to `src/theory/tactics.test.ts`.
 
 `/about`, `/privacy` and `/contact` live in `src/pages/legal/` (shared frame: `LegalLayout`). They are never covered
 by the welcome window (`isInfoPath` in `src/site.ts`). The contact e-mail address is `CONTACT_EMAIL` in
