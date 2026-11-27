@@ -49,3 +49,13 @@ test('the prices come last, and not for someone who has Premium', () => {
   assert.match(html, /\$4\.99/);
   assert.doesNotMatch(renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: true, premium: true })), /welcome-premium/);
 });
+
+test('between the introduction and the prices come the Woodpecker, Blindfold and free books texts', () => {
+  const html = renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: false, premium: false }));
+  const at = (needle: string) => html.indexOf(needle);
+  assert.ok(at('data-testid="welcome-start"') < at('data-testid="welcome-guides"'));
+  assert.ok(at('data-testid="welcome-guides"') < at('data-testid="welcome-premium"'));
+  for (const text of ['The Woodpecker Method', 'Blindfold training', 'Free chess books']) assert.match(html, new RegExp(text));
+  // Someone with Premium has no prices to see, but still reads about the training.
+  assert.match(renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: true, premium: true })), /welcome-guides/);
+});
