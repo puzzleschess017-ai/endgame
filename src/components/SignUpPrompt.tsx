@@ -12,9 +12,9 @@ export default function SignUpPrompt({ path, className = '' }: { path: string; c
       href={signUpHref(path)}
       data-testid="topbar-signup"
       title="Free: your results and settings follow you to every device"
-      className={`btn-shine flex items-center justify-center gap-2 shrink-0 min-h-[40px] px-4 rounded-xl bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] text-sm font-bold whitespace-nowrap no-underline shadow-[0_6px_20px_rgba(57,255,136,0.22)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88] ${className}`}
+      className={`btn-shine flex items-center justify-center gap-1.5 shrink-0 min-h-[34px] px-3 rounded-lg bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] text-[13px] font-bold whitespace-nowrap no-underline shadow-[0_6px_20px_rgba(57,255,136,0.22)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88] ${className}`}
     >
-      <UserPlus className="w-4 h-4" aria-hidden="true" />
+      <UserPlus className="w-3.5 h-3.5" aria-hidden="true" />
       Create account
     </a>
   );
