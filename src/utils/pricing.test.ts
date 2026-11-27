@@ -45,11 +45,10 @@ describe('pricing table', () => {
     assert.equal(find(/^Mate in/).premium, 'Up to 3 moves');
     assert.equal(find(/Timed drills/).premium, '1 minute or No time limit');
   });
-  it('the account rows: sync and the engine need an account, e-books need Premium', () => {
+  it('the account rows: sync needs an account, e-books need Premium, the engine is not a perk (it is free for everybody)', () => {
     const sync = find(/saved to your account/);
     assert.deepEqual([sync.guest, sync.free, sync.premium], [false, true, true]);
-    const engine = find(/engine/);
-    assert.deepEqual([engine.guest, engine.free, engine.premium], [false, true, true]);
+    assert.ok(!pricingGroups().some((group) => group.rows.some((r) => /engine/i.test(r.label))), 'no pricing row for the engine');
     const books = find(/e-book/);
     assert.deepEqual([books.guest, books.free, books.premium], [false, false, true]);
   });

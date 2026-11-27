@@ -244,8 +244,7 @@ sets the guest choice, so they land on Home as a guest and the window does not c
 | Blindfold mate in 2 and 3 | locked | locked | yes |
 | Blindfold drills | page visible, every choice locked | square colours | all ten: also Check or not, Attacked or not, diagonals, knight routes, Moves needed, Count the squares, Square and opposition, Follow the moves and Rebuild position |
 | Blindfold drills, no time limit | locked | locked | yes |
-| Board Analysis, Check with engine | locked (sign in to unlock) | yes | yes |
-| Streak, Survival, Coordinates, Board Editor, Board Analysis (without the engine), Statistics | yes | yes | yes |
+| Streak, Survival, Coordinates, Board Editor, Board Analysis with Check with engine, Statistics | yes | yes | yes |
 
 Choices a visitor may not use stay visible with a small lock; clicking one says to sign in or that it is
 Premium (`src/components/locks.tsx`). A guest who opens Blindfold sees the same page as everybody, with every choice locked and "Create a free account to play" instead of Start. The server checks the rest: `/api/puzzles/sample` (type, difficulty, number of puzzles) and
@@ -291,15 +290,15 @@ browser only and are lost if site data is cleared.
 The engine is Stockfish compiled to WebAssembly, run in a Web Worker in the visitor's browser (no server cost, nothing
 is sent anywhere). Code: `src/engine/` (`uci.ts` reads the engine's answers, `client.ts` talks to the worker one search
 at a time, `files.ts` picks the build, `fakeEngine.ts` is a pretend engine for tests), `src/hooks/useEngine.ts` and
-`src/components/EnginePanel.tsx`. The switch is Premium (`tier === 'premium'` in the browser: the engine runs on the
-visitor's computer, so this is a lock on the page, not a server-side protection). The files are downloaded only the first
+`src/components/EnginePanel.tsx`. The switch is free for everybody, guests included (`ENGINE_TIER = 'guest'` in `src/utils/access.ts`; the engine runs on the
+visitor's computer, so a tier limit would only be a lock on the page, not a server-side protection). The files are downloaded only the first
 time the switch is turned on.
 
 **Setting it up.** The site serves the engine from `/engine/` (folder `public/engine`, not in git). `npm install` and
 `npm run build` run `scripts/copy-engine.mjs`, which copies the light single-thread build (and writes
 `public/engine/manifest.json`) out of the `stockfish` npm package. The package has to be added once with
 `npm install stockfish`, and `package.json` and `package-lock.json` committed. Until then the script only prints a note,
-and "Check with engine" tells a Premium visitor that the engine is not installed on the server. The light build is used
+and "Check with engine" tells the visitor that the engine is not installed on the server. The light build is used
 because it is small (a few MB) and needs no special server headers (several threads would need cross-origin isolation,
 which can break analytics and images from other sites). The search depth is `ENGINE_DEPTH` in `useEngine.ts`.
 

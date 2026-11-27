@@ -1,7 +1,7 @@
 // The comparison table of the Pricing page: what a guest, a free account and Premium get. Every row is worked out from
 // the same rules the browser and the server use (src/utils/access.ts), so the table cannot say something else than the
 // site does when a limit changes.
-import { ACCESS, canUseEngine, getsEbooksFree, TIERS, type Tier } from './access';
+import { ACCESS, getsEbooksFree, TIERS, type Tier } from './access';
 import { levelDescription } from './blindfold';
 import { drillLabel, drillLimitLabel, DRILL_KINDS } from './drills';
 
@@ -48,7 +48,6 @@ export function pricingGroups(): PricingGroup[] {
       title: 'Your account',
       rows: [
         row('Results saved to your account on every device', (tier) => tier !== 'guest'),
-        row('“Check with engine” in Board Analysis', canUseEngine),
         row('Every e-book to download', getsEbooksFree),
       ],
     },
