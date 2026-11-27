@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { LESSONS, lessonPath } from '../src/theory/endgames.ts';
 import { OPENING_LESSONS, openingPath } from '../src/theory/openings.ts';
+import { TACTICS_LESSONS, tacticPath } from '../src/theory/tactics.ts';
 import { contentFor } from './prerender.ts';
 import { EBOOKS } from '../src/utils/ebooks.ts';
 import { PREMIUM_MONTHLY_LABEL, PREMIUM_YEARLY_LABEL } from '../src/utils/premium.ts';
@@ -36,6 +37,17 @@ describe('theory pages written into the HTML', () => {
     for (const lesson of LESSONS) assert.ok(endgames.includes(`href="${lessonPath(lesson.slug)}"`), lesson.slug);
     const openings = contentFor('/openings/')!;
     for (const lesson of OPENING_LESSONS) assert.ok(openings.includes(`href="${openingPath(lesson.slug)}"`), lesson.slug);
+    const tactics = contentFor('/tactics')!;
+    for (const lesson of TACTICS_LESSONS) assert.ok(tactics.includes(`href="${tacticPath(lesson.slug)}"`), lesson.slug);
+  });
+  it('a tactics lesson has its text and links to the puzzle modes it trains', () => {
+    for (const lesson of TACTICS_LESSONS) {
+      const html = contentFor(tacticPath(lesson.slug))!;
+      assert.ok(html.includes(`<h1>${escapeHtml(lesson.title)}</h1>`), lesson.slug);
+      for (const section of lesson.sections) assert.ok(html.includes(`<h2>${escapeHtml(section.heading)}</h2>`), `${lesson.slug}: ${section.heading}`);
+      for (const slug of lesson.related) assert.ok(html.includes(`href="${tacticPath(slug)}"`), `${lesson.slug} -> ${slug}`);
+      assert.ok(html.includes('href="/streak"') && html.includes('href="/survival"'), lesson.slug);
+    }
   });
   it('personal pages and unknown lessons have no text of their own', () => {
     assert.equal(contentFor('/statistics'), undefined);

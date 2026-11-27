@@ -1,19 +1,20 @@
 // The text of the pages, written into the HTML the server sends. The app builds its pages in the
 // browser, and a search engine that has not run the JavaScript yet (or does not run it) would only see the
-// short intro of index.html. So for /endgames, /openings and every lesson the server writes the
+// short intro of index.html. So for /endgames, /openings, /tactics and every lesson the server writes the
 // headings and paragraphs of the lesson into the page, and every training page, the eBooks and the Pricing
 // page get a short description of what they are, with links to the rest of the site. It is built from the same data as the real page
 // (src/theory), so the two can not drift apart, and the app replaces it as soon as it starts.
 
 import { ENDGAMES } from '../src/theory/endgames.ts';
 import { OPENINGS } from '../src/theory/openings.ts';
+import { TACTICS } from '../src/theory/tactics.ts';
 import type { Lesson, Section, TheoryCollection } from '../src/theory/types.ts';
 import { EBOOKS } from '../src/utils/ebooks.ts';
 import { pricingGroups, type Cell } from '../src/utils/pricing.ts';
 import { PREMIUM_MONTHLY_LABEL, PREMIUM_YEARLY_LABEL, yearlySavingPercent } from '../src/utils/premium.ts';
 import { escapeHtml, PAGES, SITE_NAME } from './seo.ts';
 
-const COLLECTIONS: TheoryCollection[] = [ENDGAMES, OPENINGS];
+const COLLECTIONS: TheoryCollection[] = [ENDGAMES, OPENINGS, TACTICS];
 
 const WRAPPER_STYLE = 'max-width:720px;margin:0 auto;padding:24px;line-height:1.6';
 // The page's stylesheet resets headings and lists, so give the text a plain look for the moment before the
@@ -46,10 +47,11 @@ function lessonHtml(collection: TheoryCollection, lesson: Lesson): string {
     ...lesson.sections.map(sectionHtml),
   ];
   if (related.length) parts.push('<h2>Keep reading</h2>', linkList(collection, related));
+  const trainingLinks = (collection.training ?? []).map((link) => `<a href="${link.href}">${escapeHtml(link.label)}</a>`);
   parts.push(
     collection.woodpecker
       ? `<p>${escapeHtml(collection.practiceText)} <a href="/woodpecker">Woodpecker method: chess endgame training</a></p>`
-      : `<p>${escapeHtml(collection.practiceText)}</p>`,
+      : `<p>${escapeHtml(collection.practiceText)}${trainingLinks.length ? ` Train it with ${trainingLinks.join(' or ')}.` : ''}</p>`,
     `<p><a href="${collection.base}">${escapeHtml(collection.allLabel)}</a></p>`,
   );
   return parts.join('\n');
@@ -73,7 +75,7 @@ interface AppText {
 }
 
 /** The training pages in the order of the menu: the links on every one of them. */
-const SITE_LINKS = ['/woodpecker', '/streak', '/survival', '/coordinates', '/blindfold', '/analysis', '/editor', '/endgames', '/openings', '/ebooks', '/pricing'];
+const SITE_LINKS = ['/woodpecker', '/streak', '/survival', '/coordinates', '/blindfold', '/analysis', '/editor', '/endgames', '/openings', '/tactics', '/ebooks', '/pricing'];
 
 function cellText(cell: Cell): string {
   return cell === true ? 'yes' : cell === false ? 'no' : cell;

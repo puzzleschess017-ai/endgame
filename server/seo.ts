@@ -327,6 +327,105 @@ export const PAGES: PageMeta[] = [
     priority: 0.7,
   },
   {
+    path: '/tactics',
+    title: 'Chess Tactics: Lessons with Diagrams | Chess Tactics Guide',
+    description:
+      'Free chess tactics lessons with diagrams: fork, pin, skewer, discovered attack, double check, deflection, attraction, zugzwang and mating patterns.',
+    indexable: true,
+    kind: 'info',
+    priority: 0.8,
+  },
+  {
+    path: '/tactics/fork',
+    title: 'The Chess Fork: Attack Two Pieces at Once | Chess Tactics Guide',
+    description:
+      'The chess fork explained with diagrams: knight, queen and pawn forks, why a fork with check wins material, and how to spot and avoid forks.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/tactics/pin',
+    title: 'The Pin in Chess: Absolute and Relative Pins | Chess Tactics Guide',
+    description:
+      'Absolute and relative pins in chess with diagrams: how a pin works, examples from the Ruy Lopez and the Nimzo-Indian, and how to win a pinned piece.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/tactics/skewer',
+    title: 'The Skewer: Force the Big Piece to Move | Chess Tactics Guide',
+    description:
+      'The skewer in chess explained with diagrams: how it differs from a pin, a skewer against the king and against the queen, and how to find one.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/tactics/discovered-attack',
+    title: 'Discovered Attack: Two Threats in One Move | Chess Tactics Guide',
+    description:
+      'Discovered attacks and discovered checks with diagrams: how moving one piece opens a line for another, with a Petrov Defence trap that wins the queen.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/tactics/double-check',
+    title: 'Double Check: When Only the King Can Move | Chess Tactics Guide',
+    description:
+      'Double check in chess with diagrams: why only the king can move, how a double check leads to mate or wins the queen, and how to look for it.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/tactics/deflection',
+    title: 'Deflection: Lure a Defender Away | Chess Tactics Guide',
+    description:
+      'Deflection in chess with diagrams: lure a defender away with a sacrifice, from a back-rank trick to the queen sacrifice of Morphy\'s Opera Game.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/tactics/attraction',
+    title: 'Attraction (Decoy): Drag a Piece to a Bad Square | Chess Tactics Guide',
+    description:
+      'Attraction (decoy) in chess with diagrams: a sacrifice that drags the king to a bad square, with Légal\'s mate and a rook sacrifice that wins a queen.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/tactics/zugzwang',
+    title: 'Zugzwang: When Every Move Makes It Worse | Chess Tactics Guide',
+    description:
+      'Zugzwang explained with diagrams: why the same king and pawn position is a draw with one side to move and a win with the other, and where it appears.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/tactics/back-rank-mate',
+    title: 'Back-Rank Mate: Patterns and How to Avoid It | Chess Tactics Guide',
+    description:
+      'Back-rank mate in chess with diagrams: the pattern, how luft saves the king, how to give the mate with a rook or queen and how to avoid it.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
+    path: '/tactics/smothered-mate',
+    title: 'Smothered Mate: The Knight\'s Finishing Blow | Chess Tactics Guide',
+    description:
+      'The smothered mate in chess with diagrams: the knight\'s finishing blow, the pattern, a trap from the Blackburne Shilling Gambit and how to avoid it.',
+    indexable: true,
+    kind: 'article',
+    priority: 0.7,
+  },
+  {
     path: '/ebooks',
     title: 'Chess eBooks: The Queen’s Gambit and more | Chess Tactics Guide',
     description:
@@ -404,7 +503,7 @@ export const PAGES: PageMeta[] = [
 ];
 
 // The day the lessons (src/theory) last changed. One date for each collection: bump it when you edit a lesson.
-const THEORY_LASTMOD: Record<string, string> = { '/endgames': '2026-11-25', '/openings': '2026-11-26' };
+const THEORY_LASTMOD: Record<string, string> = { '/endgames': '2026-11-25', '/openings': '2026-11-26', '/tactics': '2026-11-27' };
 for (const page of PAGES) {
   const lastmod = THEORY_LASTMOD['/' + page.path.split('/')[1]];
   if (lastmod) page.lastmod = lastmod;

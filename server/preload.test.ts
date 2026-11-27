@@ -23,6 +23,7 @@ describe('the files of a page', () => {
   });
   it('a lesson uses the page of its index, Home and unknown paths have none', () => {
     assert.equal(routeSource('/endgames/lucena-position'), 'src/pages/theory/EndgameTheoryPage.tsx');
+    assert.equal(routeSource('/tactics/fork'), 'src/pages/theory/TacticsTheoryPage.tsx');
     assert.equal(routeSource('/streak/'), 'src/pages/StreakPage.tsx');
     assert.equal(routeSource('/'), undefined);
     assert.equal(routeSource('/nope'), undefined);

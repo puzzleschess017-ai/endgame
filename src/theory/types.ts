@@ -15,7 +15,7 @@ export interface Section {
   diagram?: Diagram;
 }
 
-export type LessonKind = 'Win' | 'Draw' | 'Technique' | 'Opening' | 'Defence' | 'Principles';
+export type LessonKind = 'Win' | 'Draw' | 'Technique' | 'Opening' | 'Defence' | 'Principles' | 'Tactic';
 
 export interface Lesson {
   slug: string;
@@ -38,7 +38,7 @@ export interface Lesson {
   related: string[];
 }
 
-/** A set of lessons with one index page: /endgames or /openings. */
+/** A set of lessons with one index page: /endgames, /openings or /tactics. */
 export interface TheoryCollection {
   base: string;
   /** "Endgame theory": the first words of the breadcrumb and the link back to the index. */
@@ -56,4 +56,6 @@ export interface TheoryCollection {
   practiceText: string;
   /** Endgame lessons also point to the Woodpecker endgame puzzles. */
   woodpecker: boolean;
+  /** Training pages the "practise this" box links to besides Board Analysis (tactics: the puzzle modes). */
+  training?: Array<{ href: string; label: string }>;
 }

@@ -35,6 +35,7 @@ const PAGES: Record<string, ComponentType> = {
   '/login': lazy(() => import('./pages/LoginPage.tsx')),
   '/endgames': lazy(() => import('./pages/theory/EndgameTheoryPage.tsx')),
   '/openings': lazy(() => import('./pages/theory/OpeningTheoryPage.tsx')),
+  '/tactics': lazy(() => import('./pages/theory/TacticsTheoryPage.tsx')),
   '/ebooks': lazy(() => import('./pages/EbooksPage.tsx')),
   '/pricing': lazy(() => import('./pages/PricingPage.tsx')),
   '/about': lazy(() => import('./pages/legal/AboutPage.tsx')),
@@ -47,10 +48,16 @@ const PAGES: Record<string, ComponentType> = {
 initConsent();  // Google Analytics is loaded only for a visitor who accepted cookies
 
 const path = window.location.pathname.replace(/\/+$/, '') || '/';
-// Every lesson (/endgames/<name>, /openings/<name>) is shown by the same page as its index. An unknown name shows the index too.
+// Every lesson (/endgames/<name>, /openings/<name>, /tactics/<name>) is shown by the same page as its index. An unknown name shows the index too.
 const Page =
   PAGES[path] ??
-  (path.startsWith('/endgames/') ? PAGES['/endgames'] : path.startsWith('/openings/') ? PAGES['/openings'] : HomePage);
+  (path.startsWith('/endgames/')
+    ? PAGES['/endgames']
+    : path.startsWith('/openings/')
+      ? PAGES['/openings']
+      : path.startsWith('/tactics/')
+        ? PAGES['/tactics']
+        : HomePage);
 
 createRoot(document.getElementById('root')!).render(
   <Suspense fallback={null}>
