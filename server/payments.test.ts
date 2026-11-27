@@ -3,11 +3,19 @@ import crypto from 'node:crypto';
 import { describe, it } from 'node:test';
 import {
   actionFor,
+  cancelSubscription,
+  cancelUserSubscription,
   createCheckout,
   createPaymentStore,
+  fetchSubscription,
   loadPaymentSettings,
+  NO_SUBSCRIPTION,
+  subscriptionOf,
+  subscriptionView,
   verifyWebhook,
   type CheckoutConfig,
+  type DodoApi,
+  type PaymentStore,
 } from './payments.ts';
 
 const USER = '3f8c2d5e-1a4b-4c6d-8e9f-0a1b2c3d4e5f';
@@ -119,7 +127,7 @@ describe('actionFor', () => {
     type,
     data: { payload_type: 'Subscription', subscription_id: 'sub_1', product_id: product, status, metadata: { user_id: USER }, ...extra },
   });
-  const on = { kind: 'set-tier', userId: USER, tier: 'premium' };
+  const on = { kind: 'set-tier', userId: USER, tier: 'premium', subscriptionId: 'sub_1' };
   const off = { kind: 'set-tier', userId: USER, tier: 'free' };
 
   it('the first payment of a Premium subscription, and each renewal, turn Premium on', () => {
@@ -128,6 +136,15 @@ describe('actionFor', () => {
     assert.deepEqual(actionFor(payment({ subscription_id: undefined, subscription_ids: ['sub_1'] }), PRODUCTS), on);
     // the id in capitals is still the same person
     assert.deepEqual(actionFor(payment({ metadata: { user_id: USER.toUpperCase() } }), PRODUCTS), on);
+  });
+  it('a Premium event carries the id of its subscription, so that the person can cancel it later', () => {
+    assert.equal((actionFor(payment(), PRODUCTS) as { subscriptionId?: string }).subscriptionId, 'sub_1');
+    assert.equal((actionFor(sub('active', { subscription_id: 'sub_2' }), PRODUCTS) as { subscriptionId?: string }).subscriptionId, 'sub_2');
+    // an id that is not an id is not saved, but Premium still turns on
+    const odd = actionFor(sub('active', { subscription_id: '../../x' }), PRODUCTS);
+    assert.deepEqual(odd, { kind: 'set-tier', userId: USER, tier: 'premium' });
+    // the end of a subscription carries no id: the one that was saved stays
+    assert.deepEqual(actionFor(sub('cancelled', {}, MONTHLY_ID, 'subscription.cancelled'), PRODUCTS), off);
   });
   it('Dodo sends product_cart as null for a checkout session: the offer in the metadata says it is Premium', () => {
     assert.deepEqual(actionFor(payment({ product_cart: null }), PRODUCTS), on);
@@ -216,6 +233,169 @@ describe('createPaymentStore', () => {
   it('throws when Supabase refuses, so that Dodo delivers the event again', async () => {
     const { store: s } = store('k', 500);
     await assert.rejects(() => s.apply({ kind: 'set-tier', userId: USER, tier: 'free' }), /500/);
+  });
+
+  // A fake Supabase that keeps the app_metadata of one user.
+  function withUsers(metadata: Record<string, unknown> | null, serviceKey = 'sb_secret_abc') {
+    const calls: Array<{ url: string; method: string; headers: Record<string, string>; body: unknown }> = [];
+    const state = { metadata };
+    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = init?.method ?? 'GET';
+      calls.push({ url, method, headers: (init?.headers ?? {}) as Record<string, string>, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      if (url.includes('/auth/v1/admin/users/')) {
+        if (state.metadata === null) return new Response('{}', { status: 404 });
+        if (method === 'PUT') state.metadata = (JSON.parse(String(init?.body)) as { app_metadata: Record<string, unknown> }).app_metadata;
+        return Response.json({ id: USER, app_metadata: state.metadata });
+      }
+      return new Response(null, { status: 204 });
+    }) as typeof fetch;
+    return { calls, state, store: createPaymentStore({ url: 'https://x.supabase.co', serviceKey, fetchImpl }) };
+  }
+
+  it('saves the subscription id in the app_metadata of the user and keeps the other keys', async () => {
+    const { calls, state, store: s } = withUsers({ provider: 'google', providers: ['google'] });
+    await s.apply({ kind: 'set-tier', userId: USER, tier: 'premium', subscriptionId: 'sub_9' });
+    assert.deepEqual(state.metadata, { provider: 'google', providers: ['google'], dodo_subscription_id: 'sub_9' });
+    assert.deepEqual(
+      calls.map((c) => `${c.method} ${c.url.replace('https://x.supabase.co', '')}`),
+      [`PATCH /rest/v1/profiles?id=eq.${USER}`, `GET /auth/v1/admin/users/${USER}`, `PUT /auth/v1/admin/users/${USER}`],
+    );
+    assert.equal(calls[1].headers.apikey, 'sb_secret_abc');
+    assert.equal(await s.subscriptionIdOf(USER), 'sub_9');
+  });
+  it('does not write again when the same id is already saved, and a plan change alone never touches the metadata', async () => {
+    const same = withUsers({ dodo_subscription_id: 'sub_9' });
+    await same.store.apply({ kind: 'set-tier', userId: USER, tier: 'premium', subscriptionId: 'sub_9' });
+    assert.equal(same.calls.filter((c) => c.method === 'PUT').length, 0);
+    const none = withUsers({});
+    await none.store.apply({ kind: 'set-tier', userId: USER, tier: 'free' });
+    assert.deepEqual(none.calls.map((c) => c.method), ['PATCH']);
+  });
+  it('a new subscription replaces the saved id', async () => {
+    const { state, store: s } = withUsers({ dodo_subscription_id: 'sub_old' });
+    await s.apply({ kind: 'set-tier', userId: USER, tier: 'premium', subscriptionId: 'sub_new' });
+    assert.equal((state.metadata as Record<string, unknown>).dodo_subscription_id, 'sub_new');
+  });
+  it('fails (so that Dodo sends the event again) when the metadata cannot be saved', async () => {
+    const { store: s } = withUsers(null);
+    await assert.rejects(() => s.apply({ kind: 'set-tier', userId: USER, tier: 'premium', subscriptionId: 'sub_9' }), /404/);
+  });
+  it('subscriptionIdOf: nothing saved, a bad value and a bad user id all give null', async () => {
+    assert.equal(await withUsers({}).store.subscriptionIdOf(USER), null);
+    assert.equal(await withUsers({ dodo_subscription_id: '../x' }).store.subscriptionIdOf(USER), null);
+    const { calls, store: s } = withUsers({ dodo_subscription_id: 'sub_9' });
+    assert.equal(await s.subscriptionIdOf('../../etc'), null);
+    assert.equal(calls.length, 0, 'a bad user id never reaches Supabase');
+  });
+});
+
+describe('subscriptions', () => {
+  const api: DodoApi = { apiKey: 'dodo_test_x', baseUrl: 'https://test.dodopayments.com' };
+  const record = (extra: Record<string, unknown> = {}) => ({
+    subscription_id: 'sub_1',
+    status: 'active',
+    metadata: { user_id: USER },
+    next_billing_date: '2026-12-27T10:00:00Z',
+    cancel_at_next_billing_date: false,
+    ...extra,
+  });
+  // A fake Dodo with one subscription: GET reads it, PATCH with the cancel flag sets it.
+  function dodo(initial: Record<string, unknown> | null, patchStatus = 200) {
+    const calls: Array<{ url: string; method: string; headers: Record<string, string>; body: unknown }> = [];
+    let current = initial;
+    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const method = init?.method ?? 'GET';
+      calls.push({ url: String(input), method, headers: (init?.headers ?? {}) as Record<string, string>, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      if (!current) return new Response('{}', { status: 404 });
+      if (method === 'PATCH') {
+        if (patchStatus !== 200) return new Response('{}', { status: patchStatus });
+        current = { ...current, ...JSON.parse(String(init?.body)) };
+      }
+      return Response.json(current);
+    }) as typeof fetch;
+    return { calls, fetchImpl };
+  }
+  const saved = (id: string | null): PaymentStore => ({ apply: async () => {}, subscriptionIdOf: async () => id });
+
+  it('fetchSubscription reads the status, the next payment and whether the cancel is scheduled', async () => {
+    const { calls, fetchImpl } = dodo(record({ cancel_at_next_billing_date: true }));
+    const state = await fetchSubscription(api, 'sub_1', fetchImpl);
+    assert.deepEqual(state, { id: 'sub_1', userId: USER, active: true, nextBillingDate: '2026-12-27T10:00:00.000Z', cancelScheduled: true });
+    assert.equal(calls[0].url, 'https://test.dodopayments.com/subscriptions/sub_1');
+    assert.equal(calls[0].headers.Authorization, 'Bearer dodo_test_x');
+  });
+  it('fetchSubscription: unknown to Dodo is null, any other failure throws, a dirty id never leaves the server', async () => {
+    assert.equal(await fetchSubscription(api, 'sub_1', dodo(null).fetchImpl), null);
+    const broken = (async () => new Response('{}', { status: 500 })) as typeof fetch;
+    await assert.rejects(() => fetchSubscription(api, 'sub_1', broken), /500/);
+    const { calls, fetchImpl } = dodo(record());
+    assert.equal(await fetchSubscription(api, '../customers', fetchImpl), null);
+    assert.equal(calls.length, 0);
+    const odd = dodo(record({ status: 'cancelled', metadata: {}, next_billing_date: 'soon' }));
+    assert.deepEqual(await fetchSubscription(api, 'sub_1', odd.fetchImpl), { id: 'sub_1', userId: null, active: false, nextBillingDate: null, cancelScheduled: false });
+  });
+  it('cancelSubscription asks Dodo to stop at the end of the paid period, not now', async () => {
+    const { calls, fetchImpl } = dodo(record());
+    await cancelSubscription(api, 'sub_1', fetchImpl);
+    assert.deepEqual([calls[0].method, calls[0].url, calls[0].body], ['PATCH', 'https://test.dodopayments.com/subscriptions/sub_1', { cancel_at_next_billing_date: true }]);
+    await assert.rejects(() => cancelSubscription(api, 'sub_1', dodo(record(), 422).fetchImpl), /422/);
+    await assert.rejects(() => cancelSubscription(api, '../x', fetchImpl), /id/);
+  });
+  it('subscriptionOf finds the person’s running subscription, and nothing else', async () => {
+    const mine = await subscriptionOf({ store: saved('sub_1'), api, userId: USER, fetchImpl: dodo(record()).fetchImpl });
+    assert.equal(mine?.id, 'sub_1');
+    assert.equal(await subscriptionOf({ store: saved(null), api, userId: USER, fetchImpl: dodo(record()).fetchImpl }), null, 'nothing saved');
+    assert.equal(await subscriptionOf({ store: saved('sub_1'), api, userId: USER, fetchImpl: dodo(null).fetchImpl }), null, 'Dodo does not know it');
+    assert.equal(await subscriptionOf({ store: saved('sub_1'), api, userId: USER, fetchImpl: dodo(record({ status: 'cancelled' })).fetchImpl }), null, 'ended');
+    const other = '11111111-2222-4333-8444-555555555555';
+    assert.equal(await subscriptionOf({ store: saved('sub_1'), api, userId: USER, fetchImpl: dodo(record({ metadata: { user_id: other } })).fetchImpl }), null, 'somebody else’s');
+    assert.equal(await subscriptionOf({ store: saved('sub_1'), api, userId: USER, fetchImpl: dodo(record({ metadata: {} })).fetchImpl }), null, 'no owner on record');
+  });
+  it('cancelling the subscription of a person stops the renewal and keeps Premium until the period ends', async () => {
+    const { calls, fetchImpl } = dodo(record());
+    const result = await cancelUserSubscription({ store: saved('sub_1'), api, userId: USER, fetchImpl });
+    assert.deepEqual(result, { ok: true, view: { managed: true, nextBillingDate: '2026-12-27T10:00:00.000Z', cancelScheduled: true } });
+    assert.deepEqual(calls.map((c) => c.method), ['GET', 'PATCH'], 'the owner is checked first, then the cancel is sent');
+    assert.deepEqual(calls[1].body, { cancel_at_next_billing_date: true });
+  });
+  it('cancelling twice is not an error and sends nothing the second time', async () => {
+    const { calls, fetchImpl } = dodo(record({ cancel_at_next_billing_date: true }));
+    const result = await cancelUserSubscription({ store: saved('sub_1'), api, userId: USER, fetchImpl });
+    assert.equal(result.ok, true);
+    assert.deepEqual(calls.map((c) => c.method), ['GET']);
+  });
+  it('cancelling: no subscription of the person is a 404, and nothing is sent to Dodo', async () => {
+    const other = '11111111-2222-4333-8444-555555555555';
+    for (const [store, fetchImpl] of [
+      [saved(null), dodo(record()).fetchImpl],
+      [saved('sub_1'), dodo(record({ metadata: { user_id: other } })).fetchImpl],
+      [saved('sub_1'), dodo(record({ status: 'expired' })).fetchImpl],
+    ] as const) {
+      const calls: string[] = [];
+      const spy = (async (input: RequestInfo | URL, init?: RequestInit) => {
+        calls.push(init?.method ?? 'GET');
+        return fetchImpl(input, init);
+      }) as typeof fetch;
+      const result = await cancelUserSubscription({ store, api, userId: USER, fetchImpl: spy });
+      assert.deepEqual([result.ok, !result.ok && result.status], [false, 404]);
+      assert.ok(!calls.includes('PATCH'), 'no cancel was sent');
+    }
+  });
+  it('cancelling: when Dodo or Supabase fail, the answer is a 502 with a message to try again', async () => {
+    const failing = await cancelUserSubscription({ store: saved('sub_1'), api, userId: USER, fetchImpl: dodo(record(), 500).fetchImpl });
+    assert.deepEqual([failing.ok, !failing.ok && failing.status], [false, 502]);
+    const noSupabase: PaymentStore = { apply: async () => {}, subscriptionIdOf: async () => { throw new Error('down'); } };
+    const unreachable = await cancelUserSubscription({ store: noSupabase, api, userId: USER, fetchImpl: dodo(record()).fetchImpl });
+    assert.deepEqual([unreachable.ok, !unreachable.ok && unreachable.status], [false, 502]);
+  });
+  it('the view for the page', () => {
+    assert.deepEqual(subscriptionView(null), NO_SUBSCRIPTION);
+    assert.deepEqual(subscriptionView({ id: 'sub_1', userId: USER, active: true, nextBillingDate: '2026-12-27T10:00:00.000Z', cancelScheduled: false }), {
+      managed: true,
+      nextBillingDate: '2026-12-27T10:00:00.000Z',
+      cancelScheduled: false,
+    });
   });
 });
 

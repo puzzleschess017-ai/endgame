@@ -7,6 +7,7 @@ import AppShell from '../components/AppShell';
 import PremiumBuy, { usePremiumOpen } from '../components/PremiumBuy';
 import PricingPlans from '../components/PricingPlans';
 import { SECONDARY_BUTTON_CLASS } from '../components/panelUi';
+import SubscriptionCard from '../components/SubscriptionCard';
 import { auth, useAuth } from '../auth';
 import { pricingGroups, type Cell } from '../utils/pricing';
 import { readSavedUsername } from '../utils/profile';
@@ -24,7 +25,7 @@ const FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: 'Can I cancel?',
-    a: 'Yes, at any time. Cancelling stops the next payment, and you keep Premium until the end of the period you have already paid for. You can manage the subscription in Dodo’s customer portal, or write to us on the Contact page. Your first payment can be refunded within 7 days; see the Refund and Cancellation Policy.',
+    a: 'Yes, at any time. With Premium, the “Your subscription” section at the top of this page has a Cancel button. Cancelling stops the next payment, and you keep Premium until the end of the period you have already paid for. You can also cancel in Dodo’s customer portal (the link is in your receipt e-mail), or write to us on the Contact page. Your first payment can be refunded within 7 days; see the Refund and Cancellation Policy.',
   },
   {
     q: 'What happens to my results if Premium ends?',
@@ -87,6 +88,7 @@ export default function PricingPage() {
             <Check className="w-4 h-4" aria-hidden="true" /> You have Premium. Thank you!
           </p>
         )}
+        {isPremium && signedIn && <SubscriptionCard />}
 
         <PricingPlans
           action={(plan) =>

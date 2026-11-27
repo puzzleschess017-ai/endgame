@@ -252,6 +252,14 @@ shows the account and Sign out. `?next=/streak` sends the visitor back to that p
 plan, one row per account, created by a trigger). People can read their row and change their name only;
 the plan (`free` or `premium`) is changed by hand in the Supabase Table Editor until payments exist.
 
+Premium is bought on Dodo Payments (`server/payments.ts`, settings in `.env.example`). The webhook sets the plan and saves
+the id of the subscription in the `app_metadata` of the Supabase user (`dodo_subscription_id`, written with the service role
+key; nothing to add to the SQL). A person with Premium sees "Your subscription" on `/pricing`: `GET /api/subscription` says
+when it renews, and the Cancel button calls `POST /api/subscription/cancel`, which asks Dodo to stop at the end of the paid
+period (`cancel_at_next_billing_date`). The server first checks in Dodo that the subscription names this person. Premium stays
+until the period ends, then Dodo's `subscription.expired` event turns it off. There is no "resume" button: after a cancel
+the person buys Premium again once it has ended. Premium given by hand has no subscription, so the card says there is nothing to cancel.
+
 #### Welcome window
 
 The welcome window is **switched off** (`WELCOME_WINDOW = false` in `src/site.ts`): everybody lands on the page they

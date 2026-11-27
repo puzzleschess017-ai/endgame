@@ -2,8 +2,9 @@
 // payment, handles VAT and sales tax, and pays the money out. The site sells one thing, Premium, as a monthly or a yearly
 // subscription (the e-books come with it): the webhook sets the plan in profiles.tier.
 // The flow: the page asks POST /api/checkout, the server asks Dodo for a checkout session with the signed-in person's id in
-// the metadata, the person pays on Dodo's page, and Dodo calls POST /api/webhooks/dodo. Everything here is switched off
-// until the environment variables below are set (see .env.example).
+// the metadata, the person pays on Dodo's page, and Dodo calls POST /api/webhooks/dodo. The person can cancel from the
+// account page: the webhook saves the id of the subscription, and the cancel stops the renewal at the end of the paid period.
+// Everything here is switched off until the environment variables below are set (see .env.example).
 import crypto from 'node:crypto';
 
 // ---------------------------------------------------------------------------------------------
@@ -16,6 +17,7 @@ export type Offer = 'premium:monthly' | 'premium:yearly';
 /** Dodo ids look like pdt_0NdXyz..., pay_..., sub_..., ref_...; only the safe characters are accepted. */
 const DODO_ID = /^[A-Za-z0-9_-]{4,64}$/;
 const USER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const USER_ID_IN_PATH = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 
 export interface CheckoutConfig {
   apiKey: string;
@@ -126,7 +128,13 @@ export function verifyWebhook(
 // From a Dodo event to what has to change on the site
 // ---------------------------------------------------------------------------------------------
 
-export type PaymentAction = { kind: 'set-tier'; userId: string; tier: 'free' | 'premium' };
+export type PaymentAction = {
+  kind: 'set-tier';
+  userId: string;
+  tier: 'free' | 'premium';
+  /** The Dodo subscription behind a Premium event; saved so that the person can cancel it from the account page. */
+  subscriptionId?: string;
+};
 
 function record(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
@@ -180,15 +188,20 @@ export function actionFor(event: unknown, premiumProducts: string[]): PaymentAct
     const userId = userIdOf(data);
     if (!cartHasPremium(data, premiumProducts) || !userId || !idOf(data.payment_id)) return null;
     if (data.status !== undefined && data.status !== 'succeeded') return null;
-    const inSubscription = idOf(data.subscription_id) !== null || (Array.isArray(data.subscription_ids) && data.subscription_ids.length > 0);
-    return inSubscription ? { kind: 'set-tier', userId, tier: 'premium' } : null;
+    const subscriptionId = idOf(data.subscription_id) ?? (Array.isArray(data.subscription_ids) ? idOf(data.subscription_ids[0]) : null);
+    const inSubscription = subscriptionId !== null || (Array.isArray(data.subscription_ids) && data.subscription_ids.length > 0);
+    if (!inSubscription) return null;
+    return { kind: 'set-tier', userId, tier: 'premium', ...(subscriptionId ? { subscriptionId } : {}) };
   }
 
   if (type.startsWith('subscription.')) {
     const productId = idOf(data.product_id);
     const userId = userIdOf(data);
     if (!productId || !premiumProducts.includes(productId) || !userId) return null;
-    if (data.status === 'active') return { kind: 'set-tier', userId, tier: 'premium' };
+    if (data.status === 'active') {
+      const subscriptionId = idOf(data.subscription_id);
+      return { kind: 'set-tier', userId, tier: 'premium', ...(subscriptionId ? { subscriptionId } : {}) };
+    }
     if (data.status === 'on_hold' || data.status === 'cancelled' || data.status === 'expired' || data.status === 'paused') {
       return { kind: 'set-tier', userId, tier: 'free' };
     }
@@ -203,9 +216,17 @@ export function actionFor(event: unknown, premiumProducts: string[]): PaymentAct
 // ---------------------------------------------------------------------------------------------
 
 export interface PaymentStore {
-  /** Applies an action. Throws when Supabase refuses, so the webhook answers with an error and Dodo tries again. */
+  /**
+   * Applies an action: sets the plan and, when the action carries one, saves the id of the subscription.
+   * Throws when Supabase refuses, so the webhook answers with an error and Dodo tries again.
+   */
   apply(action: PaymentAction): Promise<void>;
+  /** The id of the Dodo subscription saved for the person, or null when there is none. Throws when Supabase cannot be asked. */
+  subscriptionIdOf(userId: string): Promise<string | null>;
 }
+
+/** Where the id of the person's subscription is kept: in the app_metadata of the Supabase user, which only the server can write. */
+const SUBSCRIPTION_KEY = 'dodo_subscription_id';
 
 export function createPaymentStore(options: { url: string; serviceKey: string; fetchImpl?: typeof fetch }): PaymentStore {
   const fetchImpl = options.fetchImpl ?? fetch;
@@ -214,21 +235,155 @@ export function createPaymentStore(options: { url: string; serviceKey: string; f
   const headers: Record<string, string> = { apikey: options.serviceKey, 'Content-Type': 'application/json' };
   if (options.serviceKey.startsWith('eyJ')) headers.Authorization = `Bearer ${options.serviceKey}`;
 
-  async function send(path: string, init: { method: string; body?: unknown; prefer?: string }): Promise<void> {
-    const res = await fetchImpl(`${base}/rest/v1/${path}`, {
+  async function send(path: string, init: { method: string; body?: unknown; prefer?: string }): Promise<Response> {
+    const res = await fetchImpl(`${base}/${path}`, {
       method: init.method,
       headers: init.prefer ? { ...headers, Prefer: init.prefer } : headers,
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
       signal: AbortSignal.timeout(5000),
     });
-    if (!res.ok) throw new Error(`Supabase answered ${res.status} for ${init.method} ${path.split('?')[0]}`);
+    if (!res.ok) throw new Error(`Supabase answered ${res.status} for ${init.method} ${path.split('?')[0].replace(USER_ID_IN_PATH, ':id')}`);
+    return res;
+  }
+
+  /** The app_metadata of a user (the Supabase admin API; the person is found by the id the server has checked). */
+  async function readMetadata(userId: string): Promise<Record<string, unknown>> {
+    const res = await send(`auth/v1/admin/users/${userId}`, { method: 'GET' });
+    return record(record(await res.json())?.app_metadata) ?? {};
   }
 
   return {
     async apply(action) {
-      await send(`profiles?id=eq.${action.userId}`, { method: 'PATCH', prefer: 'return=minimal', body: { tier: action.tier } });
+      await send(`rest/v1/profiles?id=eq.${action.userId}`, { method: 'PATCH', prefer: 'return=minimal', body: { tier: action.tier } });
+      if (action.subscriptionId) {
+        // Read, add one key, write everything back: the other keys (provider, providers) must stay as they are.
+        const metadata = await readMetadata(action.userId);
+        if (metadata[SUBSCRIPTION_KEY] !== action.subscriptionId) {
+          await send(`auth/v1/admin/users/${action.userId}`, {
+            method: 'PUT',
+            body: { app_metadata: { ...metadata, [SUBSCRIPTION_KEY]: action.subscriptionId } },
+          });
+        }
+      }
+    },
+    async subscriptionIdOf(userId) {
+      if (!USER_ID.test(userId)) return null;
+      return idOf((await readMetadata(userId.toLowerCase()))[SUBSCRIPTION_KEY]);
     },
   };
+}
+
+// ---------------------------------------------------------------------------------------------
+// The person's subscription: looking at it and cancelling it (from the account page)
+// ---------------------------------------------------------------------------------------------
+
+/** What is needed to talk to Dodo: its address and the API key (the same ones as for a checkout). */
+export type DodoApi = Pick<CheckoutConfig, 'apiKey' | 'baseUrl'>;
+
+export interface SubscriptionState {
+  /** The id of the subscription in Dodo. */
+  id: string;
+  /** The person it belongs to, from the metadata the server put in the checkout. */
+  userId: string | null;
+  /** True while the subscription is running (Dodo status "active"); a cancelled one that is still paid for is also active. */
+  active: boolean;
+  /** When the next payment is due, or, when the cancel is scheduled, when the paid period ends (an ISO date). */
+  nextBillingDate: string | null;
+  /** True when the subscription is cancelled for the end of the paid period. */
+  cancelScheduled: boolean;
+}
+
+/** The subscription as the account page shows it. */
+export interface SubscriptionView {
+  /** False when there is no subscription of this person to manage here. */
+  managed: boolean;
+  nextBillingDate: string | null;
+  cancelScheduled: boolean;
+}
+
+export const NO_SUBSCRIPTION: SubscriptionView = { managed: false, nextBillingDate: null, cancelScheduled: false };
+
+export function subscriptionView(state: SubscriptionState | null): SubscriptionView {
+  return state ? { managed: true, nextBillingDate: state.nextBillingDate, cancelScheduled: state.cancelScheduled } : NO_SUBSCRIPTION;
+}
+
+function dodoHeaders(api: DodoApi): Record<string, string> {
+  return { Authorization: `Bearer ${api.apiKey}`, 'Content-Type': 'application/json', Accept: 'application/json' };
+}
+
+function dateOf(value: unknown): string | null {
+  return typeof value === 'string' && !Number.isNaN(Date.parse(value)) ? new Date(value).toISOString() : null;
+}
+
+/** Asks Dodo about a subscription. Null when Dodo has no such subscription (404); throws on any other failure. */
+export async function fetchSubscription(api: DodoApi, id: string, fetchImpl: typeof fetch = fetch): Promise<SubscriptionState | null> {
+  if (!DODO_ID.test(id)) return null;
+  const res = await fetchImpl(`${api.baseUrl}/subscriptions/${encodeURIComponent(id)}`, {
+    headers: dodoHeaders(api),
+    signal: AbortSignal.timeout(8000),
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Dodo answered ${res.status} when reading a subscription`);
+  const data = record(await res.json());
+  if (!data) throw new Error('Dodo gave no subscription');
+  const raw = record(data.metadata)?.user_id;
+  return {
+    id,
+    userId: typeof raw === 'string' && USER_ID.test(raw) ? raw.toLowerCase() : null,
+    active: data.status === 'active',
+    nextBillingDate: dateOf(data.next_billing_date),
+    cancelScheduled: data.cancel_at_next_billing_date === true,
+  };
+}
+
+/** Cancels a subscription at the end of the paid period (the person keeps Premium until then). Throws when Dodo refuses. */
+export async function cancelSubscription(api: DodoApi, id: string, fetchImpl: typeof fetch = fetch): Promise<void> {
+  if (!DODO_ID.test(id)) throw new Error('Not a subscription id');
+  const res = await fetchImpl(`${api.baseUrl}/subscriptions/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: dodoHeaders(api),
+    body: JSON.stringify({ cancel_at_next_billing_date: true }),
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) throw new Error(`Dodo answered ${res.status} when cancelling a subscription`);
+}
+
+/**
+ * The running subscription of a person, or null when there is none to manage: nothing saved for them (Premium given by
+ * hand, or a payment from before the id was saved), Dodo does not know it, it belongs to somebody else, or it has ended.
+ * The owner is checked against Dodo's own record, so a saved id can never reach another person's subscription.
+ */
+export async function subscriptionOf(options: { store: PaymentStore; api: DodoApi; userId: string; fetchImpl?: typeof fetch }): Promise<SubscriptionState | null> {
+  const id = await options.store.subscriptionIdOf(options.userId);
+  if (!id) return null;
+  const state = await fetchSubscription(options.api, id, options.fetchImpl);
+  if (!state || !state.active || state.userId !== options.userId.toLowerCase()) return null;
+  return state;
+}
+
+export type CancelResult = { ok: true; view: SubscriptionView } | { ok: false; status: number; error: string };
+
+/**
+ * Cancels the person's subscription for the end of the paid period. The person keeps Premium until then; when the period
+ * ends Dodo sends subscription.expired (or cancelled), and the webhook turns Premium off. Asking twice is not an error.
+ */
+export async function cancelUserSubscription(options: { store: PaymentStore; api: DodoApi; userId: string; fetchImpl?: typeof fetch }): Promise<CancelResult> {
+  let state: SubscriptionState | null;
+  try {
+    state = await subscriptionOf(options);
+  } catch (err) {
+    console.error('[payments] could not read the subscription', err instanceof Error ? err.message : err);
+    return { ok: false, status: 502, error: 'Your subscription could not be checked just now. Please try again.' };
+  }
+  if (!state) return { ok: false, status: 404, error: 'There is no subscription to cancel on this account.' };
+  if (state.cancelScheduled) return { ok: true, view: subscriptionView(state) };
+  try {
+    await cancelSubscription(options.api, state.id, options.fetchImpl);
+  } catch (err) {
+    console.error('[payments] could not cancel the subscription', err instanceof Error ? err.message : err);
+    return { ok: false, status: 502, error: 'The subscription could not be cancelled just now. Please try again.' };
+  }
+  return { ok: true, view: subscriptionView({ ...state, cancelScheduled: true }) };
 }
 
 // ---------------------------------------------------------------------------------------------

@@ -8,7 +8,7 @@ export const PRIVACY_UPDATED = '25 November 2026';
 
 /** Shown on the Terms and Refund pages; change it whenever their text changes. */
 export const TERMS_UPDATED = '26 November 2026';
-export const REFUND_UPDATED = '26 November 2026';
+export const REFUND_UPDATED = '27 November 2026';
 
 /** How many days after the first payment the buyer may ask for the money back (the Terms and Refund pages say it). Renewals are not refunded. */
 export const REFUND_DAYS = 7;
