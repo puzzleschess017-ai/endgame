@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import AppShell from '../components/AppShell';
-import { MODE_ITEMS } from '../components/Sidebar';
+import { MODE_ITEMS } from '../utils/menu';
 import { useAuth } from '../auth';
 import { useSyncVersion } from '../sync';
 import { readSavedUsername } from '../utils/profile';
@@ -42,7 +42,7 @@ export default function StatisticsPage() {
 
   return (
     <AppShell username={username}>
-      <div className="max-w-[860px] flex flex-col gap-6" data-testid="statistics">
+      <div className="mx-auto w-full max-w-[860px] flex flex-col gap-6" data-testid="statistics">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Statistics</h2>
           <p className="mt-1.5 text-sm sm:text-base font-medium text-white/70">

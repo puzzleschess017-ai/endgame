@@ -75,8 +75,9 @@ export default function HomePage() {
   );
 
   return (
-    <AppShell username={username} heading={session ? greeting : undefined} hideAccountBar={!session}>
-      <div className="max-w-[990px] flex flex-col gap-8" data-testid="home">
+    <AppShell username={username}>
+      <div className="mx-auto w-full max-w-[990px] flex flex-col gap-8" data-testid="home">
+        {session && greeting}
 
         {!hasTrained ? (
           <WelcomeIntro signedIn={session !== null} premium={tier === 'premium'} />

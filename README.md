@@ -118,10 +118,10 @@ wrong move reported to the page).
 ### Adding a new mode
 
 Every mode must look the same as Woodpecker: build the page with `TrainerLayout`
-(`src/components/TrainerLayout.tsx`: the menu on the left, then the board column and the
+(`src/components/TrainerLayout.tsx`: the menu bar on top, then the board column and the
 right-hand panel in fixed places), draw the board inside an element that uses `BOARD_FRAME_CLASS`
 and whose side comes from `snapBoardSize` (both in `src/utils/appearance.ts`), add the page to
-`NAV_GROUPS` in `src/components/Sidebar.tsx` (pick a group, an icon and its colour) and to `PAGES`
+`NAV_GROUPS` in `src/utils/menu.ts` (pick a group, an icon, its colour and a one-line `blurb`) and to `PAGES`
 in `src/main.tsx`. That keeps the board size, corners and panel position identical on every page.
 Get the board size, colours and pieces from `useAppearance()` (`src/hooks/useAppearance.ts`) and pass
 them to `TrainerLayout` as `appearance` / `onAppearanceChange`: the layout then shows the board size
@@ -131,9 +131,12 @@ To show the mode's records on the Statistics page, add its lines to `collectHome
 `src/utils/stats.ts`. To make its runs count in the Home dashboard, call `recordActivity` from
 `src/utils/activity.ts` when a run ends (`mode`, time spent in ms, correct and wrong answers, puzzles).
 
-The menu (`Sidebar.tsx`) is a full-height panel on the left from 1280 px width, with the groups
-PUZZLES, TRAINING, TOOLS (Board Editor, Board Analysis) and PROGRESS that can be collapsed (remembered in `ctg_sidebar_collapsed_v1`);
-on smaller screens it is a bar on top of the page with one scrolling row. Every page sits inside
+The menu (`src/components/TopNav.tsx`, the entries in `src/utils/menu.ts`) is a bar at the top of every page, and from
+1280 px width it sticks to the top while the page scrolls. It has the logo, Home (Dashboard for someone signed in), the drop-down
+menus Puzzles, Training, Tools (Board Editor, Board Analysis) and Library, the Pricing pill, and on the right the account,
+sign-out and sound buttons. A menu opens with a click, moving the mouse to another name switches to it, and Escape, a click
+elsewhere or tabbing out closes it. On smaller screens it is the logo and the account buttons with one row of entries below that
+scrolls sideways (the same markup: the menus simply stay open there, and Tools is hidden on phones). Every page sits inside
 `AppShell.tsx`, so the menu never moves. Each entry has a coloured icon.
 
 Home and Statistics read the browser's data only:
