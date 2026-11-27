@@ -16,7 +16,7 @@ test('the Start training and Login buttons shine, Login a moment later and in bl
   assert.match(tag('welcome-signin'), /\[--glow:125,211,252\]/);
 });
 
-test('the outlined "Create a free account" button does not shine', () => {
+test('the outlined "Create account" button does not shine', () => {
   const html = renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: false, premium: false }));
   assert.doesNotMatch(html.match(/<a [^>]*data-testid="welcome-signup"[^>]*>/)![0], /btn-shine/);
 });
@@ -27,4 +27,28 @@ test('the shine is switched off for people who ask for less motion, and on a dis
   assert.match(css, /@keyframes btn-glow/);
   assert.match(css, /\.btn-still,\s*\.btn-shine:disabled,\s*\.btn-shine\[aria-disabled='true'\] \{ animation: none; \}/);
   assert.match(css, /@layer components \{\s*\.btn-shine \{/);
+});
+
+test('Login and Create account lift a little on hover, and not for people who ask for less motion', () => {
+  const html = renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: false, premium: false }));
+  const tag = (testId: string) => html.match(new RegExp(`<a [^>]*data-testid="${testId}"[^>]*>`))![0];
+  for (const id of ['welcome-signin', 'welcome-signup']) {
+    assert.match(tag(id), /\bhover:-translate-y-0\.5\b/);
+    assert.match(tag(id), /\bmotion-reduce:hover:translate-y-0\b/);
+  }
+});
+
+test('the home page describes every tab of the menu, each with a screenshot', () => {
+  const html = renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: false, premium: false }));
+  for (const id of ['woodpecker', 'streak', 'survival', 'coordinates', 'blindfold', 'editor', 'analysis', 'endgames', 'openings', 'tactics', 'ebooks', 'statistics']) {
+    assert.match(html, new RegExp(`data-testid="feature-${id}"`));
+  }
+  assert.equal((html.match(/\/welcome\/(phone|desktop)-[a-z]+\.webp/g) ?? []).length >= 12, true);
+});
+
+test('the prices come last, and not for someone who has Premium', () => {
+  const html = renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: false, premium: false }));
+  assert.ok(html.indexOf('data-testid="welcome-premium"') > html.indexOf('data-testid="feature-statistics"'));
+  assert.match(html, /\$4\.99/);
+  assert.doesNotMatch(renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: true, premium: true })), /welcome-premium/);
 });

@@ -5,15 +5,10 @@ import { useEffect, useState } from 'react';
 import { Check, Crown, Minus } from 'lucide-react';
 import AppShell from '../components/AppShell';
 import PremiumBuy, { usePremiumOpen } from '../components/PremiumBuy';
+import PricingPlans from '../components/PricingPlans';
+import { SECONDARY_BUTTON_CLASS } from '../components/panelUi';
 import { auth, useAuth } from '../auth';
 import { pricingGroups, type Cell } from '../utils/pricing';
-import {
-  PREMIUM_MONTHLY_LABEL,
-  PREMIUM_YEARLY_CENTS,
-  PREMIUM_YEARLY_LABEL,
-  priceLabel,
-  yearlySavingPercent,
-} from '../utils/premium';
 import { readSavedUsername } from '../utils/profile';
 
 const CARD = 'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
@@ -36,17 +31,6 @@ const FAQ: Array<{ q: string; a: string }> = [
     a: 'Nothing is deleted. Your results, statistics and settings stay on your account; only the Premium options lock again, and the e-books can no longer be downloaded.',
   },
 ];
-
-/** What both paid plans include (the plans differ only in how often you pay). */
-function PremiumFeatures() {
-  return (
-    <ul className="text-sm font-medium text-white/80 leading-relaxed list-disc pl-5 space-y-1">
-      <li>Every Woodpecker set, up to 9 cycles, Expert and Endgame puzzles</li>
-      <li>Blindfold with every level and every drill</li>
-      <li>Every e-book to download</li>
-    </ul>
-  );
-}
 
 function CellView({ value, premium }: { value: Cell; premium?: boolean }) {
   if (value === true) return <Check className={`mx-auto w-4 h-4 ${premium ? 'text-amber-300' : 'text-[#39ff88]'}`} aria-label="Included" />;
@@ -104,56 +88,19 @@ export default function PricingPage() {
           </p>
         )}
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <section className={`${CARD} p-5 sm:p-6 flex flex-col gap-3`} data-testid="plan-free">
-            <h2 className="text-xl font-bold text-white tracking-tight">Free</h2>
-            <p className="text-3xl font-bold text-white tabular-nums">
-              $0 <span className="text-sm font-semibold text-white/60">forever</span>
-            </p>
-            <ul className="text-sm font-medium text-white/80 leading-relaxed list-disc pl-5 space-y-1">
-              <li>Puzzle Streak, Puzzle Survival, Coordinate Training, Board Editor, Statistics and the theory lessons</li>
-              <li>Woodpecker and Blindfold with the starter options</li>
-              <li>A free account keeps your results on every device</li>
-            </ul>
-            {!signedIn && (
-              <a href="/login?next=%2Fpricing" className="mt-auto text-sm font-bold text-[#39ff88] underline underline-offset-2">
-                Create a free account
-              </a>
-            )}
-          </section>
-
-          <section className={`${CARD} border-amber-300/30 p-5 sm:p-6 flex flex-col gap-3`} data-testid="plan-monthly">
-            <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-              <Crown className="w-5 h-5 text-amber-300" aria-hidden="true" /> Monthly
-            </h2>
-            <p className="text-3xl font-bold text-white tabular-nums">
-              {PREMIUM_MONTHLY_LABEL} <span className="text-sm font-semibold text-white/60">/ month</span>
-            </p>
-            <p className="text-sm font-semibold text-white/75">Billed every month. Cancel any time.</p>
-            <PremiumFeatures />
-            {!isPremium && <PremiumBuy plan="monthly" open={open} signedIn={signedIn} returnTo="/pricing" unlocking={waiting} />}
-          </section>
-
-          <section
-            className={`${CARD} border-[#39ff88]/50 ring-1 ring-[#39ff88]/30 p-5 sm:p-6 flex flex-col gap-3 relative`}
-            data-testid="plan-yearly"
-          >
-            <span className="absolute -top-3 left-5 rounded-full bg-[#39ff88] px-3 py-0.5 text-xs font-bold text-[#06210f]">
-              Best value: save {yearlySavingPercent()}%
-            </span>
-            <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-              <Crown className="w-5 h-5 text-amber-300" aria-hidden="true" /> Yearly
-            </h2>
-            <p className="text-3xl font-bold text-white tabular-nums">
-              {PREMIUM_YEARLY_LABEL} <span className="text-sm font-semibold text-white/60">/ year</span>
-            </p>
-            <p className="text-sm font-semibold text-white/75">
-              That is {priceLabel(Math.round(PREMIUM_YEARLY_CENTS / 12))} a month. Cancel any time.
-            </p>
-            <PremiumFeatures />
-            {!isPremium && <PremiumBuy plan="yearly" open={open} signedIn={signedIn} returnTo="/pricing" unlocking={waiting} />}
-          </section>
-        </div>
+        <PricingPlans
+          action={(plan) =>
+            plan === 'free' ? (
+              !signedIn ? (
+                <a href="/login?tab=signup&next=%2Fpricing" className={`${SECONDARY_BUTTON_CLASS} !min-h-[48px] flex items-center justify-center no-underline`}>
+                  Create a free account
+                </a>
+              ) : null
+            ) : !isPremium ? (
+              <PremiumBuy plan={plan} open={open} signedIn={signedIn} returnTo="/pricing" unlocking={waiting} />
+            ) : null
+          }
+        />
 
         <section className={`${CARD} p-3 sm:p-5`} aria-labelledby="compare-title">
           <h2 id="compare-title" className="px-2 pt-1 pb-3 text-xl font-bold text-white tracking-tight">
