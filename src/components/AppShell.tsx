@@ -30,7 +30,7 @@ export default function AppShell({ username, heading, hideAccountBar = false, ch
           <div className="min-w-0">{heading}</div>
           <div className="flex items-center gap-1 shrink-0">
             <ProfileMenu guestName={username} align="right" />
-            <AccountControls compact />
+            <AccountControls />
             <SoundMenu />
           </div>
         </div>
