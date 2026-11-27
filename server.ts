@@ -13,6 +13,7 @@ import { checkBlindfoldLevel, checkBlindfoldMateIn, checkWoodpecker, getsEbooksF
 import type { BlindfoldLevel, MateIn } from './src/utils/blindfold.ts';
 import type { PuzzleCountOption } from './src/types.ts';
 import { contentFor } from './server/prerender.ts';
+import { preloadTags, readManifest } from './server/preload.ts';
 import { cleanSiteUrl, pageFor, renderPage, robotsTxt, sitemapXml } from './server/seo.ts';
 import {
   RATING_BANDS,
@@ -831,9 +832,10 @@ async function startServer() {
     // The page: index.html with the title, description and canonical address of the path asked for.
     // A path the app does not have still shows Home (as before), but with status 404.
     const template = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
+    const manifest = readManifest(distDir);
     app.get('*', (req, res) => {
       const page = pageFor(req.path);
-      res.status(page ? 200 : 404).set('Cache-Control', 'no-cache').type('html').send(renderPage(template, page, siteUrl, page ? contentFor(req.path) : undefined));
+      res.status(page ? 200 : 404).set('Cache-Control', 'no-cache').type('html').send(renderPage(template, page, siteUrl, page ? contentFor(req.path) : undefined, preloadTags(manifest, req.path)));
     });
   }
 

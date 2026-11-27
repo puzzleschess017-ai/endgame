@@ -194,6 +194,13 @@ Pricing table come from the same data as the pages). When you rename a mode or c
 there too; `server/prerender.test.ts` checks that every page has its own heading and links to the others. The `<noscript>`
 list in `index.html` is for visitors without JavaScript and has to name the same pages.
 
+Every page except Home is loaded with `import()` (`src/main.tsx`), which used to leave a blank screen while the browser
+found out, one request after another, which files the page needs. `server/preload.ts` reads the Vite manifest
+(`dist/.vite/manifest.json`, `build.manifest` in `vite.config.ts`) and writes `<link rel="modulepreload">` for the files
+of the page asked for and `<link rel="prefetch">` for the files of all the others into the head, so the page loads in
+parallel with the main bundle and the next tab is already in the cache. **A new page needs a line in `ROUTE_SOURCES`**
+(`server/preload.ts`); `server/preload.test.ts` compares the table with `src/main.tsx`.
+
 ### About, Privacy, Contact and cookies
 
 To add an endgame lesson: add an object to `LESSONS` in `src/theory/endgames.ts` (check every position in the Lichess

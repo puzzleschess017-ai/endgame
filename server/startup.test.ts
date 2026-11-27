@@ -8,7 +8,7 @@ import { test } from 'node:test';
 // So load the modules the server uses with plain node, the way production does.
 const ROOT = path.resolve(import.meta.dirname, '..');
 
-for (const file of ['server/prerender.ts', 'server/seo.ts', 'src/utils/pricing.ts', 'src/utils/access.ts']) {
+for (const file of ['server/prerender.ts', 'server/seo.ts', 'server/preload.ts', 'src/utils/pricing.ts', 'src/utils/access.ts']) {
   test(`${file} loads with plain node (every import has its ".ts")`, () => {
     const out = execFileSync(process.execPath, ['-e', `import('./${file}').then(() => console.log('ok'))`], { cwd: ROOT, encoding: 'utf8', timeout: 30000 });
     assert.equal(out.trim(), 'ok');
