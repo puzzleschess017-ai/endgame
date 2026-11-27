@@ -3,7 +3,7 @@ import AccessGate, { useGateOpen } from './AccessGate';
 import CookieBanner from './CookieBanner';
 import SiteLinks from './SiteLinks';
 import Sidebar, { AccountControls, currentPath } from './Sidebar';
-import SignUpPrompt from './SignUpPrompt';
+import SignUpPrompt, { useShowsSignUp } from './SignUpPrompt';
 import ProfileMenu from './ProfileMenu';
 import SoundMenu from './SoundMenu';
 
@@ -23,6 +23,7 @@ interface AppShellProps {
 export default function AppShell({ username, heading, hideAccountBar = false, children }: AppShellProps) {
   const gateOpen = useGateOpen();
   const path = currentPath();
+  const showsSignUp = useShowsSignUp(path);
   return (
     <div className="min-h-screen app-bg text-white xl:flex">
       <Sidebar username={username} />
@@ -32,7 +33,7 @@ export default function AppShell({ username, heading, hideAccountBar = false, ch
           <div className="min-w-0">{heading}</div>
           <div className="flex items-center gap-2 shrink-0">
             <SignUpPrompt path={path} />
-            <ProfileMenu guestName={username} align="right" />
+            {!showsSignUp && <ProfileMenu guestName={username} align="right" />}
             <AccountControls />
             <SoundMenu />
           </div>

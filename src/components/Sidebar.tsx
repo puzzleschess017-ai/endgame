@@ -23,6 +23,7 @@ import { useAuth } from '../auth';
 import ProfileMenu from './ProfileMenu';
 import { signOutAndSync } from '../sync';
 import SoundMenu from './SoundMenu';
+import { useShowsSignUp } from './SignUpPrompt';
 
 export interface NavItem {
   id: string;
@@ -275,6 +276,7 @@ interface SidebarProps {
  */
 export default function Sidebar({ username: savedName }: SidebarProps) {
   const path = currentPath();
+  const showsSignUp = useShowsSignUp(path);
   const { session, name: accountName } = useAuth();
   // Someone signed in is greeted by the account name; a guest by the name saved in this browser.
   const username = session ? accountName : savedName;
@@ -324,7 +326,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
         </a>
 
         <div className="ml-auto xl:hidden flex items-center gap-2 min-w-0">
-          <ProfileMenu guestName={savedName} align="right" testId="topbar-name" />
+          {!showsSignUp && <ProfileMenu guestName={savedName} align="right" testId="topbar-name" />}
           <AccountControls />
           <SoundMenu />
         </div>
