@@ -303,7 +303,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
           aria-label="Chess Tactics Guide home"
         >
           <img
-            src="/assets/aistudio/Add_a_heading__16_-removebg-preview_c70fa2ca.png"
+            src="/assets/aistudio/chess-tactics-guide-logo.png"
             alt="Chess Tactics Guide logo"
             className="w-14 h-14 object-contain select-none shrink-0"
             draggable={false}
