@@ -38,17 +38,14 @@ test('Login and Create account lift a little on hover, and not for people who as
   }
 });
 
-test('the home page describes every tab of the menu, each with a screenshot', () => {
+test('the home page shows two whole phone screenshots', () => {
   const html = renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: false, premium: false }));
-  for (const id of ['woodpecker', 'streak', 'survival', 'coordinates', 'blindfold', 'editor', 'analysis', 'endgames', 'openings', 'tactics', 'ebooks', 'statistics']) {
-    assert.match(html, new RegExp(`data-testid="feature-${id}"`));
-  }
-  assert.equal((html.match(/\/welcome\/(phone|desktop)-[a-z]+\.webp/g) ?? []).length >= 12, true);
+  assert.equal((html.match(/<img [^>]*src="\/welcome\/phone-[a-z]+\.webp"/g) ?? []).length, 2);
 });
 
 test('the prices come last, and not for someone who has Premium', () => {
   const html = renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: false, premium: false }));
-  assert.ok(html.indexOf('data-testid="welcome-premium"') > html.indexOf('data-testid="feature-statistics"'));
+  assert.ok(html.indexOf('data-testid="welcome-premium"') > html.indexOf('data-testid="welcome-start"'));
   assert.match(html, /\$4\.99/);
   assert.doesNotMatch(renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: true, premium: true })), /welcome-premium/);
 });

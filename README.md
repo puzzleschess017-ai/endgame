@@ -141,7 +141,7 @@ A guest sees a yellow, shining **Create account** button at the top right of the
 comes back to the same page afterwards. On a phone it is a row of its own above the page. Home, Blindfold, Pricing, Statistics and
 the legal pages do not have it. Someone signed in never sees it.
 
-The home page of a visitor who has not trained yet (`src/components/WelcomeIntro.tsx`) describes every tab with a screenshot (`public/welcome/`, phone shots for most tabs, computer shots for the editor and the analysis board). The screenshots are plain files: retake them when a page changes a lot. The three plans (`src/components/PricingPlans.tsx`) are shared by that page and the Pricing page; Yearly is the dark, raised card. The font of the whole site is Inter (`@fontsource-variable/inter`, served from this site).
+The home page of a visitor who has not trained yet (`src/components/WelcomeIntro.tsx`) shows a short introduction with two phone screenshots (`public/welcome/`, plain files: retake them when those pages change a lot) and the three plans. The plans (`src/components/PricingPlans.tsx`) are shared with the Pricing page; Yearly is the dark, raised card. The font of the whole site is Inter (`@fontsource-variable/inter`, served from this site).
 
 Home and Statistics read the browser's data only:
 `ctg_activity_v1` holds one total per day (sessions, time, answers, puzzles; the last 400 days) and
