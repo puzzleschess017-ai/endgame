@@ -10,9 +10,8 @@ import type { PendingPromotion } from '../components/ChessboardPanel';
 import type { Puzzle } from '../types';
 import { applyUciMove, getLegalDests, isPromotionMove } from '../utils/chessHelpers';
 import { playMoveSound } from '../utils/sound';
+import { randomPreviewFen } from '../utils/preview';
 
-/** Shown on the board before a run starts (same position as Woodpecker). */
-export const PREVIEW_FEN = '1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1';
 
 const SETUP_MOVE_DELAY_MS = 200;
 const REPLY_DELAY_MS = 280;
@@ -41,26 +40,29 @@ interface Options {
   onFailed: (puzzle: Puzzle, info: FailedInfo) => void;
 }
 
-const PREVIEW_BOARD: SolverBoard = {
-  fen: PREVIEW_FEN,
-  orientation: 'white',
-  turnColor: 'white',
-  dests: new Map(),
-  lastMove: undefined,
-  check: false,
-  locked: true,
-};
+function previewBoard(fen: string): SolverBoard {
+  return {
+    fen,
+    orientation: 'white',
+    turnColor: 'white',
+    dests: new Map(),
+    lastMove: undefined,
+    check: false,
+    locked: true,
+  };
+}
 
 const colorOf = (chess: Chess): Color => (chess.turn() === 'w' ? 'white' : 'black');
 const asKey = (square: string) => square as Key;
 
 export function usePuzzleSolver({ onSolved, onFailed }: Options) {
-  const [board, setBoard] = useState<SolverBoard>(PREVIEW_BOARD);
+  const [firstPreview] = useState(() => randomPreviewFen());
+  const [board, setBoard] = useState<SolverBoard>(() => previewBoard(firstPreview));
   const [syncToken, setSyncToken] = useState(0);
   const [hintArrow, setHintArrow] = useState<[Key, Key] | null>(null);
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion | null>(null);
 
-  const chessRef = useRef(new Chess(PREVIEW_FEN));
+  const chessRef = useRef(new Chess(firstPreview));
   const puzzleRef = useRef<Puzzle | null>(null);
   const moveIndexRef = useRef(1);
   const settledRef = useRef(true);
@@ -139,8 +141,9 @@ export function usePuzzleSolver({ onSolved, onFailed }: Options) {
     setHintArrow(null);
     puzzleRef.current = null;
     settledRef.current = true;
-    chessRef.current = new Chess(PREVIEW_FEN);
-    setBoard(PREVIEW_BOARD);
+    const preview = randomPreviewFen();
+    chessRef.current = new Chess(preview);
+    setBoard(previewBoard(preview));
     setSyncToken((t) => t + 1);
   }, [clearTimers]);
 

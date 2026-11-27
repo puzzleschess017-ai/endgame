@@ -25,8 +25,8 @@ import { playMoveSound } from './utils/sound';
 import { recordFinishedCycles } from './utils/woodpeckerHistory';
 import { nextCycle, resumeAfterReview, reviewSession, trimOldAttempts, type ReviewItem } from './utils/review';
 import { readSavedUsername } from './utils/profile';
+import { randomPreviewFen } from './utils/preview';
 
-const PREVIEW_FEN = '1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1';
 
 interface BoardState {
   fen: string;
@@ -55,8 +55,9 @@ export default function App() {
     message: string;
   }>({ type: 'idle', message: 'Find the best move' });
 
+  const [firstPreview] = useState(() => randomPreviewFen());
   const [boardState, setBoardState] = useState<BoardState>({
-    fen: PREVIEW_FEN,
+    fen: firstPreview,
     playerColor: 'white',
     turnColor: 'white',
     dests: new Map(),
@@ -64,7 +65,7 @@ export default function App() {
     locked: true,
   });
 
-  const chessRef = useRef<Chess>(new Chess(PREVIEW_FEN));
+  const chessRef = useRef<Chess>(new Chess(firstPreview));
   const moveIndexRef = useRef<number>(1);
   const timersRef = useRef<number[]>([]);
   const lastTickRef = useRef<number>(Date.now());
@@ -153,9 +154,10 @@ export default function App() {
 
     if (!session || session.status !== 'training' || !currentPuzzle) {
       if (!session) {
-        chessRef.current = new Chess(PREVIEW_FEN);
+        const preview = randomPreviewFen();
+        chessRef.current = new Chess(preview);
         setBoardState({
-          fen: PREVIEW_FEN,
+          fen: preview,
           playerColor: 'white',
           turnColor: 'white',
           dests: new Map(),
