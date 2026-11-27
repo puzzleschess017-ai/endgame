@@ -4,7 +4,7 @@
 
 export const DEFAULT_SITE_URL = 'https://chesstacticsguide.com';
 export const SITE_NAME = 'Chess Tactics Guide';
-const LOGO_PATH = '/assets/aistudio/Add_a_heading__16_-removebg-preview_c70fa2ca.png';
+const LOGO_PATH = '/assets/aistudio/chess-tactics-guide-logo.png';
 
 export interface PageMeta {
   path: string;

@@ -187,6 +187,12 @@ empty `<div id="root">`, so a crawler that has not run the JavaScript yet still 
 when it starts. Nothing to do when you edit a lesson, but **bump `THEORY_LASTMOD` in `server/seo.ts`** (the `<lastmod>`
 of those pages in the sitemap) to the day you changed one; the other pages have no `<lastmod>` on purpose.
 
+The training pages (`/`, `/woodpecker`, `/streak`, `/survival`, `/coordinates`, `/blindfold`, `/analysis`, `/editor`, `/ebooks`
+and `/pricing`) get a short text the same way, written in `appTexts()` of `server/prerender.ts` (the e-book list and the
+Pricing table come from the same data as the pages). When you rename a mode or change what a page does, change its text
+there too; `server/prerender.test.ts` checks that every page has its own heading and links to the others. The `<noscript>`
+list in `index.html` is for visitors without JavaScript and has to name the same pages.
+
 ### About, Privacy, Contact and cookies
 
 To add an endgame lesson: add an object to `LESSONS` in `src/theory/endgames.ts` (check every position in the Lichess
