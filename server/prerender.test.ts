@@ -5,6 +5,7 @@ import { OPENING_LESSONS, openingPath } from '../src/theory/openings.ts';
 import { contentFor } from './prerender.ts';
 import { EBOOKS } from '../src/utils/ebooks.ts';
 import { PREMIUM_MONTHLY_LABEL, PREMIUM_YEARLY_LABEL } from '../src/utils/premium.ts';
+import fs from 'node:fs';
 import { escapeHtml, pageFor, renderPage } from './seo.ts';
 
 const TEMPLATE = '<html><head><title>x</title></head><body><div id="root"></div></body></html>';
@@ -91,5 +92,21 @@ describe('training pages written into the HTML', () => {
   });
   it('every page that has text is a page of the sitemap', () => {
     for (const path of PATHS) assert.ok(pageFor(path)?.indexable, path);
+  });
+});
+
+describe('no flash of the prerendered text', () => {
+  // The text is for crawlers and visitors without JavaScript. A visitor with JavaScript would see it for a moment
+  // before the app replaces it, so index.html hides it from the first paint, before the body is parsed.
+  const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  it('index.html marks the page as running JavaScript and hides the prerendered text in the head', () => {
+    const head = html.slice(0, html.indexOf('</head>'));
+    assert.ok(head.includes("classList.add('js')"));
+    assert.ok(head.includes('.js [data-prerendered]{display:none}'));
+  });
+  it('the prerendered text carries the attribute the rule hides, and the noscript list stays visible', () => {
+    assert.ok(contentFor('/endgames')!.includes('<main data-prerendered'));
+    const noscript = html.slice(html.indexOf('<noscript>'), html.indexOf('</noscript>'));
+    assert.ok(!noscript.includes('data-prerendered'));
   });
 });

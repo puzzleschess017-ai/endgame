@@ -184,7 +184,8 @@ should stay 50-170 characters and titles under 70; `server/seo.test.ts` checks t
 The theory pages (`/endgames`, `/openings` and every lesson) also get their text in the HTML: `server/prerender.ts`
 builds the headings, paragraphs, lists and links of the lesson from `src/theory` and the server writes it into the
 empty `<div id="root">`, so a crawler that has not run the JavaScript yet still reads the lesson. The app replaces it
-when it starts. Nothing to do when you edit a lesson, but **bump `THEORY_LASTMOD` in `server/seo.ts`** (the `<lastmod>`
+when it starts. A visitor with JavaScript never sees it: `index.html` adds a `js` class to `<html>` in the head and hides
+`[data-prerendered]` from the first paint (otherwise the plain text would flash before the app loads). Nothing to do when you edit a lesson, but **bump `THEORY_LASTMOD` in `server/seo.ts`** (the `<lastmod>`
 of those pages in the sitemap) to the day you changed one; the other pages have no `<lastmod>` on purpose.
 
 The training pages (`/`, `/woodpecker`, `/streak`, `/survival`, `/coordinates`, `/blindfold`, `/analysis`, `/editor`, `/ebooks`
