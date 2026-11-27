@@ -1,17 +1,13 @@
+@import "@fontsource-variable/inter";
 @import "tailwindcss";
 @import "chessground/assets/chessground.base.css";
 
-/*
- * Futura Font Configuration:
- * Place genuine Futura font files (e.g. Futura-Regular.woff2, Futura-Medium.woff2,
- * Futura-Bold.woff2, or .ttf/.otf) into /public/fonts/ — the server automatically
- * registers @font-face rules via /fonts/futura.css.
- */
+/* The font of the whole site is Inter, served from this site (the @fontsource-variable/inter package), not from Google. */
 @layer base {
   :root {
     color-scheme: dark;
     forced-color-adjust: none;
-    --font-sans: "Futura", "Futura PT", "Futura Std", "Century Gothic", "Trebuchet MS", sans-serif;
+    --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
 
   html,
@@ -518,7 +514,7 @@
     bottom: 0;
     left: 0;
     width: 40%;
-    background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0) 100%);
+    background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
     transform: translateX(-140%) skewX(-18deg);
     animation: btn-sweep 5s ease-in-out infinite;
     pointer-events: none;
@@ -537,8 +533,8 @@
   100%    { transform: translateX(380%) skewX(-18deg); }
 }
 @keyframes btn-glow {
-  0%, 100% { box-shadow: 0 6px 20px rgba(var(--glow), 0.22); }
-  50%      { box-shadow: 0 6px 28px rgba(var(--glow), 0.5), 0 0 0 1px rgba(var(--glow), 0.28); }
+  0%, 100% { box-shadow: 0 6px 20px rgba(var(--glow), 0.16); }
+  50%      { box-shadow: 0 6px 24px rgba(var(--glow), 0.28), 0 0 0 1px rgba(var(--glow), 0.14); }
 }
 @media (prefers-reduced-motion: reduce) {
   .btn-shine,

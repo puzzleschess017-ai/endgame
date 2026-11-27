@@ -612,7 +612,7 @@ export default function ChessboardPanel({
     }
 
     const fontSize = Math.max(9, Math.min(12, Math.round(boardPx * 0.024)));
-    ctx.font = `700 ${fontSize}px Futura, "Futura PT", "Century Gothic", "Trebuchet MS", sans-serif`;
+    ctx.font = `700 ${fontSize}px "Inter Variable", Inter, system-ui, sans-serif`;
 
     const files =
       orientation === 'white'
