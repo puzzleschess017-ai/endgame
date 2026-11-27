@@ -19,7 +19,7 @@ function setLabel(set: ProgressSet): string {
 }
 
 const CARD_BASE =
-  'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
+  'bg-card border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(131,24,67,0.14)]';
 
 /** Personal records of every mode and the last Woodpecker cycles. */
 export default function StatisticsPage() {
@@ -99,7 +99,7 @@ export default function StatisticsPage() {
                   <select
                     value={progressSet.id}
                     onChange={(e) => setChosenSet(e.target.value)}
-                    className="rounded-lg bg-[#0d1627] border border-white/15 px-3 py-2 text-sm font-semibold text-white"
+                    className="rounded-lg bg-card border border-white/15 px-3 py-2 text-sm font-semibold text-white"
                     data-testid="progress-set"
                   >
                     {sets.map((s) => (

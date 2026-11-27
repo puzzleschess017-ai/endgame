@@ -19,7 +19,7 @@ export default function LegalLayout({ title, documentTitle, children }: LegalLay
       <div className="mx-auto w-full max-w-[760px]">
         <article className={`${CARD_CLASS} gap-5`}>
           <h1 className="text-3xl font-bold tracking-tight text-white">{title}</h1>
-          <div className="flex flex-col gap-4 text-[15px] font-medium leading-relaxed text-white/80 [&_h2]:mt-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-white [&_a]:text-[#39ff88] [&_a]:underline [&_a]:underline-offset-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:flex [&_ol]:flex-col [&_ol]:gap-1.5">
+          <div className="flex flex-col gap-4 text-[15px] font-medium leading-relaxed text-white/80 [&_h2]:mt-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-white [&_a]:text-accent [&_a]:underline [&_a]:underline-offset-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:flex [&_ol]:flex-col [&_ol]:gap-1.5">
             {children}
           </div>
         </article>

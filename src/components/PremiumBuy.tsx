@@ -74,7 +74,7 @@ export default function PremiumBuy({ plan, open, signedIn, returnTo, unlocking }
   return (
     <div data-testid={`premium-buy-${plan}`} className="flex flex-col gap-2 mt-auto">
       {unlocking ? (
-        <p data-testid="premium-unlocking" role="status" className="text-sm font-bold text-[#39ff88]">
+        <p data-testid="premium-unlocking" role="status" className="text-sm font-bold text-accent">
           Payment received. Turning Premium on…
         </p>
       ) : !signedIn ? (
@@ -97,7 +97,7 @@ export default function PremiumBuy({ plan, open, signedIn, returnTo, unlocking }
             {busy ? 'Opening the payment page…' : `Get ${plan === 'monthly' ? 'monthly' : 'yearly'} Premium · ${price}`}
           </button>
           {error && (
-            <p role="alert" data-testid="premium-error" className="text-sm font-medium text-[#ffd2cc]">
+            <p role="alert" data-testid="premium-error" className="text-sm font-medium text-danger-ink">
               {error}
             </p>
           )}

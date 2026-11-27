@@ -35,7 +35,7 @@ export default function AccessGate() {
       data-testid="gate"
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0b1424]/70 backdrop-blur-md overflow-y-auto"
     >
-      <div className="w-full max-w-[440px] bg-[#16233b] border border-white/10 rounded-2xl p-6 sm:p-7 flex flex-col gap-5 shadow-[0_16px_44px_rgba(4,9,20,0.6)]">
+      <div className="w-full max-w-[440px] bg-card border border-white/10 rounded-2xl p-6 sm:p-7 flex flex-col gap-5 shadow-[0_16px_44px_rgba(131,24,67,0.2)]">
         <div>
           <h2 id="gate-title" className="text-2xl font-bold text-white tracking-tight">
             Welcome to Chess Tactics Guide
@@ -65,7 +65,7 @@ export default function AccessGate() {
             type="button"
             data-testid="gate-guest"
             onClick={chooseGuest}
-            className="mt-1 py-2 text-sm font-semibold text-white/70 hover:text-white underline underline-offset-4 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+            className="mt-1 py-2 text-sm font-semibold text-white/70 hover:text-white underline underline-offset-4 cursor-pointer focus-visible:outline-2 focus-visible:outline-accent"
           >
             Play as a guest
           </button>

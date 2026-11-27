@@ -412,7 +412,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
               {error && (
                 <div
                   role="alert"
-                  className="text-sm font-medium text-[#ffd2cc] bg-[#401a22] border border-[#8f3848] rounded-xl px-3.5 py-2.5"
+                  className="text-sm font-medium text-danger-ink bg-danger-bg border border-danger-line rounded-xl px-3.5 py-2.5"
                 >
                   {error}
                 </div>
@@ -456,9 +456,9 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                         {Math.ceil(msLeft / 1000)}
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-[#101b2f] overflow-hidden" aria-hidden="true">
+                    <div className="h-2 rounded-full bg-inset overflow-hidden" aria-hidden="true">
                       <div
-                        className="h-full bg-[#39ff88]"
+                        className="h-full bg-accent"
                         style={{ width: `${Math.max(0, Math.min(100, (msLeft / (settings.memorize * 1000)) * 100))}%` }}
                       />
                     </div>
@@ -509,10 +509,10 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                     autoComplete="off"
                     spellCheck={false}
                     placeholder={longMate && step < current.position.mateIn - 1 ? 'Your move, e.g. Qh7+' : 'Your move, e.g. Qh7#'}
-                    className="w-full px-4 py-3 rounded-xl bg-[#101b2f] border border-white/20 focus:border-[#39ff88] outline-none text-white text-lg font-semibold tracking-tight placeholder:text-white/40 placeholder:text-base placeholder:font-medium min-h-[48px]"
+                    className="w-full px-4 py-3 rounded-xl bg-inset border border-white/20 focus:border-accent outline-none text-white text-lg font-semibold tracking-tight placeholder:text-white/40 placeholder:text-base placeholder:font-medium min-h-[48px]"
                   />
                   {hint && (
-                    <p role="alert" className="text-sm font-medium text-[#ffd2cc]" data-testid="hint">
+                    <p role="alert" className="text-sm font-medium text-danger-ink" data-testid="hint">
                       {hint}
                     </p>
                   )}
@@ -528,7 +528,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
               {phase === 'feedback' && feedback && (
                 <div className="flex flex-col gap-3">
                   <p
-                    className={`text-lg font-bold ${feedback.kind === 'correct' ? 'text-[#39ff88]' : 'text-[#ff7a7a]'}`}
+                    className={`text-lg font-bold ${feedback.kind === 'correct' ? 'text-accent' : 'text-danger'}`}
                     data-testid="status"
                   >
                     {feedback.kind === 'correct'
@@ -570,7 +570,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
               <div className="text-center">
                 <h2 className="text-xl font-bold text-white tracking-tight">Round complete</h2>
                 <div
-                  className="text-7xl font-bold text-[#39ff88] leading-none mt-4 tabular-nums"
+                  className="text-7xl font-bold text-accent leading-none mt-4 tabular-nums"
                   data-testid="final-score"
                 >
                   {result.correct}/{result.total}
@@ -579,7 +579,7 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
                   {longMate ? `mates in ${settings.mateIn} found` : 'checkmates found'} ({levelDescription(settings.level)})
                 </div>
                 {result.isNewBest && (
-                  <div className="inline-block mt-3 px-3 py-1 rounded-full bg-[#39ff88]/15 border border-[#39ff88] text-[#39ff88] text-xs font-bold">
+                  <div className="inline-block mt-3 px-3 py-1 rounded-full bg-accent/15 border border-accent text-accent text-xs font-bold">
                     New best!
                   </div>
                 )}

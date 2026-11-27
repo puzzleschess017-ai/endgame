@@ -353,7 +353,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
 
               <div className="space-y-1.5">
                 <span className="text-sm font-semibold text-white">Pieces on the board</span>
-                <div className="grid grid-cols-4 gap-1 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+                <div className="grid grid-cols-4 gap-1 bg-inset p-1.5 rounded-xl border border-white/10">
                   {RECONSTRUCT_LEVELS.map((level) => (
                     <button
                       key={level}
@@ -373,7 +373,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
 
               <div className="space-y-1.5">
                 <span className="text-sm font-semibold text-white">Memorize time</span>
-                <div className="grid grid-cols-3 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+                <div className="grid grid-cols-3 gap-1.5 bg-inset p-1.5 rounded-xl border border-white/10">
                   {RECONSTRUCT_SECONDS.map((seconds) => (
                     <button
                       key={seconds}
@@ -393,7 +393,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
               {error && (
                 <div
                   role="alert"
-                  className="text-sm font-medium text-[#ffd2cc] bg-[#401a22] border border-[#8f3848] rounded-xl px-3.5 py-2.5"
+                  className="text-sm font-medium text-danger-ink bg-danger-bg border border-danger-line rounded-xl px-3.5 py-2.5"
                 >
                   {error}
                 </div>
@@ -433,9 +433,9 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
                         {Math.ceil(msLeft / 1000)}
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-[#101b2f] overflow-hidden" aria-hidden="true">
+                    <div className="h-2 rounded-full bg-inset overflow-hidden" aria-hidden="true">
                       <div
-                        className="h-full bg-[#39ff88]"
+                        className="h-full bg-accent"
                         style={{ width: `${Math.max(0, Math.min(100, (msLeft / (settings.seconds * 1000)) * 100))}%` }}
                       />
                     </div>
@@ -469,10 +469,10 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
                             onTouchStart={(e) => startDragFromPalette(code, e)}
                             onClick={() => setTool(code)}
                             style={{ touchAction: 'none' }}
-                            className={`h-10 rounded-xl border transition-colors duration-150 cursor-grab flex items-center justify-center focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                            className={`h-10 rounded-xl border transition-colors duration-150 cursor-grab flex items-center justify-center focus-visible:outline-2 focus-visible:outline-accent ${
                               tool === code
-                                ? 'bg-[#39ff88]/20 border-[#39ff88]'
-                                : 'bg-[#101b2f] border-white/15 hover:border-white/60'
+                                ? 'bg-accent/20 border-accent'
+                                : 'bg-inset border-white/15 hover:border-white/60'
                             }`}
                           >
                             <img
@@ -527,7 +527,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
               {phase === 'feedback' && outcome && (
                 <div className="flex flex-col gap-3">
                   <p
-                    className={`text-lg font-bold ${outcome.comparison.perfect ? 'text-[#39ff88]' : 'text-[#ff7a7a]'}`}
+                    className={`text-lg font-bold ${outcome.comparison.perfect ? 'text-accent' : 'text-danger'}`}
                     data-testid="status"
                   >
                     {outcome.comparison.perfect
@@ -564,7 +564,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
               <div className="text-center">
                 <h2 className="text-xl font-bold text-white tracking-tight">Round complete</h2>
                 <div
-                  className="text-7xl font-bold text-[#39ff88] leading-none mt-4 tabular-nums"
+                  className="text-7xl font-bold text-accent leading-none mt-4 tabular-nums"
                   data-testid="final-score"
                 >
                   {result.perfect}/{items.length}
@@ -573,7 +573,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
                   positions rebuilt perfectly ({levelDescription(settings.level)})
                 </div>
                 {result.isNewBest && (
-                  <div className="inline-block mt-3 px-3 py-1 rounded-full bg-[#39ff88]/15 border border-[#39ff88] text-[#39ff88] text-xs font-bold">
+                  <div className="inline-block mt-3 px-3 py-1 rounded-full bg-accent/15 border border-accent text-accent text-xs font-bold">
                     New best!
                   </div>
                 )}

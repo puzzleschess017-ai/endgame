@@ -55,7 +55,7 @@ export default function AppearanceSettingsModal({
       aria-labelledby="board-settings-title"
     >
       <div
-        className="w-full max-w-[500px] bg-[#16233b] border border-white/15 rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.6)] overflow-hidden"
+        className="w-full max-w-[500px] bg-card border border-white/15 rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.6)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
@@ -84,10 +84,10 @@ export default function AppearanceSettingsModal({
                     key={theme.id}
                     type="button"
                     onClick={() => handleSelectTheme(theme.id)}
-                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all duration-150 cursor-pointer min-h-[46px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all duration-150 cursor-pointer min-h-[46px] focus-visible:outline-2 focus-visible:outline-accent ${
                       active
-                        ? 'bg-[#39ff88]/15 border-[#39ff88] text-white'
-                        : 'bg-[#101b2f] border-white/10 text-white/85 hover:border-white/40 hover:text-white'
+                        ? 'bg-accent/15 border-accent text-white'
+                        : 'bg-inset border-white/10 text-white/85 hover:border-white/40 hover:text-white'
                     }`}
                   >
                     <span
@@ -117,13 +117,13 @@ export default function AppearanceSettingsModal({
                     key={set.id}
                     type="button"
                     onClick={() => handleSelectPieceSet(set.id)}
-                    className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border transition-all duration-150 cursor-pointer min-h-[84px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                    className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border transition-all duration-150 cursor-pointer min-h-[84px] focus-visible:outline-2 focus-visible:outline-accent ${
                       active
-                        ? 'bg-[#39ff88]/15 border-[#39ff88] text-white'
-                        : 'bg-[#101b2f] border-white/10 text-white/85 hover:border-white/40 hover:text-white'
+                        ? 'bg-accent/15 border-accent text-white'
+                        : 'bg-inset border-white/10 text-white/85 hover:border-white/40 hover:text-white'
                     }`}
                   >
-                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-[#233454]">
+                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-inset">
                       <img
                         src={`/pieces/${set.id}/wN.svg`}
                         alt={`${set.name} white knight`}
@@ -145,11 +145,11 @@ export default function AppearanceSettingsModal({
           </section>
         </div>
 
-        <div className="px-5 py-3.5 border-t border-white/10 bg-[#132038] flex justify-end">
+        <div className="px-5 py-3.5 border-t border-white/10 bg-inset flex justify-end">
           <button
             type="button"
             onClick={handleDone}
-            className="px-5 py-2.5 rounded-xl btn-shine bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] text-sm font-bold transition-all duration-150 cursor-pointer min-h-[40px]"
+            className="px-5 py-2.5 rounded-xl btn-shine bg-accent hover:bg-accent-hover text-snow text-sm font-bold transition-all duration-150 cursor-pointer min-h-[40px]"
           >
             Done
           </button>

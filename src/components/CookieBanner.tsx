@@ -10,12 +10,12 @@ export default function CookieBanner({ hidden }: { hidden: boolean }) {
       role="region"
       aria-label="Cookies"
       data-testid="cookie-banner"
-      className="fixed inset-x-3 bottom-3 z-[90] mx-auto max-w-[560px] rounded-2xl border border-white/15 bg-[#16233b] p-4 shadow-[0_12px_36px_rgba(4,9,20,0.6)] flex flex-col gap-3"
+      className="fixed inset-x-3 bottom-3 z-[90] mx-auto max-w-[560px] rounded-2xl border border-white/15 bg-card p-4 shadow-[0_12px_36px_rgba(131,24,67,0.2)] flex flex-col gap-3"
     >
       <p className="text-sm font-medium text-white/85 leading-relaxed">
         We would like to use Google Analytics to see which pages are used, so we can improve the site. It sets cookies
         only if you accept.{' '}
-        <a href="/privacy" className="underline underline-offset-2 text-white hover:text-[#39ff88]">
+        <a href="/privacy" className="underline underline-offset-2 text-white hover:text-accent">
           Privacy
         </a>
       </p>

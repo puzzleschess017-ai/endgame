@@ -4,11 +4,11 @@ import { LOGIN_BUTTON_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, START
 
 const shines = (cls: string) => cls.split(/\s+/).includes('btn-shine');
 
-test('every filled main button shines: Start, Primary and Login (Login in light blue)', () => {
+test('every filled main button shines: Start, Primary and Login (Login in dark plum)', () => {
   assert.ok(shines(START_BUTTON_CLASS));
   assert.ok(shines(PRIMARY_BUTTON_CLASS));
   assert.ok(shines(LOGIN_BUTTON_CLASS));
-  assert.ok(LOGIN_BUTTON_CLASS.includes('[--glow:125,211,252]'));
+  assert.ok(LOGIN_BUTTON_CLASS.includes('[--glow:36,18,29]'));
   assert.ok(!PRIMARY_BUTTON_CLASS.includes('--glow'), 'green is the default glow');
 });
 

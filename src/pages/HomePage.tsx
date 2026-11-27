@@ -16,7 +16,7 @@ const RANGES = [7, 30, 90] as const;
 type Range = (typeof RANGES)[number];
 
 const CARD_BASE =
-  'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
+  'bg-card border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(131,24,67,0.14)]';
 
 /** "2026-11-24" -> a local Date at noon. */
 function parseDay(day: string): Date {
@@ -96,7 +96,7 @@ export default function HomePage() {
                   >
                     <span className="text-sm font-semibold text-white leading-snug">{tile.label}</span>
                     <span
-                      className={`text-3xl font-bold tracking-tight tabular-nums ${tile.tone === 'good' ? 'text-[#39ff88]' : 'text-white'}`}
+                      className={`text-3xl font-bold tracking-tight tabular-nums ${tile.tone === 'good' ? 'text-accent' : 'text-white'}`}
                       data-testid={`value-${tile.id}`}
                     >
                       {tile.value}
@@ -113,7 +113,7 @@ export default function HomePage() {
                   <h3 className="text-xl font-bold text-white tracking-tight">Training Analytics</h3>
                   <p className="text-sm font-medium text-white/60">Performance trends across {rangeLabel}</p>
                 </div>
-                <div className="flex gap-1 bg-[#16233b] p-1 rounded-xl border border-white/10" role="group" aria-label="Time range">
+                <div className="flex gap-1 bg-card p-1 rounded-xl border border-white/10" role="group" aria-label="Time range">
                   {RANGES.map((r) => (
                     <button
                       key={r}
@@ -134,7 +134,7 @@ export default function HomePage() {
                   title="Daily Training Activity"
                   subtitle={`Sessions per day, ${rangeLabel}`}
                   data={toData((p) => p.sessions)}
-                  color="#39ff88"
+                  color="#db2777"
                   unit="sessions"
                   emptyText="No training in this period yet"
                 />

@@ -7,13 +7,13 @@ import WelcomeIntro from './WelcomeIntro.tsx';
 
 const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
 
-test('the Start training and Login buttons shine, Login a moment later and in blue', () => {
+test('the Start training and Login buttons shine, Login a moment later and in dark plum', () => {
   const html = renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: false, premium: false }));
   const tag = (testId: string) => html.match(new RegExp(`<a [^>]*data-testid="${testId}"[^>]*>`))![0];
   assert.match(tag('welcome-start'), /class="[^"]*\bbtn-shine\b/);
   assert.doesNotMatch(tag('welcome-start'), /btn-shine-late/);
   assert.match(tag('welcome-signin'), /class="[^"]*\bbtn-shine\b[^"]*\bbtn-shine-late\b/);
-  assert.match(tag('welcome-signin'), /\[--glow:125,211,252\]/);
+  assert.match(tag('welcome-signin'), /\[--glow:36,18,29\]/);
 });
 
 test('the outlined "Create a free account" button does not shine', () => {

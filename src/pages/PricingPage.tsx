@@ -16,7 +16,7 @@ import {
 } from '../utils/premium';
 import { readSavedUsername } from '../utils/profile';
 
-const CARD = 'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
+const CARD = 'bg-card border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(131,24,67,0.14)]';
 
 const FAQ: Array<{ q: string; a: string }> = [
   {
@@ -49,7 +49,7 @@ function PremiumFeatures() {
 }
 
 function CellView({ value, premium }: { value: Cell; premium?: boolean }) {
-  if (value === true) return <Check className={`mx-auto w-4 h-4 ${premium ? 'text-amber-300' : 'text-[#39ff88]'}`} aria-label="Included" />;
+  if (value === true) return <Check className={`mx-auto w-4 h-4 ${premium ? 'text-amber-300' : 'text-accent'}`} aria-label="Included" />;
   if (value === false) return <Minus className="mx-auto w-4 h-4 text-white/35" aria-label="Not included" />;
   return <span className={premium ? 'font-bold text-white' : 'text-white/85'}>{value}</span>;
 }
@@ -98,7 +98,7 @@ export default function PricingPage() {
         {isPremium && (
           <p
             data-testid="pricing-has-premium"
-            className={`${CARD} border-[#39ff88]/40 px-5 py-3 flex items-center gap-2 text-sm font-bold text-[#39ff88]`}
+            className={`${CARD} border-accent/40 px-5 py-3 flex items-center gap-2 text-sm font-bold text-accent`}
           >
             <Check className="w-4 h-4" aria-hidden="true" /> You have Premium. Thank you!
           </p>
@@ -116,7 +116,7 @@ export default function PricingPage() {
               <li>A free account keeps your results on every device</li>
             </ul>
             {!signedIn && (
-              <a href="/login?next=%2Fpricing" className="mt-auto text-sm font-bold text-[#39ff88] underline underline-offset-2">
+              <a href="/login?next=%2Fpricing" className="mt-auto text-sm font-bold text-accent underline underline-offset-2">
                 Create a free account
               </a>
             )}
@@ -135,10 +135,10 @@ export default function PricingPage() {
           </section>
 
           <section
-            className={`${CARD} border-[#39ff88]/50 ring-1 ring-[#39ff88]/30 p-5 sm:p-6 flex flex-col gap-3 relative`}
+            className={`${CARD} border-accent/50 ring-1 ring-accent/30 p-5 sm:p-6 flex flex-col gap-3 relative`}
             data-testid="plan-yearly"
           >
-            <span className="absolute -top-3 left-5 rounded-full bg-[#39ff88] px-3 py-0.5 text-xs font-bold text-[#06210f]">
+            <span className="absolute -top-3 left-5 rounded-full bg-accent px-3 py-0.5 text-xs font-bold text-snow">
               Best value: save {yearlySavingPercent()}%
             </span>
             <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">

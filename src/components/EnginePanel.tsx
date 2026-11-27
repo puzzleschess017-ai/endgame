@@ -47,8 +47,8 @@ export default function EnginePanel({ tier, fen, on, onToggle, state, onHover, o
         data-testid="engine-toggle"
         title={locked ? unlockHint(tier, needs) : undefined}
         onClick={locked ? locks.choose('Engine analysis', needs, () => {}) : () => onToggle(!on)}
-        className={`${locked ? LOCKED_CLASS : ''} flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left transition-colors cursor-pointer min-h-[40px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
-          on ? 'border-[#39ff88]/60 bg-[#39ff88]/10' : 'border-white/20 bg-[#101b2f] hover:border-white/50'
+        className={`${locked ? LOCKED_CLASS : ''} flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left transition-colors cursor-pointer min-h-[40px] focus-visible:outline-2 focus-visible:outline-accent ${
+          on ? 'border-accent/60 bg-accent/10' : 'border-white/20 bg-inset hover:border-white/50'
         }`}
       >
         <span className="flex items-center gap-2 text-sm font-bold text-white">
@@ -57,9 +57,9 @@ export default function EnginePanel({ tier, fen, on, onToggle, state, onHover, o
         </span>
         <span
           aria-hidden="true"
-          className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${on ? 'bg-[#39ff88]' : 'bg-white/20'}`}
+          className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${on ? 'bg-accent' : 'bg-white/20'}`}
         >
-          <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
+          <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-snow shadow transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
         </span>
         {locked && <LockMark />}
       </button>
@@ -69,14 +69,14 @@ export default function EnginePanel({ tier, fen, on, onToggle, state, onHover, o
         <p
           data-testid="engine-message"
           role={state.status === 'error' || state.status === 'missing' ? 'alert' : 'status'}
-          className={`text-sm font-semibold leading-snug ${state.status === 'error' || state.status === 'missing' ? 'text-[#ff7a7a]' : 'text-white/70'}`}
+          className={`text-sm font-semibold leading-snug ${state.status === 'error' || state.status === 'missing' ? 'text-danger' : 'text-white/70'}`}
         >
           {message}
         </p>
       )}
 
       {on && !message && (
-        <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-[#101b2f] p-2.5" data-testid="engine-results" aria-live="polite">
+        <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-inset p-2.5" data-testid="engine-results" aria-live="polite">
           <div className="flex items-center justify-between gap-3">
             <span data-testid="engine-score" className="text-lg font-bold tabular-nums text-white">
               {top ? formatScore(top) : '…'}
@@ -90,7 +90,7 @@ export default function EnginePanel({ tier, fen, on, onToggle, state, onHover, o
             role="img"
             aria-label={top ? `Evaluation ${formatScore(top)} for White` : 'Evaluation not known yet'}
           >
-            <div data-testid="engine-bar" className="h-full bg-white transition-[width] duration-300" style={{ width: `${share}%` }} />
+            <div data-testid="engine-bar" className="h-full bg-snow transition-[width] duration-300" style={{ width: `${share}%` }} />
           </div>
           <ul className="flex flex-col gap-0.5" data-testid="engine-lines">
             {state.lines.map((line) => {
@@ -105,7 +105,7 @@ export default function EnginePanel({ tier, fen, on, onToggle, state, onHover, o
                     onMouseLeave={() => onHover(null)}
                     onFocus={() => onHover(line.pv[0])}
                     onBlur={() => onHover(null)}
-                    className="flex w-full items-baseline gap-2 rounded-lg px-1.5 py-1 text-left text-xs cursor-pointer hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+                    className="flex w-full items-baseline gap-2 rounded-lg px-1.5 py-1 text-left text-xs cursor-pointer hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-accent"
                   >
                     <span className="w-10 shrink-0 font-bold tabular-nums text-white">{formatScore(line)}</span>
                     <span className="min-w-0 flex-1 truncate font-semibold text-white/85">{numberMoves(fen, san)}</span>

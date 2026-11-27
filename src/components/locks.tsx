@@ -67,13 +67,13 @@ export function UnlockNotice({ notice }: { notice: LockNotice | null }) {
     <div
       role="status"
       data-testid="unlock-notice"
-      className="flex items-start gap-2 text-sm font-medium text-white/90 bg-[#101b2f] border border-[#39ff88]/40 rounded-xl px-3.5 py-2.5"
+      className="flex items-start gap-2 text-sm font-medium text-white/90 bg-inset border border-accent/40 rounded-xl px-3.5 py-2.5"
     >
-      <Lock aria-hidden="true" className="h-4 w-4 mt-0.5 shrink-0 text-[#39ff88]" />
+      <Lock aria-hidden="true" className="h-4 w-4 mt-0.5 shrink-0 text-accent" />
       {signIn ? (
         <span>
           {what} is free once you have an account.{' '}
-          <a href={signInHref()} data-testid="unlock-sign-in" className="font-bold text-sky-300 underline underline-offset-2">
+          <a href={signInHref()} data-testid="unlock-sign-in" className="font-bold text-accent underline underline-offset-2">
             Login or create an account
           </a>
           .
@@ -99,14 +99,14 @@ export function UnlockNotice({ notice }: { notice: LockNotice | null }) {
  */
 export function UnlockLinks({ tier, accountLink = true }: { tier: Tier; accountLink?: boolean }) {
   if (tier === 'premium') return null;
-  const focus = 'focus-visible:outline-2 focus-visible:outline-[#39ff88]';
+  const focus = 'focus-visible:outline-2 focus-visible:outline-accent';
   if (tier === 'guest' && accountLink) {
     return (
       <div className="grid grid-cols-2 gap-1.5">
         <a
           href={signUpHref()}
           data-testid="create-account-link"
-          className={`flex items-center justify-center gap-2 rounded-xl border border-sky-300/30 bg-sky-300/10 px-2 py-1.5 text-sky-300 no-underline hover:bg-sky-300/15 ${focus}`}
+          className={`flex items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent/10 px-2 py-1.5 text-accent no-underline hover:bg-accent/15 ${focus}`}
         >
           <UserPlus aria-hidden="true" className="h-4 w-4 shrink-0" />
           <span className="text-left leading-tight">

@@ -2,6 +2,55 @@
 @import "chessground/assets/chessground.base.css";
 
 /*
+ * Colours of the site: white and pink. The words below are the ones used in the class names (bg-card, text-accent...).
+ *   white   the INK. Every "text-white", "border-white/10" and "hover:bg-white/5" in the pages is written as white on a
+ *           dark page; the page is light now, so "white" here is the dark plum that is drawn on it (and the see-through
+ *           versions become soft plum lines and tints). The real white is "snow".
+ *   snow    real white: text on a pink button.
+ *   card    cards and menus.   inset  the soft pink of boxes inside a card, inputs and secondary buttons.
+ *   accent  the pink of buttons, links and marks.
+ *   danger  wrong answers and errors.
+ * The light colours of Tailwind that were chosen for a dark page (amber-300, sky-300...) are made darker below, so the
+ * icons, texts and tints that use them stay readable on white.
+ */
+@theme {
+  --color-white: #24121d;
+  --color-snow: #ffffff;
+  --color-card: #ffffff;
+  --color-inset: #fdf2f8;
+  --color-accent: #db2777;
+  --color-accent-hover: #be185d;
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-danger-ink: #b42318;
+  --color-danger-line: #fda4af;
+  --color-danger-bg: #fff1f2;
+
+  --color-amber-300: #b45309;
+  --color-amber-400: #b45309;
+  --color-yellow-300: #a16207;
+  --color-yellow-400: #a16207;
+  --color-orange-300: #c2410c;
+  --color-orange-400: #c2410c;
+  --color-orange-500: #ea580c;
+  --color-lime-300: #4d7c0f;
+  --color-lime-400: #4d7c0f;
+  --color-emerald-300: #047857;
+  --color-emerald-400: #047857;
+  --color-cyan-300: #0e7490;
+  --color-cyan-400: #0e7490;
+  --color-sky-200: #0284c7;
+  --color-sky-300: #0369a1;
+  --color-violet-400: #6d28d9;
+  --color-violet-500: #6d28d9;
+  --color-rose-300: #be123c;
+  --color-rose-400: #be123c;
+  --color-rose-500: #be123c;
+  --color-pink-400: #be185d;
+  --color-pink-500: #be185d;
+}
+
+/*
  * Futura Font Configuration:
  * Place genuine Futura font files (e.g. Futura-Regular.woff2, Futura-Medium.woff2,
  * Futura-Bold.woff2, or .ttf/.otf) into /public/fonts/ — the server automatically
@@ -9,7 +58,7 @@
  */
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
     forced-color-adjust: none;
     --font-sans: "Futura", "Futura PT", "Futura Std", "Century Gothic", "Trebuchet MS", sans-serif;
   }
@@ -18,18 +67,18 @@
   body {
     font-family: var(--font-sans);
     font-weight: 500;
-    background-color: #101b2f;
-    color: #ffffff;
+    background-color: #fff5f9;
+    color: #24121d;
   }
 
-  /* The page background: a deep blue that shifts from lighter at the top left to darker at the bottom right,
-     with a faint green glow at the top right and a blue one at the bottom left. */
+  /* The page background: white that turns a little pink toward the bottom right, with a soft pink glow at the top
+     right and a lilac one at the bottom left. */
   .app-bg {
-    background-color: #101b2f;
+    background-color: #fff5f9;
     background-image:
-      radial-gradient(900px 560px at 88% -8%, rgba(57, 255, 136, 0.07), transparent 62%),
-      radial-gradient(1000px 680px at -5% 105%, rgba(70, 120, 255, 0.16), transparent 62%),
-      linear-gradient(155deg, #16264a 0%, #101b2f 48%, #0a1322 100%);
+      radial-gradient(900px 560px at 88% -8%, rgba(244, 114, 182, 0.16), transparent 62%),
+      radial-gradient(1000px 680px at -5% 105%, rgba(196, 181, 253, 0.22), transparent 62%),
+      linear-gradient(155deg, #ffffff 0%, #fff5f9 48%, #fde7f1 100%);
     background-attachment: fixed;
   }
 
@@ -370,6 +419,32 @@
 .piece-set-neo .cg-wrap piece.pawn.black { background-image: url('/pieces/neo/bP.svg'); }
 
 /*
+ * The menu (src/components/Sidebar.tsx): solid pink with white text; the page you are on is a white tile. Inside it "white" and
+ * "accent" mean real white (see the colours at the top of this file), and the see-through card colour is a white glaze, so
+ * every class written for the page (text-white, hover:bg-card, border-accent/40...) comes out right on the pink. The drop-down
+ * of the account button opens inside the menu on small screens: .ink-scope puts the page colours back there.
+ * Not in a layer, so these rules win over the utility classes of the entries (each has its own icon colour).
+ */
+.side-menu {
+  --color-white: #ffffff;
+  --color-accent: #ffffff;
+  --color-card: rgba(255, 255, 255, 0.18);
+  background: linear-gradient(180deg, #ec4899 0%, #be185d 100%);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.side-menu .nav-chip { background: rgba(255, 255, 255, 0.2); }
+.side-menu .nav-chip svg { color: #ffffff; }
+.side-menu .nav-group-btn { color: rgba(255, 255, 255, 0.78); }
+.side-menu a[aria-current='page'] { background: rgba(255, 255, 255, 0.96); border-color: #ffffff; color: #9d174d; }
+.side-menu a[aria-current='page'] .nav-chip { background: #fce7f3; }
+.side-menu a[aria-current='page'] .nav-chip svg { color: #be185d; }
+.ink-scope {
+  --color-white: #24121d;
+  --color-accent: #db2777;
+  --color-card: #ffffff;
+}
+
+/*
  * The side menu is meant to fit on the screen without a scrollbar. The lower the window, the tighter the entries sit
  * (it still scrolls on a very low window). Only on big screens, where the menu is a column.
  */
@@ -483,12 +558,12 @@
   .book3d-body { transition: none; }
 }
 
-/* A card that "lights up": shakes a little and its border glows green, once (daily goal, best puzzle streak).
+/* A card that "lights up": shakes a little and its border glows pink, once (daily goal, best puzzle streak).
    Without 0% and 100% the animation starts and ends at the card's own border and shadow. */
 @keyframes goal-celebrate {
   12%  { transform: translateX(-4px); }
   24%  { transform: translateX(4px); }
-  36%  { transform: translateX(-3px); border-color: rgba(57,255,136,0.9); box-shadow: 0 0 0 1px rgba(57,255,136,0.55), 0 0 28px rgba(57,255,136,0.35), 0 16px 44px rgba(4,9,20,0.45); }
+  36%  { transform: translateX(-3px); border-color: rgba(219,39,119,0.9); box-shadow: 0 0 0 1px rgba(219,39,119,0.55), 0 0 28px rgba(219,39,119,0.35), 0 16px 44px rgba(131,24,67,0.14); }
   48%  { transform: translateX(2px); }
   60%  { transform: translateX(0); }
 }
@@ -499,14 +574,14 @@
 
 /* A soft shine on a main (filled) button: a light sweeps across it now and then and its glow breathes a little. The
    shared button classes in src/components/panelUi.tsx carry it, and the few filled buttons written by hand have
-   .btn-shine too. --glow is the button's colour as "r,g,b" (green unless a class like [--glow:125,211,252] says
+   .btn-shine too. --glow is the button's colour as "r,g,b" (pink unless a class like [--glow:125,211,252] says
    otherwise). .btn-shine-late delays it (so two buttons side by side do not flash together) and .btn-still turns it
    off for a button that is pressed again and again while someone plays. It also stops on a disabled button and
    for people who ask for less motion. In the components layer, so a utility such as "absolute" or "overflow-visible"
    on the same element still wins. */
 @layer components {
   .btn-shine {
-    --glow: 57, 255, 136;
+    --glow: 219, 39, 119;
     position: relative;
     overflow: hidden;
     animation: btn-glow 3.6s ease-in-out infinite;

@@ -54,9 +54,9 @@ export default function TrainingSidebar({
     const nextCycleNum = session.currentCycle + 1;
 
     return (
-      <div className="bg-[#16233b] border border-white/10 rounded-2xl p-6 flex flex-col gap-5 shadow-[0_16px_44px_rgba(4,9,20,0.45)]">
+      <div className="bg-card border border-white/10 rounded-2xl p-6 flex flex-col gap-5 shadow-[0_16px_44px_rgba(131,24,67,0.14)]">
         <div>
-          <div className="text-xs font-bold text-[#39ff88] uppercase tracking-wider">
+          <div className="text-xs font-bold text-accent uppercase tracking-wider">
             Cycle Complete
           </div>
           <h2 className="text-xl font-bold text-white mt-1">
@@ -65,25 +65,25 @@ export default function TrainingSidebar({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-[#101b2f] border border-white/10 rounded-xl p-3.5">
+          <div className="bg-inset border border-white/10 rounded-xl p-3.5">
             <div className="text-xs font-semibold text-white/70">Correctly Solved</div>
-            <div className="text-2xl font-bold text-[#39ff88] tabular-nums mt-0.5">
+            <div className="text-2xl font-bold text-accent tabular-nums mt-0.5">
               {latestResult?.correct ?? session.cycleCorrect}
             </div>
           </div>
-          <div className="bg-[#101b2f] border border-white/10 rounded-xl p-3.5">
+          <div className="bg-inset border border-white/10 rounded-xl p-3.5">
             <div className="text-xs font-semibold text-white/70">Incorrect</div>
-            <div className="text-2xl font-bold text-[#ff7b7b] tabular-nums mt-0.5">
+            <div className="text-2xl font-bold text-danger tabular-nums mt-0.5">
               {latestResult?.incorrect ?? session.cycleIncorrect}
             </div>
           </div>
-          <div className="bg-[#101b2f] border border-white/10 rounded-xl p-3.5">
+          <div className="bg-inset border border-white/10 rounded-xl p-3.5">
             <div className="text-xs font-semibold text-white/70">Accuracy</div>
             <div className="text-2xl font-bold text-white tabular-nums mt-0.5">
               {(latestResult?.accuracy ?? Number(accuracyPct)).toFixed(1)}%
             </div>
           </div>
-          <div className="bg-[#101b2f] border border-white/10 rounded-xl p-3.5">
+          <div className="bg-inset border border-white/10 rounded-xl p-3.5">
             <div className="text-xs font-semibold text-white/70">Total Time</div>
             <div className="text-2xl font-bold text-white tabular-nums mt-0.5">
               {formatDuration(latestResult?.totalTimeMs ?? session.cycleElapsedMs)}
@@ -99,7 +99,7 @@ export default function TrainingSidebar({
           type="button"
           onClick={onStartNextCycleNow}
           data-testid="start-next-cycle"
-          className="w-full py-3 px-4 rounded-xl btn-shine bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-sm flex items-center justify-center gap-2 transition-all duration-150 shadow-[0_4px_16px_rgba(57,255,136,0.2)] cursor-pointer min-h-[44px] whitespace-nowrap"
+          className="w-full py-3 px-4 rounded-xl btn-shine bg-accent hover:bg-accent-hover text-snow font-bold text-sm flex items-center justify-center gap-2 transition-all duration-150 shadow-[0_4px_16px_rgba(219,39,119,0.2)] cursor-pointer min-h-[44px] whitespace-nowrap"
         >
           <span>Start Cycle {nextCycleNum}</span>
           <ArrowRight className="w-4 h-4" />
@@ -114,9 +114,9 @@ export default function TrainingSidebar({
     const goOn = parent?.status === 'cycle_complete';
 
     return (
-      <div className="bg-[#16233b] border border-white/10 rounded-2xl p-6 flex flex-col gap-5 shadow-[0_16px_44px_rgba(4,9,20,0.45)]" data-testid="review-complete">
+      <div className="bg-card border border-white/10 rounded-2xl p-6 flex flex-col gap-5 shadow-[0_16px_44px_rgba(131,24,67,0.14)]" data-testid="review-complete">
         <div>
-          <div className="text-xs font-bold text-[#39ff88] uppercase tracking-wider">Review Complete</div>
+          <div className="text-xs font-bold text-accent uppercase tracking-wider">Review Complete</div>
           <h2 className="text-xl font-bold text-white mt-1">
             {result ? `${result.correct} of ${result.correct + result.incorrect} solved` : 'Review finished'}
           </h2>
@@ -131,11 +131,11 @@ export default function TrainingSidebar({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-[#101b2f] border border-white/10 rounded-xl p-3.5">
+          <div className="bg-inset border border-white/10 rounded-xl p-3.5">
             <div className="text-xs font-semibold text-white/70">Accuracy</div>
             <div className="text-2xl font-bold text-white tabular-nums mt-0.5">{(result?.accuracy ?? 0).toFixed(1)}%</div>
           </div>
-          <div className="bg-[#101b2f] border border-white/10 rounded-xl p-3.5">
+          <div className="bg-inset border border-white/10 rounded-xl p-3.5">
             <div className="text-xs font-semibold text-white/70">Total Time</div>
             <div className="text-2xl font-bold text-white tabular-nums mt-0.5">{formatDuration(result?.totalTimeMs ?? 0)}</div>
           </div>
@@ -149,7 +149,7 @@ export default function TrainingSidebar({
               type="button"
               data-testid="review-resume"
               onClick={() => onResumeAfterReview(true)}
-              className="w-full py-3 px-4 rounded-xl btn-shine bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-sm flex items-center justify-center gap-2 transition-all duration-150 shadow-[0_4px_16px_rgba(57,255,136,0.2)] cursor-pointer min-h-[44px]"
+              className="w-full py-3 px-4 rounded-xl btn-shine bg-accent hover:bg-accent-hover text-snow font-bold text-sm flex items-center justify-center gap-2 transition-all duration-150 shadow-[0_4px_16px_rgba(219,39,119,0.2)] cursor-pointer min-h-[44px]"
             >
               <span>
                 {goOn
@@ -162,7 +162,7 @@ export default function TrainingSidebar({
           <button
             type="button"
             onClick={onResetSession}
-            className="w-full py-3 px-4 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold transition-all duration-150 cursor-pointer min-h-[44px]"
+            className="w-full py-3 px-4 rounded-xl bg-inset border border-white/20 hover:border-white text-white text-sm font-semibold transition-all duration-150 cursor-pointer min-h-[44px]"
           >
             {parent ? 'End Training & New Settings' : 'New Settings'}
           </button>
@@ -176,9 +176,9 @@ export default function TrainingSidebar({
     const last = session.cycleResults[session.cycleResults.length - 1];
 
     return (
-      <div className="bg-[#16233b] border border-white/10 rounded-2xl p-6 flex flex-col gap-5 shadow-[0_16px_44px_rgba(4,9,20,0.45)]">
+      <div className="bg-card border border-white/10 rounded-2xl p-6 flex flex-col gap-5 shadow-[0_16px_44px_rgba(131,24,67,0.14)]">
         <div>
-          <div className="text-xs font-bold text-[#39ff88] uppercase tracking-wider">
+          <div className="text-xs font-bold text-accent uppercase tracking-wider">
             Training Complete
           </div>
           <h2 className="text-xl font-bold text-white mt-1">
@@ -200,14 +200,14 @@ export default function TrainingSidebar({
           <button
             type="button"
             onClick={onRepeatSameSet}
-            className="w-full py-3 px-4 rounded-xl btn-shine bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-sm transition-all duration-150 shadow-[0_4px_16px_rgba(57,255,136,0.2)] cursor-pointer min-h-[44px]"
+            className="w-full py-3 px-4 rounded-xl btn-shine bg-accent hover:bg-accent-hover text-snow font-bold text-sm transition-all duration-150 shadow-[0_4px_16px_rgba(219,39,119,0.2)] cursor-pointer min-h-[44px]"
           >
             Repeat Same Puzzle Set
           </button>
           <button
             type="button"
             onClick={onResetSession}
-            className="w-full py-3 px-4 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold transition-all duration-150 cursor-pointer min-h-[44px]"
+            className="w-full py-3 px-4 rounded-xl bg-inset border border-white/20 hover:border-white text-white text-sm font-semibold transition-all duration-150 cursor-pointer min-h-[44px]"
           >
             New Settings
           </button>
@@ -221,13 +221,13 @@ export default function TrainingSidebar({
   const puzzleSolved = feedback.type === 'solved';
 
   return (
-    <div className="bg-[#16233b] border border-white/10 rounded-2xl p-5 flex flex-col gap-4 shadow-[0_16px_44px_rgba(4,9,20,0.45)]">
+    <div className="bg-card border border-white/10 rounded-2xl p-5 flex flex-col gap-4 shadow-[0_16px_44px_rgba(131,24,67,0.14)]">
       {/* Cycle Progress Strip */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="font-bold text-white tabular-nums">
             Cycle {session.currentCycle} of {session.config.totalCycles}
-            {session.review && <span className="ml-2 text-xs font-bold text-[#39ff88] uppercase tracking-wider">Review</span>}
+            {session.review && <span className="ml-2 text-xs font-bold text-accent uppercase tracking-wider">Review</span>}
           </span>
           <span className="font-semibold text-white/80 tabular-nums">
             Puzzle {session.currentPuzzleIndex + 1} / {totalPuzzles}
@@ -250,12 +250,12 @@ export default function TrainingSidebar({
             return (
               <div
                 key={c}
-                className="h-2 rounded-full bg-[#101b2f] overflow-hidden"
+                className="h-2 rounded-full bg-inset overflow-hidden"
                 title={`Cycle ${c}`}
               >
                 <div
                   className={`h-full rounded-full transition-all duration-200 ${
-                    isCompleted || isCurrent ? 'bg-[#39ff88]' : 'bg-transparent'
+                    isCompleted || isCurrent ? 'bg-accent' : 'bg-transparent'
                   }`}
                   style={{ width: `${pct}%` }}
                 />
@@ -271,22 +271,22 @@ export default function TrainingSidebar({
         aria-live="polite"
         className={`rounded-xl px-3.5 py-2.5 border text-sm flex items-center gap-2.5 min-h-[46px] ${
           feedback.type === 'error'
-            ? 'bg-[#401a22] border-[#8f3848] text-[#ffd2cc]'
+            ? 'bg-danger-bg border-danger-line text-danger-ink'
             : feedback.type === 'solved' || feedback.type === 'continue'
-              ? 'bg-[#39ff88]/12 border-[#39ff88]/60 text-white'
-              : 'bg-[#101b2f] border-white/10 text-white'
+              ? 'bg-accent/12 border-accent/60 text-white'
+              : 'bg-inset border-white/10 text-white'
         }`}
       >
         {feedback.type === 'error' ? (
-          <AlertCircle className="w-4 h-4 shrink-0 text-[#ff7b7b]" />
+          <AlertCircle className="w-4 h-4 shrink-0 text-danger" />
         ) : feedback.type === 'solved' || feedback.type === 'continue' ? (
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-[#39ff88]" />
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-accent" />
         ) : (
           <span
             className={`w-3.5 h-3.5 rounded-sm shrink-0 border ${
               playerColor === 'white'
-                ? 'bg-white border-white/80'
-                : 'bg-[#101b2f] border-white/60'
+                ? 'bg-snow border-white/50'
+                : 'bg-white border-white/60'
             }`}
             aria-hidden="true"
           />
@@ -296,19 +296,19 @@ export default function TrainingSidebar({
 
       {/* Live Statistics */}
       <div className="grid grid-cols-3 gap-2.5">
-        <div className="bg-[#101b2f] border border-white/10 rounded-xl px-3 py-2.5">
+        <div className="bg-inset border border-white/10 rounded-xl px-3 py-2.5">
           <div className="text-[11px] font-semibold text-white/70">Correct</div>
-          <div className="text-lg font-bold text-[#39ff88] tabular-nums mt-0.5">
+          <div className="text-lg font-bold text-accent tabular-nums mt-0.5">
             {session.cycleCorrect}
           </div>
         </div>
-        <div className="bg-[#101b2f] border border-white/10 rounded-xl px-3 py-2.5">
+        <div className="bg-inset border border-white/10 rounded-xl px-3 py-2.5">
           <div className="text-[11px] font-semibold text-white/70">Incorrect</div>
-          <div className="text-lg font-bold text-[#ff7b7b] tabular-nums mt-0.5">
+          <div className="text-lg font-bold text-danger tabular-nums mt-0.5">
             {session.cycleIncorrect}
           </div>
         </div>
-        <div className="bg-[#101b2f] border border-white/10 rounded-xl px-3 py-2.5">
+        <div className="bg-inset border border-white/10 rounded-xl px-3 py-2.5">
           <div className="text-[11px] font-semibold text-white/70">Accuracy</div>
           <div className="text-lg font-bold text-white tabular-nums mt-0.5">
             {accuracyPct}%
@@ -317,13 +317,13 @@ export default function TrainingSidebar({
       </div>
 
       <div className="grid grid-cols-2 gap-2.5">
-        <div className="bg-[#101b2f] border border-white/10 rounded-xl px-3 py-2.5 flex items-center justify-between">
+        <div className="bg-inset border border-white/10 rounded-xl px-3 py-2.5 flex items-center justify-between">
           <span className="text-xs font-semibold text-white/70">Puzzle Time</span>
           <span className="text-sm font-bold text-white tabular-nums">
             {formatDuration(session.puzzleElapsedMs)}
           </span>
         </div>
-        <div className="bg-[#101b2f] border border-white/10 rounded-xl px-3 py-2.5 flex items-center justify-between">
+        <div className="bg-inset border border-white/10 rounded-xl px-3 py-2.5 flex items-center justify-between">
           <span className="text-xs font-semibold text-white/70">Cycle Time</span>
           <span className="text-sm font-bold text-white tabular-nums">
             {formatDuration(session.cycleElapsedMs)}
@@ -341,7 +341,7 @@ export default function TrainingSidebar({
             onClick={onRequestHint}
             disabled={hintActive}
             title="Using the arrow counts this puzzle as incorrect"
-            className="flex-1 py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white disabled:opacity-50 text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer min-h-[42px] whitespace-nowrap"
+            className="flex-1 py-2.5 px-3.5 rounded-xl bg-inset border border-white/20 hover:border-white disabled:opacity-50 text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer min-h-[42px] whitespace-nowrap"
           >
             <Eye className="w-4 h-4" />
             <span>{hintActive ? 'Arrow Shown' : 'Show Arrow'}</span>
@@ -352,7 +352,7 @@ export default function TrainingSidebar({
           <button
             type="button"
             onClick={onNextPuzzle}
-            className="flex-1 py-2.5 px-3.5 rounded-xl btn-still bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] text-sm font-bold flex items-center justify-center gap-1.5 transition-all duration-150 shadow-[0_4px_14px_rgba(57,255,136,0.2)] cursor-pointer min-h-[42px] whitespace-nowrap"
+            className="flex-1 py-2.5 px-3.5 rounded-xl btn-still bg-accent hover:bg-accent-hover text-snow text-sm font-bold flex items-center justify-center gap-1.5 transition-all duration-150 shadow-[0_4px_14px_rgba(219,39,119,0.2)] cursor-pointer min-h-[42px] whitespace-nowrap"
           >
             <span>Next Puzzle</span>
             <ArrowRight className="w-4 h-4" />
@@ -365,7 +365,7 @@ export default function TrainingSidebar({
           type="button"
           data-testid="review-leave"
           onClick={() => onResumeAfterReview(false)}
-          className="w-full py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold cursor-pointer min-h-[42px]"
+          className="w-full py-2.5 px-3.5 rounded-xl bg-inset border border-white/20 hover:border-white text-white text-sm font-semibold cursor-pointer min-h-[42px]"
         >
           Leave review and go back to your cycles
         </button>
@@ -383,7 +383,7 @@ export default function TrainingSidebar({
           </button>
         ) : (
           <div className="flex items-center gap-2 w-full justify-between">
-            <span className="text-xs font-semibold text-[#ffd2cc]">End current training?</span>
+            <span className="text-xs font-semibold text-danger-ink">End current training?</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -398,7 +398,7 @@ export default function TrainingSidebar({
               <button
                 type="button"
                 onClick={() => setConfirmReset(false)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#101b2f] border border-white/20 text-white cursor-pointer"
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-inset border border-white/20 text-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -413,9 +413,9 @@ export default function TrainingSidebar({
 function CycleHistoryTable({ results }: { results: CycleResult[] }) {
   if (results.length === 0) return null;
   return (
-    <div className="border border-white/10 rounded-xl overflow-hidden bg-[#101b2f]">
+    <div className="border border-white/10 rounded-xl overflow-hidden bg-inset">
       <table className="w-full text-xs text-left">
-        <thead className="bg-[#132038] text-white/70 border-b border-white/10">
+        <thead className="bg-inset text-white/70 border-b border-white/10">
           <tr>
             <th className="py-2.5 px-3 font-semibold">Cycle</th>
             <th className="py-2.5 px-3 font-semibold">Score</th>
@@ -450,14 +450,14 @@ function ReviewBox({ result, onStart, midRun }: { result: CycleResult | undefine
     review.slow > 0 ? `${review.slow} slowest (up to ${formatDuration(slowest)})` : '',
   ].filter(Boolean);
   return (
-    <div data-testid="review-box" className="rounded-xl border border-white/10 bg-[#101b2f] p-3.5 flex flex-col gap-2">
+    <div data-testid="review-box" className="rounded-xl border border-white/10 bg-inset p-3.5 flex flex-col gap-2">
       <div className="text-sm font-bold text-white">Review</div>
       <p className="text-[13px] font-medium text-white/80 leading-snug tabular-nums">{parts.join(' · ')}</p>
       <button
         type="button"
         data-testid="review-start"
         onClick={() => onStart(review.items)}
-        className="w-full py-2.5 px-3.5 rounded-xl bg-[#16233b] border border-[#39ff88]/60 hover:border-[#39ff88] text-white text-sm font-bold cursor-pointer min-h-[42px]"
+        className="w-full py-2.5 px-3.5 rounded-xl bg-card border border-accent/60 hover:border-accent text-white text-sm font-bold cursor-pointer min-h-[42px]"
       >
         Practise these {review.items.length}
         {midRun ? ' now' : ''}

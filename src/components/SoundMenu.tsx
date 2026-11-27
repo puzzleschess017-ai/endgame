@@ -84,7 +84,7 @@ export default function SoundMenu() {
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="p-2 rounded-xl text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0"
+        className="p-2 rounded-xl text-white/85 hover:text-accent hover:bg-card border border-transparent hover:border-white/15 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0"
         aria-label="Sound settings"
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -101,7 +101,7 @@ export default function SoundMenu() {
             role="dialog"
             aria-label="Sound settings"
             style={{ left: position.left, top: position.top, bottom: position.bottom, width: POPOVER_WIDTH }}
-            className="fixed z-50 rounded-2xl bg-[#16233b] border border-white/15 shadow-[0_18px_48px_rgba(0,0,0,0.55)] p-4"
+            className="fixed z-50 rounded-2xl bg-card border border-white/15 shadow-[0_18px_48px_rgba(0,0,0,0.55)] p-4"
           >
             <div>
               <div className="flex items-center justify-between">
@@ -116,7 +116,7 @@ export default function SoundMenu() {
                 <button
                   type="button"
                   onClick={() => update({ muted: !settings.muted })}
-                  className="p-2 rounded-xl bg-[#101b2f] border border-white/15 hover:border-[#39ff88] hover:text-[#39ff88] text-white cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center shrink-0"
+                  className="p-2 rounded-xl bg-inset border border-white/15 hover:border-accent hover:text-accent text-white cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center shrink-0"
                   aria-label={settings.muted ? 'Unmute sounds' : 'Mute sounds'}
                   aria-pressed={settings.muted}
                   title={settings.muted ? 'Unmute sounds' : 'Mute sounds'}
@@ -137,7 +137,7 @@ export default function SoundMenu() {
                   onKeyUp={(e) => {
                     if (/^(Arrow|Page)/.test(e.key) || e.key === 'Home' || e.key === 'End') playSoundPreview();
                   }}
-                  className="flex-1 min-w-0 accent-[#39ff88] cursor-pointer"
+                  className="flex-1 min-w-0 accent-accent cursor-pointer"
                   aria-valuetext={`${percent}%`}
                 />
               </div>
@@ -145,7 +145,7 @@ export default function SoundMenu() {
 
             <div className="mt-4">
               <span className="text-sm font-bold text-white">Sound</span>
-              <div className="mt-2 grid grid-cols-2 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10" role="group" aria-label="Sound style">
+              <div className="mt-2 grid grid-cols-2 gap-1 bg-inset p-1 rounded-xl border border-white/10" role="group" aria-label="Sound style">
                 {STYLE_LABELS.map(({ value, label }) => (
                   <button
                     key={value}
@@ -157,7 +157,7 @@ export default function SoundMenu() {
                       playSoundPreview();
                     }}
                     className={`px-2 py-2 rounded-lg text-xs font-bold cursor-pointer ${
-                      settings.style === value ? 'bg-[#39ff88] text-[#08150d]' : 'text-white/80 hover:text-white'
+                      settings.style === value ? 'bg-accent text-snow' : 'text-white/80 hover:text-white'
                     }`}
                   >
                     {label}

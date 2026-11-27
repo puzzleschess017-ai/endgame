@@ -44,7 +44,7 @@ import { readSavedUsername } from '../utils/profile';
 import { playMoveSound } from '../utils/sound';
 
 const NAV_BUTTON_CLASS =
-  'py-1.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-[#39ff88] hover:text-[#39ff88] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/20 disabled:hover:text-white text-white flex items-center justify-center cursor-pointer min-h-[36px] focus-visible:outline-2 focus-visible:outline-[#39ff88]';
+  'py-1.5 rounded-xl bg-inset border border-white/20 hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/20 disabled:hover:text-white text-white flex items-center justify-center cursor-pointer min-h-[36px] focus-visible:outline-2 focus-visible:outline-accent';
 
 /** Reads a FEN typed or pasted by the person. Missing fields are filled in; illegal positions are refused with a reason. */
 function readFen(text: string): { ok: true; fen: string } | { ok: false; error: string } {
@@ -255,8 +255,8 @@ export default function AnalysisPage() {
         data-current={current}
         aria-current={current ? 'step' : undefined}
         onClick={() => navigate((a) => goTo(a, index))}
-        className={`flex-1 text-left px-2.5 py-1.5 rounded-lg text-sm font-bold cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
-          current ? 'bg-[#39ff88] text-[#101b2f]' : 'text-white hover:bg-white/10'
+        className={`flex-1 text-left px-2.5 py-1.5 rounded-lg text-sm font-bold cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
+          current ? 'bg-accent text-snow' : 'text-white hover:bg-white/10'
         }`}
       >
         {san}
@@ -288,7 +288,7 @@ export default function AnalysisPage() {
             }}
             spellCheck={false}
             autoComplete="off"
-            className="min-w-0 flex-1 bg-[#101b2f] border border-white/20 rounded-lg px-3 py-2 text-xs font-mono text-white min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+            className="min-w-0 flex-1 bg-inset border border-white/20 rounded-lg px-3 py-2 text-xs font-mono text-white min-h-[42px] focus-visible:outline-2 focus-visible:outline-accent"
           />
           <button type="button" data-testid="fen-load" onClick={loadFen} className={`${SECONDARY_BUTTON_CLASS} !w-auto`}>
             Load
@@ -303,11 +303,11 @@ export default function AnalysisPage() {
             }}
             className={`${SECONDARY_BUTTON_CLASS} !w-auto !px-3`}
           >
-            {copied === 'fen' ? <Check className="w-4 h-4 text-[#39ff88]" /> : <Copy className="w-4 h-4" />}
+            {copied === 'fen' ? <Check className="w-4 h-4 text-accent" /> : <Copy className="w-4 h-4" />}
           </button>
         </div>
         {fenError && (
-          <p role="alert" data-testid="fen-error" className="text-sm font-semibold text-[#ff7a7a]">
+          <p role="alert" data-testid="fen-error" className="text-sm font-semibold text-danger">
             {fenError}
           </p>
         )}
@@ -328,10 +328,10 @@ export default function AnalysisPage() {
           rows={3}
           placeholder="Paste a game here, for example 1. e4 e5 2. Nf3 Nc6"
           spellCheck={false}
-          className="bg-[#101b2f] border border-white/20 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder:text-white/40 resize-y focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+          className="bg-inset border border-white/20 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder:text-white/40 resize-y focus-visible:outline-2 focus-visible:outline-accent"
         />
         {pgnError && (
-          <p role="alert" data-testid="pgn-error" className="text-sm font-semibold text-[#ff7a7a]">
+          <p role="alert" data-testid="pgn-error" className="text-sm font-semibold text-danger">
             {pgnError}
           </p>
         )}
@@ -348,7 +348,7 @@ export default function AnalysisPage() {
             }}
             className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2`}
           >
-            {copied === 'pgn' ? <Check className="w-4 h-4 text-[#39ff88]" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
+            {copied === 'pgn' ? <Check className="w-4 h-4 text-accent" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
             {copied === 'pgn' ? 'Copied' : 'Copy PGN'}
           </button>
         </div>
@@ -424,7 +424,7 @@ export default function AnalysisPage() {
           <div
             ref={listRef}
             data-testid="move-list"
-            className="relative max-h-[84px] min-h-[44px] overflow-y-auto rounded-xl bg-[#101b2f] border border-white/10 p-1.5"
+            className="relative max-h-[84px] min-h-[44px] overflow-y-auto rounded-xl bg-inset border border-white/10 p-1.5"
           >
             {rows.length === 0 ? (
               <p className="px-2 py-1 text-sm font-medium text-white/60">Moves you play appear here.</p>

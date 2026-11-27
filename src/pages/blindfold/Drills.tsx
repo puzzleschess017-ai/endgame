@@ -259,7 +259,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
       appearance={appearance}
       onAppearanceChange={setAppearance}
       board={
-        <div className="w-full aspect-square rounded-2xl bg-[#16233b] border border-white/10 flex flex-col items-center justify-center gap-3 p-6 text-center">
+        <div className="w-full aspect-square rounded-2xl bg-card border border-white/10 flex flex-col items-center justify-center gap-3 p-6 text-center">
           {phase === 'running' && question ? (
             <>
               <p className="text-white/60 text-sm font-semibold">{drillLabel(question.kind)}</p>
@@ -352,7 +352,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
               <div className="flex items-baseline justify-between">
                 <span className="text-sm font-semibold text-white">{endless ? 'Time' : 'Time left'}</span>
                 <span
-                  className={`text-2xl font-bold tabular-nums ${lowTime ? 'text-[#ff7a7a]' : 'text-white'}`}
+                  className={`text-2xl font-bold tabular-nums ${lowTime ? 'text-danger' : 'text-white'}`}
                   data-testid="clock"
                 >
                   {formatClock(msLeft)}
@@ -386,12 +386,12 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
                     placeholder={question.entry === 'number' ? 'Number' : 'Square, e.g. f3'}
                     aria-label={question.entry === 'number' ? 'Your answer (a number)' : 'Your answer (a square, such as f3)'}
                     data-testid="answer-input"
-                    className="flex-1 min-w-0 rounded-xl bg-[#101b2f] border border-white/20 focus:border-[#39ff88] text-white text-2xl font-bold text-center px-3 min-h-[56px] outline-none placeholder:text-white/35 placeholder:text-base placeholder:font-semibold"
+                    className="flex-1 min-w-0 rounded-xl bg-inset border border-white/20 focus:border-accent text-white text-2xl font-bold text-center px-3 min-h-[56px] outline-none placeholder:text-white/35 placeholder:text-base placeholder:font-semibold"
                   />
                   <button
                     type="submit"
                     data-testid="answer-submit"
-                    className="px-6 rounded-xl bg-[#101b2f] border border-white/20 hover:border-[#39ff88] text-white text-lg font-bold cursor-pointer min-h-[56px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+                    className="px-6 rounded-xl bg-inset border border-white/20 hover:border-accent text-white text-lg font-bold cursor-pointer min-h-[56px] focus-visible:outline-2 focus-visible:outline-accent"
                   >
                     OK
                   </button>
@@ -407,7 +407,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
                       key={option.value}
                       type="button"
                       onClick={() => answer(option.value)}
-                      className="py-4 rounded-xl bg-[#101b2f] border border-white/20 hover:border-[#39ff88] text-white text-lg font-bold cursor-pointer min-h-[56px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+                      className="py-4 rounded-xl bg-inset border border-white/20 hover:border-accent text-white text-lg font-bold cursor-pointer min-h-[56px] focus-visible:outline-2 focus-visible:outline-accent"
                     >
                       {option.label}
                       <span className="sr-only"> (key {option.key.toUpperCase()})</span>
@@ -417,7 +417,7 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
               )}
 
               <p
-                className={`text-center text-sm font-semibold min-h-[20px] ${last && !last.ok ? 'text-[#ff7a7a]' : 'text-[#39ff88]'}`}
+                className={`text-center text-sm font-semibold min-h-[20px] ${last && !last.ok ? 'text-danger' : 'text-accent'}`}
                 aria-live="polite"
                 data-testid="last"
               >
@@ -450,14 +450,14 @@ export default function Drills({ username, mode, onModeChange }: BlindfoldModePr
                   {result.endless ? 'Drill finished' : 'Time’s up!'}
                 </h2>
                 <div
-                  className="text-7xl font-bold text-[#39ff88] leading-none mt-4 tabular-nums"
+                  className="text-7xl font-bold text-accent leading-none mt-4 tabular-nums"
                   data-testid="final-correct"
                 >
                   {result.correct}
                 </div>
                 <div className="text-sm font-semibold text-white/70 mt-2">correct answers ({drillLabel(kind)})</div>
                 {result.isNewBest && (
-                  <div className="inline-block mt-3 px-3 py-1 rounded-full bg-[#39ff88]/15 border border-[#39ff88] text-[#39ff88] text-xs font-bold">
+                  <div className="inline-block mt-3 px-3 py-1 rounded-full bg-accent/15 border border-accent text-accent text-xs font-bold">
                     New best!
                   </div>
                 )}

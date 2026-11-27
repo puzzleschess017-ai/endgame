@@ -7,7 +7,7 @@ import { practiceHref } from '../../theory/endgames';
 import type { Lesson, TheoryCollection } from '../../theory/types';
 
 const PROSE_CLASS =
-  'flex flex-col gap-4 text-[15px] font-medium leading-relaxed text-white/80 [&_h2]:mt-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-white [&_a]:text-[#39ff88] [&_a]:underline [&_a]:underline-offset-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1.5';
+  'flex flex-col gap-4 text-[15px] font-medium leading-relaxed text-white/80 [&_h2]:mt-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-white [&_a]:text-accent [&_a]:underline [&_a]:underline-offset-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1.5';
 
 const KIND_TEXT: Record<Lesson['kind'], string> = {
   Win: 'A winning position',
@@ -28,7 +28,7 @@ function LessonCard({ lesson, collection }: { lesson: Lesson; collection: Theory
   return (
     <a
       href={collection.pathFor(lesson.slug)}
-      className="group flex h-full flex-col gap-3 rounded-xl border border-white/10 bg-[#101b2f] p-3 no-underline transition-colors hover:border-[#39ff88]/60 focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+      className="group flex h-full flex-col gap-3 rounded-xl border border-white/10 bg-inset p-3 no-underline transition-colors hover:border-accent/60 focus-visible:outline-2 focus-visible:outline-accent"
       data-testid="lesson-card"
     >
       {preview && (
@@ -37,10 +37,10 @@ function LessonCard({ lesson, collection }: { lesson: Lesson; collection: Theory
         </div>
       )}
       <span className="flex flex-1 flex-col gap-1 px-1 pb-1">
-        <span className="text-xs font-bold uppercase tracking-wider text-[#39ff88]">{KIND_TEXT[lesson.kind]}</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-accent">{KIND_TEXT[lesson.kind]}</span>
         <span className="text-base font-bold leading-snug text-white">{lesson.title}</span>
         <span className="text-sm font-medium leading-snug text-white/70">{lesson.summary}</span>
-        <span className="mt-auto flex items-center gap-1 pt-2 text-sm font-bold text-white/60 group-hover:text-[#39ff88]">
+        <span className="mt-auto flex items-center gap-1 pt-2 text-sm font-bold text-white/60 group-hover:text-accent">
           Read the lesson
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </span>
@@ -82,7 +82,7 @@ function LessonView({ lesson, collection }: { lesson: Lesson; collection: Theory
   return (
     <article className={`${CARD_CLASS} gap-5`} data-testid="lesson">
       <nav aria-label="Breadcrumb" className="text-sm font-semibold text-white/60">
-        <a href={collection.base} className="text-white/70 no-underline hover:text-[#39ff88]">
+        <a href={collection.base} className="text-white/70 no-underline hover:text-accent">
           {collection.name}
         </a>
         <span aria-hidden="true"> › </span>
@@ -116,7 +116,7 @@ function LessonView({ lesson, collection }: { lesson: Lesson; collection: Theory
       </div>
 
       <section
-        className="flex flex-col gap-3 rounded-xl border border-[#39ff88]/30 bg-[#39ff88]/5 p-4"
+        className="flex flex-col gap-3 rounded-xl border border-accent/30 bg-accent/5 p-4"
         aria-label="Practise this"
         data-testid="practise"
       >
@@ -160,13 +160,13 @@ function LessonView({ lesson, collection }: { lesson: Lesson; collection: Theory
             .filter((l): l is Lesson => !!l)
             .map((l) => (
               <li key={l.slug}>
-                <a href={collection.pathFor(l.slug)} className="text-[#39ff88] underline underline-offset-2">
+                <a href={collection.pathFor(l.slug)} className="text-accent underline underline-offset-2">
                   {l.title}
                 </a>
               </li>
             ))}
           <li>
-            <a href={collection.base} className="text-white/70 underline underline-offset-2 hover:text-[#39ff88]">
+            <a href={collection.base} className="text-white/70 underline underline-offset-2 hover:text-accent">
               {collection.allLabel}
             </a>
           </li>

@@ -6,7 +6,7 @@ export default function SiteLinks({ className = '', cookies = true }: { classNam
   return (
     <footer className={`flex-wrap items-center justify-center gap-x-4 gap-y-0 text-xs font-semibold text-white/60 ${className}`}>
       {LEGAL_LINKS.map((link) => (
-        <a key={link.href} href={link.href} className="py-1.5 text-white/70 no-underline hover:text-[#39ff88]">
+        <a key={link.href} href={link.href} className="py-1.5 text-white/70 no-underline hover:text-accent">
           {link.label}
         </a>
       ))}
@@ -15,7 +15,7 @@ export default function SiteLinks({ className = '', cookies = true }: { classNam
           type="button"
           data-testid="cookie-settings"
           onClick={() => setConsent(null)}
-          className="py-1.5 text-white/70 hover:text-[#39ff88] cursor-pointer"
+          className="py-1.5 text-white/70 hover:text-accent cursor-pointer"
         >
           Cookies
         </button>

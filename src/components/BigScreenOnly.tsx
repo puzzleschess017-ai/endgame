@@ -33,7 +33,7 @@ export default function BigScreenOnly({ title, children }: { title: string; chil
       <div className="max-w-[460px] mx-auto" data-testid="big-screen-only">
         <div className={CARD_CLASS}>
           <div className="flex items-center gap-3">
-            <MonitorSmartphone className="w-7 h-7 text-[#39ff88] shrink-0" aria-hidden="true" />
+            <MonitorSmartphone className="w-7 h-7 text-accent shrink-0" aria-hidden="true" />
             <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
           </div>
           <p className="text-sm font-medium text-white/80 leading-relaxed">

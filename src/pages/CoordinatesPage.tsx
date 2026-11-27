@@ -227,7 +227,7 @@ export default function CoordinatesPage() {
 
           <div className="space-y-2">
             <span className="text-sm font-semibold text-white">Time</span>
-            <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+            <div className="grid grid-cols-2 gap-1.5 bg-inset p-1.5 rounded-xl border border-white/10">
               {DURATIONS.map((d) => (
                 <button
                   key={d.value}
@@ -244,7 +244,7 @@ export default function CoordinatesPage() {
 
           <div className="space-y-2">
             <span className="text-sm font-semibold text-white">Playing as</span>
-            <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10">
+            <div className="grid grid-cols-2 gap-1.5 bg-inset p-1.5 rounded-xl border border-white/10">
               {ORIENTATIONS.map((o) => (
                 <button
                   key={o.value}
@@ -270,7 +270,7 @@ export default function CoordinatesPage() {
           <button
             type="button"
             onClick={startRun}
-            className="w-full py-3.5 px-5 rounded-xl btn-shine bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(57,255,136,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]"
+            className="w-full py-3.5 px-5 rounded-xl btn-shine bg-accent hover:bg-accent-hover text-snow font-bold text-base tracking-tight transition-all duration-150 shadow-[0_6px_20px_rgba(219,39,119,0.22)] cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             Start
           </button>
@@ -287,8 +287,8 @@ export default function CoordinatesPage() {
               </span>
             </div>
             {!infinite && (
-              <div className="h-2 rounded-full bg-[#101b2f] overflow-hidden" aria-hidden="true">
-                <div className="h-full bg-[#39ff88]" style={{ width: `${barPercent}%` }} />
+              <div className="h-2 rounded-full bg-inset overflow-hidden" aria-hidden="true">
+                <div className="h-full bg-accent" style={{ width: `${barPercent}%` }} />
               </div>
             )}
           </div>
@@ -301,7 +301,7 @@ export default function CoordinatesPage() {
 
           <div className="text-center py-2">
             <div className="text-xs font-semibold text-white/65">Click this square</div>
-            <div className="text-7xl font-bold tracking-tight text-[#39ff88] leading-none mt-2" data-testid="target">
+            <div className="text-7xl font-bold tracking-tight text-accent leading-none mt-2" data-testid="target">
               {target}
             </div>
           </div>
@@ -309,7 +309,7 @@ export default function CoordinatesPage() {
           <button
             type="button"
             onClick={infinite ? finishRun : quitRun}
-            className="w-full py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+            className="w-full py-2.5 px-3.5 rounded-xl bg-inset border border-white/20 hover:border-white text-white text-sm font-semibold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-accent"
           >
             {infinite ? 'Finish run' : 'End run (not saved)'}
           </button>
@@ -320,14 +320,14 @@ export default function CoordinatesPage() {
         <div className={CARD_CLASS} role="status" aria-live="polite">
           <div className="text-center">
             <h2 className="text-xl font-bold text-white tracking-tight">{result.infinite ? 'Run finished' : 'Time’s up!'}</h2>
-            <div className="text-7xl font-bold text-[#39ff88] leading-none mt-4 tabular-nums" data-testid="final-score">
+            <div className="text-7xl font-bold text-accent leading-none mt-4 tabular-nums" data-testid="final-score">
               {result.correct}
             </div>
             <div className="text-sm font-semibold text-white/70 mt-2">
               {result.correct === 1 ? 'point' : 'points'}
             </div>
             {result.isNewBest && (
-              <div className="inline-block mt-3 px-3 py-1 rounded-full bg-[#39ff88]/15 border border-[#39ff88] text-[#39ff88] text-xs font-bold">
+              <div className="inline-block mt-3 px-3 py-1 rounded-full bg-accent/15 border border-accent text-accent text-xs font-bold">
                 New best!
               </div>
             )}
@@ -347,14 +347,14 @@ export default function CoordinatesPage() {
             <button
               type="button"
               onClick={startRun}
-              className="w-full py-3.5 px-5 rounded-xl btn-shine bg-[#39ff88] hover:bg-[#5cff9d] text-[#101b2f] font-bold text-base tracking-tight transition-all duration-150 cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#39ff88]"
+              className="w-full py-3.5 px-5 rounded-xl btn-shine bg-accent hover:bg-accent-hover text-snow font-bold text-base tracking-tight transition-all duration-150 cursor-pointer min-h-[48px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               Play again
             </button>
             <button
               type="button"
               onClick={quitRun}
-              className="w-full py-2.5 px-3.5 rounded-xl bg-[#101b2f] border border-white/20 hover:border-white text-white text-sm font-semibold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+              className="w-full py-2.5 px-3.5 rounded-xl bg-inset border border-white/20 hover:border-white text-white text-sm font-semibold cursor-pointer min-h-[42px] focus-visible:outline-2 focus-visible:outline-accent"
             >
               Change settings
             </button>

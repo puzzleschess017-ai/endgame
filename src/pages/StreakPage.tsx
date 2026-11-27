@@ -286,15 +286,15 @@ export default function StreakPage() {
 
               <ul className="space-y-2 text-sm font-medium text-white/85">
                 <li className="flex gap-2">
-                  <span aria-hidden="true" className="text-[#39ff88] font-bold">1</span>
+                  <span aria-hidden="true" className="text-accent font-bold">1</span>
                   One wrong move ends the streak.
                 </li>
                 <li className="flex gap-2">
-                  <span aria-hidden="true" className="text-[#39ff88] font-bold">2</span>
+                  <span aria-hidden="true" className="text-accent font-bold">2</span>
                   You can skip one puzzle per run.
                 </li>
                 <li className="flex gap-2">
-                  <span aria-hidden="true" className="text-[#39ff88] font-bold">3</span>
+                  <span aria-hidden="true" className="text-accent font-bold">3</span>
                   Puzzles come from the whole database, not only endgames.
                 </li>
               </ul>
@@ -302,7 +302,7 @@ export default function StreakPage() {
               {error && (
                 <div
                   role="alert"
-                  className="text-sm font-medium text-[#ffd2cc] bg-[#401a22] border border-[#8f3848] rounded-xl px-3.5 py-2.5"
+                  className="text-sm font-medium text-danger-ink bg-danger-bg border border-danger-line rounded-xl px-3.5 py-2.5"
                 >
                   {error}
                 </div>
@@ -328,7 +328,7 @@ export default function StreakPage() {
               <div className="text-center">
                 <div className="text-xs font-semibold text-white/65">Current streak</div>
                 <div
-                  className="text-7xl font-bold tracking-tight text-[#39ff88] leading-none mt-2 tabular-nums"
+                  className="text-7xl font-bold tracking-tight text-accent leading-none mt-2 tabular-nums"
                   data-testid="streak"
                 >
                   {streak}
@@ -357,7 +357,7 @@ export default function StreakPage() {
               {error && (
                 <div
                   role="alert"
-                  className="text-sm font-medium text-[#ffd2cc] bg-[#401a22] border border-[#8f3848] rounded-xl px-3.5 py-2.5 flex flex-col gap-2"
+                  className="text-sm font-medium text-danger-ink bg-danger-bg border border-danger-line rounded-xl px-3.5 py-2.5 flex flex-col gap-2"
                 >
                   <span>{error}</span>
                   {needsRetry && (
@@ -395,7 +395,7 @@ export default function StreakPage() {
                       : 'Run ended'}
                 </h2>
                 <div
-                  className="text-7xl font-bold text-[#39ff88] leading-none mt-4 tabular-nums"
+                  className="text-7xl font-bold text-accent leading-none mt-4 tabular-nums"
                   data-testid="final-streak"
                 >
                   {result.streak}
@@ -404,7 +404,7 @@ export default function StreakPage() {
                   {result.streak === 1 ? 'puzzle in a row' : 'puzzles in a row'}
                 </div>
                 {result.isNewBest && (
-                  <div className="inline-block mt-3 px-3 py-1 rounded-full bg-[#39ff88]/15 border border-[#39ff88] text-[#39ff88] text-xs font-bold">
+                  <div className="inline-block mt-3 px-3 py-1 rounded-full bg-accent/15 border border-accent text-accent text-xs font-bold">
                     New best!
                   </div>
                 )}
@@ -412,7 +412,7 @@ export default function StreakPage() {
 
               {result.expectedSan && (
                 <p className="text-sm font-semibold text-white/80 text-center" data-testid="expected-move">
-                  The best move was <span className="text-[#39ff88]">{result.expectedSan}</span> (shown on the board).
+                  The best move was <span className="text-accent">{result.expectedSan}</span> (shown on the board).
                 </p>
               )}
 

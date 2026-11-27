@@ -136,6 +136,14 @@ PUZZLES, TRAINING, TOOLS (Board Editor, Board Analysis) and PROGRESS that can be
 on smaller screens it is a bar on top of the page with one scrolling row. Every page sits inside
 `AppShell.tsx`, so the menu never moves. Each entry has a coloured icon.
 
+The site is white and pink. The colours are named in the `@theme` block at the top of `src/index.css` (`bg-card`, `bg-inset`,
+`text-accent`, `text-danger`...). Mind that `white` there is the dark plum INK: a page written `text-white`, `border-white/10`
+on the old dark design now draws dark text and soft lines on the light page; the real white is `snow`. The light Tailwind colours
+that suit a dark page (amber-300, sky-300...) are redefined darker in the same block. The left menu is solid pink and sets
+its own `white` and `accent` (the `.side-menu` rules in `index.css`); the logo is `chess-tactics-guide-logo-light.png`
+(the green stays, the white parts are dark). The three pictures on the welcome card (`public/welcome`) are screenshots of the
+old dark design.
+
 Home and Statistics read the browser's data only:
 `ctg_activity_v1` holds one total per day (sessions, time, answers, puzzles; the last 400 days) and
 feeds the tiles and charts, it starts empty the first time the site is opened after this feature;

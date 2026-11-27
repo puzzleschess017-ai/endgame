@@ -10,7 +10,7 @@ import { EBOOKS, type EbookInfo } from '../utils/ebooks';
 import { readSavedUsername } from '../utils/profile';
 
 const CARD =
-  'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
+  'bg-card border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(131,24,67,0.14)]';
 
 /** Gets the PDF with the sign-in token and saves it. Returns an error message, or null when the download started. */
 export async function downloadEbook(book: EbookInfo): Promise<string | null> {
@@ -72,7 +72,7 @@ function BookCard({ book, premium }: { book: EbookInfo; premium: boolean }) {
         <div className="mt-1 flex flex-col gap-2.5">
           {premium ? (
             <>
-              <p data-testid="ebook-owned" className="flex items-center gap-1.5 text-sm font-bold text-[#39ff88]">
+              <p data-testid="ebook-owned" className="flex items-center gap-1.5 text-sm font-bold text-accent">
                 <Check className="w-4 h-4" aria-hidden="true" /> Included with Premium
               </p>
               <button
@@ -85,7 +85,7 @@ function BookCard({ book, premium }: { book: EbookInfo; premium: boolean }) {
                 <Download className="w-5 h-5" aria-hidden="true" /> {busy ? 'Downloading…' : 'Download the PDF'}
               </button>
               {error && (
-                <p role="alert" data-testid="ebook-error" className="text-sm font-medium text-[#ffd2cc]">
+                <p role="alert" data-testid="ebook-error" className="text-sm font-medium text-danger-ink">
                   {error}
                 </p>
               )}

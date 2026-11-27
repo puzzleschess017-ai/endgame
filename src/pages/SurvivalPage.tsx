@@ -245,14 +245,14 @@ export default function SurvivalPage() {
               </div>
 
               <p className="text-sm font-medium text-white/80 leading-relaxed">
-                You have <span className="font-bold text-[#ff7a7a]">{SURVIVAL_STRIKES} lives</span>. Every wrong move costs
+                You have <span className="font-bold text-danger">{SURVIVAL_STRIKES} lives</span>. Every wrong move costs
                 one, and the run ends when the last one is gone. Your score is the number of puzzles you solved.
               </p>
 
               {error && (
                 <div
                   role="alert"
-                  className="text-sm font-medium text-[#ffd2cc] bg-[#401a22] border border-[#8f3848] rounded-xl px-3.5 py-2.5"
+                  className="text-sm font-medium text-danger-ink bg-danger-bg border border-danger-line rounded-xl px-3.5 py-2.5"
                 >
                   {error}
                 </div>
@@ -284,7 +284,7 @@ export default function SurvivalPage() {
                   aria-label={`${left} of ${SURVIVAL_STRIKES} lives left`}
                 >
                   {Array.from({ length: SURVIVAL_STRIKES }, (_, i) => (
-                    <span key={i} aria-hidden="true" className={i < left ? 'text-[#ff5c7a]' : 'text-white/20'}>
+                    <span key={i} aria-hidden="true" className={i < left ? 'text-danger' : 'text-white/20'}>
                       {i < left ? '♥' : '♡'}
                     </span>
                   ))}
@@ -299,7 +299,7 @@ export default function SurvivalPage() {
 
               <p
                 className={`text-center text-sm font-semibold min-h-[20px] ${
-                  note?.kind === 'wrong' ? 'text-[#ff7a7a]' : 'text-white/80'
+                  note?.kind === 'wrong' ? 'text-danger' : 'text-white/80'
                 }`}
                 aria-live="polite"
                 data-testid="status"
@@ -310,7 +310,7 @@ export default function SurvivalPage() {
               {error && (
                 <div
                   role="alert"
-                  className="text-sm font-medium text-[#ffd2cc] bg-[#401a22] border border-[#8f3848] rounded-xl px-3.5 py-2.5 flex flex-col gap-2"
+                  className="text-sm font-medium text-danger-ink bg-danger-bg border border-danger-line rounded-xl px-3.5 py-2.5 flex flex-col gap-2"
                 >
                   <span>{error}</span>
                   {needsRetry && (
@@ -332,7 +332,7 @@ export default function SurvivalPage() {
               <div className="text-center">
                 <h2 className="text-xl font-bold text-white tracking-tight">Run over</h2>
                 <div
-                  className="text-7xl font-bold text-[#39ff88] leading-none mt-4 tabular-nums"
+                  className="text-7xl font-bold text-accent leading-none mt-4 tabular-nums"
                   data-testid="final-solved"
                 >
                   {result.solved}
@@ -341,7 +341,7 @@ export default function SurvivalPage() {
                   {result.solved === 1 ? 'puzzle solved' : 'puzzles solved'}
                 </div>
                 {result.isNewBest && (
-                  <div className="inline-block mt-3 px-3 py-1 rounded-full bg-[#39ff88]/15 border border-[#39ff88] text-[#39ff88] text-xs font-bold">
+                  <div className="inline-block mt-3 px-3 py-1 rounded-full bg-accent/15 border border-accent text-accent text-xs font-bold">
                     New best!
                   </div>
                 )}

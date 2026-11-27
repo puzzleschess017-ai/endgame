@@ -23,7 +23,7 @@ export function ModeTabs({
     { id: 'drills', label: 'Drills' },
   ];
   return (
-    <div className="grid grid-cols-2 gap-1.5 bg-[#101b2f] p-1.5 rounded-xl border border-white/10" role="tablist">
+    <div className="grid grid-cols-2 gap-1.5 bg-inset p-1.5 rounded-xl border border-white/10" role="tablist">
       {items.map((item) => (
         <button
           key={item.id}
@@ -142,7 +142,7 @@ export function GuestStart() {
         <a
           href={`/login?next=${next}`}
           data-testid="blindfold-sign-in"
-          className="text-white/85 hover:text-white underline underline-offset-4 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+          className="text-white/85 hover:text-white underline underline-offset-4 cursor-pointer focus-visible:outline-2 focus-visible:outline-accent"
         >
           I already have an account
         </a>

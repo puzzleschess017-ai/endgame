@@ -968,14 +968,14 @@ export default function ChessboardPanel({
 
             {pendingPromotion && (
               <div
-                className="absolute inset-0 z-30 bg-[#101b2f]/60"
+                className="absolute inset-0 z-30 bg-inset/60"
                 onClick={onCancelPromotion}
                 role="dialog"
                 aria-modal="true"
                 aria-label="Choose promotion piece"
               >
                 <div
-                  className={`absolute w-[12.5%] min-w-[44px] bg-[#dce3ef] border-2 border-[#39ff88] shadow-2xl overflow-hidden flex divide-y divide-[#101b2f]/15 ${
+                  className={`absolute w-[12.5%] min-w-[44px] bg-[#dce3ef] border-2 border-accent shadow-2xl overflow-hidden flex divide-y divide-inset/15 ${
                     promoAtTop ? 'top-0 rounded-b-xl flex-col' : 'bottom-0 rounded-t-xl flex-col-reverse'
                   } ${promoHorizontalClass}`}
                   onClick={(e) => e.stopPropagation()}
@@ -985,7 +985,7 @@ export default function ChessboardPanel({
                       key={p.role}
                       type="button"
                       onClick={() => onSelectPromotion(p.role)}
-                      className="relative w-full aspect-square min-h-[44px] bg-[#dce3ef] hover:bg-[#39ff88]/45 active:bg-[#39ff88]/65 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#39ff88] transition-colors flex items-center justify-center cursor-pointer p-1"
+                      className="relative w-full aspect-square min-h-[44px] bg-[#dce3ef] hover:bg-accent/45 active:bg-accent/65 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-accent transition-colors flex items-center justify-center cursor-pointer p-1"
                       aria-label={`Promote to ${p.name}`}
                       title={`Promote to ${p.name}`}
                     >

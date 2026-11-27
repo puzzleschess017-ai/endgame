@@ -47,8 +47,8 @@ export const HOME_ITEM: NavItem = {
   href: '/',
   label: 'Home',
   icon: House,
-  iconClass: 'text-[#39ff88]',
-  chipClass: 'bg-[#39ff88]/15',
+  iconClass: 'text-accent',
+  chipClass: 'bg-accent/15',
 };
 
 /** The same page is "Home" for a guest and the "Dashboard" of someone signed in. */
@@ -228,11 +228,11 @@ function NavLink({ item, active, hideOnPhone }: { item: NavItem; active: boolean
     <a
       href={item.href}
       aria-current={active ? 'page' : undefined}
-      className={`nav-item flex items-center gap-3 px-3 py-1.5 xl:py-1 rounded-xl text-sm font-semibold whitespace-nowrap border transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+      className={`nav-item flex items-center gap-3 px-3 py-1.5 xl:py-1 rounded-xl text-sm font-semibold whitespace-nowrap border transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-accent ${
         hideOnPhone ? 'max-sm:hidden' : ''
       } ${
         active
-          ? 'bg-[#39ff88]/12 border-[#39ff88]/40 text-white'
+          ? 'bg-accent/12 border-accent/40 text-white'
           : 'border-transparent text-white/80 hover:text-white hover:bg-white/5'
       }`}
     >
@@ -256,7 +256,7 @@ export function AccountControls() {
       type="button"
       data-testid="sign-out-button"
       onClick={() => void signOutAndSync().then(() => window.location.assign('/'))}
-      className="rounded-xl text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 cursor-pointer flex items-center justify-center shrink-0 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[#39ff88] min-h-[40px] min-w-[40px]"
+      className="rounded-xl text-white/85 hover:text-accent hover:bg-card border border-transparent hover:border-white/15 cursor-pointer flex items-center justify-center shrink-0 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-accent min-h-[40px] min-w-[40px]"
       aria-label="Sign out"
       title="Sign out"
     >
@@ -305,7 +305,7 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
     setCollapsed((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
-    <aside className="xl:w-[280px] xl:shrink-0 xl:sticky xl:top-0 xl:h-screen xl:flex xl:flex-col bg-gradient-to-b from-[#101c33] to-[#080f1c] border-b xl:border-b-0 xl:border-r border-white/10">
+    <aside className="side-menu xl:w-[280px] xl:shrink-0 xl:sticky xl:top-0 xl:h-screen xl:flex xl:flex-col border-b xl:border-b-0 xl:border-r">
       <div className="flex flex-wrap xl:flex-col items-center xl:items-stretch gap-x-3 gap-y-2 px-4 pt-3 xl:pt-0 xl:flex-1 xl:min-h-0">
         <a
           href="/"
@@ -313,9 +313,9 @@ export default function Sidebar({ username: savedName }: SidebarProps) {
           aria-label="Chess Tactics Guide home"
         >
           <img
-            src="/assets/aistudio/chess-tactics-guide-logo.png"
+            src="/assets/aistudio/chess-tactics-guide-logo-light.png"
             alt="Chess Tactics Guide logo"
-            className="w-14 h-14 object-contain select-none shrink-0"
+            className="w-14 h-14 object-contain select-none shrink-0 rounded-2xl bg-snow p-1"
             draggable={false}
           />
           <span className="flex flex-col leading-tight">

@@ -34,7 +34,7 @@ export default function DailyGoalCard({ log }: { log: ActivityLog }) {
       aria-label="Daily goal"
       data-testid="daily-goal"
       onAnimationEnd={() => setCelebrate(false)}
-      className={`bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)] px-5 py-4 flex flex-col gap-3 ${celebrate ? 'goal-celebrate' : ''}`}
+      className={`bg-card border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(131,24,67,0.14)] px-5 py-4 flex flex-col gap-3 ${celebrate ? 'goal-celebrate' : ''}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
         <div>
@@ -45,7 +45,7 @@ export default function DailyGoalCard({ log }: { log: ActivityLog }) {
           </p>
         </div>
         <div className="text-right" data-testid="goal-streak">
-          <p className={`flex items-center justify-end gap-1.5 text-2xl font-bold tracking-tight tabular-nums ${streak.current > 0 ? 'text-[#39ff88]' : 'text-white'}`}>
+          <p className={`flex items-center justify-end gap-1.5 text-2xl font-bold tracking-tight tabular-nums ${streak.current > 0 ? 'text-accent' : 'text-white'}`}>
             <Flame className="w-5 h-5" aria-hidden="true" />
             <span data-testid="goal-streak-value">{streak.current}</span>
             <span className="text-sm font-semibold text-white/70">{streak.current === 1 ? 'day' : 'days'} in a row</span>
@@ -60,11 +60,11 @@ export default function DailyGoalCard({ log }: { log: ActivityLog }) {
         aria-valuemin={0}
         aria-valuemax={progress.goal}
         aria-valuenow={Math.min(progress.today, progress.goal)}
-        className="h-2.5 rounded-full bg-[#101b2f] overflow-hidden"
+        className="h-2.5 rounded-full bg-inset overflow-hidden"
       >
         <div
           data-testid="goal-bar"
-          className={`h-full rounded-full transition-all duration-300 ${progress.reached ? 'bg-[#39ff88]' : 'bg-[#38bdf8]'}`}
+          className={`h-full rounded-full transition-all duration-300 ${progress.reached ? 'bg-accent' : 'bg-[#38bdf8]'}`}
           style={{ width: `${progress.percent}%` }}
         />
       </div>
@@ -72,7 +72,7 @@ export default function DailyGoalCard({ log }: { log: ActivityLog }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm font-medium text-white/70" data-testid="goal-note">
           {progress.reached ? (
-            <span className="inline-flex items-center gap-1.5 font-bold text-[#39ff88]">
+            <span className="inline-flex items-center gap-1.5 font-bold text-accent">
               <Check className="w-4 h-4" aria-hidden="true" /> Goal reached
             </span>
           ) : (
@@ -81,7 +81,7 @@ export default function DailyGoalCard({ log }: { log: ActivityLog }) {
         </p>
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-white/60">Goal</span>
-          <div className="flex gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10" role="group" aria-label="Daily goal in puzzles">
+          <div className="flex gap-1 bg-inset p-1 rounded-xl border border-white/10" role="group" aria-label="Daily goal in puzzles">
             {GOAL_OPTIONS.map((option) => (
               <button
                 key={option}

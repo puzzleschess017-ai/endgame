@@ -12,7 +12,7 @@ export function PremiumCrown({ className = 'w-4 h-4' }: { className?: string }) 
 }
 
 const ITEM =
-  'flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm font-semibold text-white/85 hover:text-white hover:bg-white/5 cursor-pointer no-underline text-left focus-visible:outline-2 focus-visible:outline-[#39ff88]';
+  'flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm font-semibold text-white/85 hover:text-white hover:bg-white/5 cursor-pointer no-underline text-left focus-visible:outline-2 focus-visible:outline-accent';
 
 interface ProfileMenuProps {
   /** The name to show when nobody is signed in (the name saved in this browser). */
@@ -55,7 +55,7 @@ export default function ProfileMenu({ guestName, align, className = '', testId =
 
   // Only the person icon, like the sign-out and volume buttons next to it.
   const buttonClass =
-    'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white/85 hover:text-[#39ff88] hover:bg-[#16233b] border border-transparent hover:border-white/15 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#39ff88]';
+    'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white/85 hover:text-accent hover:bg-card border border-transparent hover:border-white/15 cursor-pointer focus-visible:outline-2 focus-visible:outline-accent';
   const icon = <UserRound className="w-4 h-4" aria-hidden="true" />;
 
   if (!session) {
@@ -115,11 +115,11 @@ export default function ProfileMenu({ guestName, align, className = '', testId =
         <div
           role="menu"
           data-testid="profile-menu"
-          className={`absolute z-50 w-[250px] top-full mt-2 ${align === 'left' ? 'left-0' : 'right-0'} bg-[#16233b] border border-white/15 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.6)] p-2 flex flex-col gap-0.5`}
+          className={`ink-scope absolute z-50 w-[250px] top-full mt-2 ${align === 'left' ? 'left-0' : 'right-0'} bg-card border border-white/15 rounded-2xl shadow-[0_16px_44px_rgba(131,24,67,0.2)] p-2 flex flex-col gap-0.5`}
         >
           <div className="flex items-center gap-3 px-3 py-2.5">
-            <span className="w-10 h-10 rounded-full bg-[#39ff88]/15 flex items-center justify-center shrink-0">
-              <UserRound className="w-5 h-5 text-[#39ff88]" aria-hidden="true" />
+            <span className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center shrink-0">
+              <UserRound className="w-5 h-5 text-accent" aria-hidden="true" />
             </span>
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-sm font-bold text-white">
@@ -147,10 +147,10 @@ export default function ProfileMenu({ guestName, align, className = '', testId =
                 maxLength={32}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                className="w-full rounded-lg bg-[#101b2f] border border-white/20 focus:border-[#39ff88] focus:outline-none px-3 py-2 text-sm font-semibold text-white min-h-[40px]"
+                className="w-full rounded-lg bg-inset border border-white/20 focus:border-accent focus:outline-none px-3 py-2 text-sm font-semibold text-white min-h-[40px]"
               />
               {error && (
-                <p role="alert" data-testid="profile-error" className="text-xs font-semibold text-[#ffd2cc]">
+                <p role="alert" data-testid="profile-error" className="text-xs font-semibold text-danger-ink">
                   {error}
                 </p>
               )}
@@ -159,7 +159,7 @@ export default function ProfileMenu({ guestName, align, className = '', testId =
                   type="submit"
                   disabled={busy}
                   data-testid="profile-save"
-                  className="flex-1 rounded-lg btn-shine bg-[#39ff88] text-[#06210f] text-sm font-bold py-2 min-h-[40px] cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5"
+                  className="flex-1 rounded-lg btn-shine bg-accent text-snow text-sm font-bold py-2 min-h-[40px] cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5"
                 >
                   <Check className="w-4 h-4" aria-hidden="true" /> Save
                 </button>

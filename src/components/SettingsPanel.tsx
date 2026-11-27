@@ -69,7 +69,7 @@ export default function SettingsPanel({
             {config.puzzleCount} per cycle
           </span>
         </div>
-        <div className="grid grid-cols-6 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10">
+        <div className="grid grid-cols-6 gap-1 bg-inset p-1 rounded-xl border border-white/10">
           {PUZZLE_COUNTS.map((count) => {
             const active = config.puzzleCount === count;
             const needs = tierFor((a) => a.woodpecker.counts, count);
@@ -82,9 +82,9 @@ export default function SettingsPanel({
                 aria-disabled={locked || undefined}
                 title={locked ? unlockHint(tier, needs) : undefined}
                 onClick={locks.choose(`${count} puzzles per cycle`, needs, () => onChange({ ...config, puzzleCount: count }))}
-                className={`${locked ? LOCKED_CLASS : ''} py-1 px-2 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[32px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                className={`${locked ? LOCKED_CLASS : ''} py-1 px-2 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[32px] focus-visible:outline-2 focus-visible:outline-accent ${
                   active
-                    ? 'bg-[#39ff88] text-[#101b2f] shadow-sm'
+                    ? 'bg-accent text-snow shadow-sm'
                     : 'text-white/85 hover:text-white hover:bg-white/10'
                 }`}
               >
@@ -103,7 +103,7 @@ export default function SettingsPanel({
             {config.totalCycles} cycles
           </span>
         </div>
-        <div className="grid grid-cols-8 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10">
+        <div className="grid grid-cols-8 gap-1 bg-inset p-1 rounded-xl border border-white/10">
           {CYCLE_COUNTS.map((cycles) => {
             const active = config.totalCycles === cycles;
             const needs = tierFor((a) => a.woodpecker.cycles, cycles);
@@ -116,9 +116,9 @@ export default function SettingsPanel({
                 aria-disabled={locked || undefined}
                 title={locked ? unlockHint(tier, needs) : undefined}
                 onClick={locks.choose(`${cycles} cycles`, needs, () => onChange({ ...config, totalCycles: cycles }))}
-                className={`${locked ? LOCKED_CLASS : ''} py-1 px-1 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[32px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                className={`${locked ? LOCKED_CLASS : ''} py-1 px-1 rounded-lg text-sm font-bold tabular-nums transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[32px] focus-visible:outline-2 focus-visible:outline-accent ${
                   active
-                    ? 'bg-[#39ff88] text-[#101b2f] shadow-sm'
+                    ? 'bg-accent text-snow shadow-sm'
                     : 'text-white/85 hover:text-white hover:bg-white/10'
                 }`}
               >
@@ -137,7 +137,7 @@ export default function SettingsPanel({
             {PUZZLE_MODES.find((m) => m.value === puzzleMode)?.hint}
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10">
+        <div className="grid grid-cols-2 gap-1 bg-inset p-1 rounded-xl border border-white/10">
           {PUZZLE_MODES.map((m) => {
             const active = puzzleMode === m.value;
             const needs = tierFor((a) => a.woodpecker.types, m.value);
@@ -152,9 +152,9 @@ export default function SettingsPanel({
                 aria-label={`${m.label}: ${m.hint}`}
                 title={locked ? unlockHint(tier, needs) : m.hint}
                 onClick={locks.choose(`The ${m.label} puzzle type`, needs, () => onChange({ ...config, puzzleMode: m.value }))}
-                className={`${locked ? LOCKED_CLASS : ''} py-1 px-2 rounded-lg text-sm font-bold transition-all duration-150 cursor-pointer min-h-[32px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                className={`${locked ? LOCKED_CLASS : ''} py-1 px-2 rounded-lg text-sm font-bold transition-all duration-150 cursor-pointer min-h-[32px] focus-visible:outline-2 focus-visible:outline-accent ${
                   active
-                    ? 'bg-[#39ff88] text-[#101b2f] shadow-sm'
+                    ? 'bg-accent text-snow shadow-sm'
                     : 'text-white/85 hover:text-white hover:bg-white/10'
                 }`}
               >
@@ -173,7 +173,7 @@ export default function SettingsPanel({
             {[...DIFFICULTIES, MIXED].find((d) => d.value === config.difficulty)?.range}
           </span>
         </div>
-        <div className="grid grid-cols-5 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10">
+        <div className="grid grid-cols-5 gap-1 bg-inset p-1 rounded-xl border border-white/10">
           {[...DIFFICULTIES, MIXED].map((d) => {
             const active = config.difficulty === d.value;
             const needs = tierFor((a) => a.woodpecker.difficulties, d.value);
@@ -188,9 +188,9 @@ export default function SettingsPanel({
                 aria-disabled={locked || undefined}
                 aria-label={`${d.label}: ${d.range}`}
                 title={locked ? unlockHint(tier, needs) : d.range}
-                className={`${locked ? LOCKED_CLASS : ''} py-1 px-0.5 rounded-lg text-[13px] font-bold transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[32px] focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                className={`${locked ? LOCKED_CLASS : ''} py-1 px-0.5 rounded-lg text-[13px] font-bold transition-all duration-150 cursor-pointer whitespace-nowrap min-h-[32px] focus-visible:outline-2 focus-visible:outline-accent ${
                   active
-                    ? 'bg-[#39ff88] text-[#101b2f] shadow-sm'
+                    ? 'bg-accent text-snow shadow-sm'
                     : 'text-white/85 hover:text-white hover:bg-white/10'
                 }`}
               >
@@ -208,7 +208,7 @@ export default function SettingsPanel({
       {error && (
         <div
           role="alert"
-          className="text-sm font-medium text-[#ffd2cc] bg-[#401a22] border border-[#8f3848] rounded-xl px-3.5 py-2.5"
+          className="text-sm font-medium text-danger-ink bg-danger-bg border border-danger-line rounded-xl px-3.5 py-2.5"
         >
           {error}
         </div>

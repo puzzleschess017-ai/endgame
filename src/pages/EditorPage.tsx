@@ -199,10 +199,10 @@ export default function EditorPage() {
                     onTouchStart={(e) => startDragFromPalette(code, e)}
                     onClick={() => setTool(code)}
                     style={{ touchAction: 'none' }}
-                    className={`h-10 rounded-xl border transition-colors duration-150 cursor-grab flex items-center justify-center focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+                    className={`h-10 rounded-xl border transition-colors duration-150 cursor-grab flex items-center justify-center focus-visible:outline-2 focus-visible:outline-accent ${
                       tool === code
-                        ? 'bg-[#39ff88]/20 border-[#39ff88]'
-                        : 'bg-[#101b2f] border-white/15 hover:border-white/60'
+                        ? 'bg-accent/20 border-accent'
+                        : 'bg-inset border-white/15 hover:border-white/60'
                     }`}
                   >
                     <img
@@ -241,7 +241,7 @@ export default function EditorPage() {
             <div className="grid grid-cols-2 gap-3 items-end">
               <div className="flex flex-col gap-1">
                 <h3 className="text-xs font-bold text-white/80">Side to move</h3>
-                <div className="grid grid-cols-2 gap-1 bg-[#101b2f] p-0.5 rounded-xl border border-white/10" role="group" aria-label="Side to move">
+                <div className="grid grid-cols-2 gap-1 bg-inset p-0.5 rounded-xl border border-white/10" role="group" aria-label="Side to move">
               <button type="button" data-testid="turn-w" aria-pressed={position.turn === 'w'} onClick={() => update({ turn: 'w' })} className={`${segmentClass(position.turn === 'w')} !min-h-[34px] !py-1`}>
                 White
               </button>
@@ -256,7 +256,7 @@ export default function EditorPage() {
                 data-testid="ep-select"
                 value={effectiveEp}
                 onChange={(e) => update({ ep: e.target.value || null })}
-                className="bg-[#101b2f] border border-white/20 rounded-lg px-2 py-1 text-sm font-semibold text-white min-h-[34px] w-full focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+                className="bg-inset border border-white/20 rounded-lg px-2 py-1 text-sm font-semibold text-white min-h-[34px] w-full focus-visible:outline-2 focus-visible:outline-accent"
               >
                 <option value="">None</option>
                 {['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((file) => (
@@ -284,7 +284,7 @@ export default function EditorPage() {
                       checked={castling[key]}
                       disabled={!possible}
                       onChange={(e) => update({ castling: { ...position.castling, [key]: e.target.checked } })}
-                      className="w-4 h-4 accent-[#39ff88]"
+                      className="w-4 h-4 accent-accent"
                     />
                     {label}
                   </label>
@@ -312,18 +312,18 @@ export default function EditorPage() {
                 }}
                 spellCheck={false}
                 autoComplete="off"
-                className="min-w-0 flex-1 bg-[#101b2f] border border-white/20 rounded-lg px-3 py-1.5 text-xs font-mono text-white min-h-[38px] focus-visible:outline-2 focus-visible:outline-[#39ff88]"
+                className="min-w-0 flex-1 bg-inset border border-white/20 rounded-lg px-3 py-1.5 text-xs font-mono text-white min-h-[38px] focus-visible:outline-2 focus-visible:outline-accent"
               />
               <button type="button" data-testid="fen-load" onClick={loadFen} className={`${SECONDARY_BUTTON_CLASS} !w-auto !min-h-[38px] !py-1.5`}>
                 Load
               </button>
             </div>
             {fenError ? (
-              <p role="alert" data-testid="fen-error" className="text-xs font-semibold text-[#ff7a7a]">
+              <p role="alert" data-testid="fen-error" className="text-xs font-semibold text-danger">
                 {fenError}
               </p>
             ) : validation.ok ? (
-              <p data-testid="fen-status" className="text-xs font-semibold text-[#39ff88]">
+              <p data-testid="fen-status" className="text-xs font-semibold text-accent">
                 This position is valid.
               </p>
             ) : (
@@ -368,7 +368,7 @@ export default function EditorPage() {
               onClick={copyFen}
               className={ROW_BUTTON_CLASS}
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-[#39ff88]" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+              {copied ? <Check className="w-3.5 h-3.5 text-accent" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
               {copied ? 'Copied' : 'Copy'}
             </button>
           </div>

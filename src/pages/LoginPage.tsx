@@ -10,11 +10,11 @@ import { readSavedUsername } from '../utils/profile';
 type Mode = 'signin' | 'signup';
 
 const INPUT_CLASS =
-  'w-full rounded-xl bg-[#101b2f] border border-white/20 focus:border-[#39ff88] focus:ring-2 focus:ring-[#39ff88]/25 focus:outline-none px-3.5 py-2 text-[15px] font-semibold text-white placeholder:text-white/40 min-h-[42px]';
+  'w-full rounded-xl bg-inset border border-white/20 focus:border-accent focus:ring-2 focus:ring-accent/25 focus:outline-none px-3.5 py-2 text-[15px] font-semibold text-white placeholder:text-white/40 min-h-[42px]';
 
 /** The card of the Login / Create account form: tighter than the usual card, so the whole form fits on one screen. */
 const FORM_CARD_CLASS =
-  'bg-[#16233b] border border-white/10 rounded-2xl p-5 flex flex-col gap-3.5 shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
+  'bg-card border border-white/10 rounded-2xl p-5 flex flex-col gap-3.5 shadow-[0_16px_44px_rgba(131,24,67,0.14)]';
 
 const PLAN_NAME = { free: 'Free', premium: 'Premium' } as const;
 
@@ -32,9 +32,9 @@ export function nextPath(search: string): string {
 function tabClass(active: boolean, tone: 'blue' | 'green'): string {
   const on =
     tone === 'blue'
-      ? 'bg-sky-300/15 text-sky-300 ring-1 ring-inset ring-sky-300/50'
-      : 'bg-[#39ff88]/15 text-[#39ff88] ring-1 ring-inset ring-[#39ff88]/50';
-  return `py-1.5 px-2 min-h-[36px] rounded-lg text-sm font-bold transition-all duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#39ff88] ${
+      ? 'bg-accent/15 text-accent ring-1 ring-inset ring-accent/50'
+      : 'bg-accent/15 text-accent ring-1 ring-inset ring-accent/50';
+  return `py-1.5 px-2 min-h-[36px] rounded-lg text-sm font-bold transition-all duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-accent ${
     active ? on : 'text-white/85 hover:text-white hover:bg-white/10'
   }`;
 }
@@ -94,8 +94,8 @@ export default function LoginPage() {
         {signedIn ? (
           <div className={CARD_CLASS} data-testid="account">
             <div className="flex items-center gap-3">
-              <span className="w-11 h-11 rounded-xl bg-[#39ff88]/15 flex items-center justify-center shrink-0">
-                <UserRound className="w-6 h-6 text-[#39ff88]" aria-hidden="true" />
+              <span className="w-11 h-11 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
+                <UserRound className="w-6 h-6 text-accent" aria-hidden="true" />
               </span>
               <div className="min-w-0">
                 <h2 className="text-xl font-bold text-white tracking-tight truncate" data-testid="account-name">
@@ -110,7 +110,7 @@ export default function LoginPage() {
               Plan:{' '}
               <span
                 data-testid="account-plan"
-                className={state.tier === 'premium' ? 'text-amber-300' : 'text-[#39ff88]'}
+                className={state.tier === 'premium' ? 'text-amber-300' : 'text-accent'}
               >
                 {state.status === 'loading' ? '…' : PLAN_NAME[state.tier === 'premium' ? 'premium' : 'free']}
               </span>
@@ -118,7 +118,7 @@ export default function LoginPage() {
             <p
               data-testid="sync-status"
               data-status={syncState.status}
-              className={`text-sm font-medium leading-snug ${syncState.status === 'error' ? 'text-[#ffd2cc]' : 'text-white/70'}`}
+              className={`text-sm font-medium leading-snug ${syncState.status === 'error' ? 'text-danger-ink' : 'text-white/70'}`}
             >
               {syncState.status === 'saved'
                 ? 'Your results are saved on this account and follow you to every device.'
@@ -147,7 +147,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-1 bg-[#101b2f] p-1 rounded-xl border border-white/10" role="group" aria-label="Login or create an account">
+            <div className="grid grid-cols-2 gap-1 bg-inset p-1 rounded-xl border border-white/10" role="group" aria-label="Login or create an account">
               <button type="button" data-testid="tab-signin" aria-pressed={mode === 'signin'} onClick={() => { setMode('signin'); setError(null); }} className={tabClass(mode === 'signin', 'blue')}>
                 Login
               </button>
@@ -207,12 +207,12 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <p role="alert" data-testid="auth-error" className="text-sm font-semibold text-[#ffd2cc] bg-[#401a22] border border-[#8f3848] rounded-xl px-3.5 py-2.5">
+                <p role="alert" data-testid="auth-error" className="text-sm font-semibold text-danger-ink bg-danger-bg border border-danger-line rounded-xl px-3.5 py-2.5">
                   {error}
                 </p>
               )}
               {notice && (
-                <p role="status" data-testid="auth-notice" className="text-sm font-semibold text-[#d6ffe6] bg-[#12382a] border border-[#39ff88]/40 rounded-xl px-3.5 py-2.5">
+                <p role="status" data-testid="auth-notice" className="text-sm font-semibold text-[#d6ffe6] bg-[#12382a] border border-accent/40 rounded-xl px-3.5 py-2.5">
                   {notice}
                 </p>
               )}
@@ -240,7 +240,7 @@ export default function LoginPage() {
           <a
             href="/pricing"
             data-testid="account-get-premium"
-            className="flex items-center justify-center gap-2 rounded-2xl border border-amber-300/30 bg-[#16233b] px-5 py-3.5 text-sm font-bold text-amber-300 no-underline hover:bg-[#1b2b47]"
+            className="flex items-center justify-center gap-2 rounded-2xl border border-amber-300/30 bg-card px-5 py-3.5 text-sm font-bold text-amber-300 no-underline hover:bg-[#1b2b47]"
           >
             <Crown className="w-4 h-4" aria-hidden="true" /> Get Premium
           </a>

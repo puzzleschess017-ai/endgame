@@ -68,7 +68,7 @@ export default function BarChart({
 
   return (
     <section
-      className="bg-[#16233b] border border-white/10 rounded-2xl p-5 flex flex-col gap-4 shadow-[0_16px_44px_rgba(4,9,20,0.45)]"
+      className="bg-card border border-white/10 rounded-2xl p-5 flex flex-col gap-4 shadow-[0_16px_44px_rgba(131,24,67,0.14)]"
       data-testid={`chart-${id}`}
       aria-label={title}
     >
@@ -128,7 +128,7 @@ export default function BarChart({
                     )}
                     {active === i && (
                       <div
-                        className={`absolute z-10 px-2.5 py-1.5 rounded-lg bg-[#0d1627] border border-white/15 text-xs font-semibold text-white whitespace-nowrap shadow-lg pointer-events-none ${
+                        className={`absolute z-10 px-2.5 py-1.5 rounded-lg bg-card border border-white/15 text-xs font-semibold text-white whitespace-nowrap shadow-lg pointer-events-none ${
                           i < 2 ? 'left-0' : i > data.length - 3 ? 'right-0' : 'left-1/2 -translate-x-1/2'
                         }`}
                         style={{ bottom: `calc(${height}% + 8px)` }}

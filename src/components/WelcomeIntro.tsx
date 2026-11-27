@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { ArrowRight, Check, Crown, LogIn } from 'lucide-react';
 import { LOGIN_BUTTON_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
 
-const CARD = 'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
+const CARD = 'bg-card border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(131,24,67,0.14)]';
 
 const STEPS: Array<{ title: string; text: string; image: string; alt: string }> = [
   {
@@ -82,7 +82,7 @@ export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean;
           {STEPS.map((step, i) => (
             <li key={step.title} className={`${CARD} overflow-hidden flex flex-col`}>
               <div className="px-5 pt-4 pb-3 flex flex-col gap-1.5">
-                <span className="w-7 h-7 rounded-full bg-[#39ff88]/15 text-[#39ff88] text-sm font-bold flex items-center justify-center">{i + 1}</span>
+                <span className="w-7 h-7 rounded-full bg-accent/15 text-accent text-sm font-bold flex items-center justify-center">{i + 1}</span>
                 <span className="text-[15px] font-bold text-white">{step.title}</span>
                 <span className="text-sm font-medium text-white/70 leading-snug">{step.text}</span>
               </div>

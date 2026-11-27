@@ -15,8 +15,8 @@ interface CoordinateBoardProps {
 }
 
 const MARK_CLASS: Record<SquareMark, string> = {
-  correct: 'bg-[#39ff88]/75',
-  wrong: 'bg-[#ff5a5a]/75',
+  correct: 'bg-accent/75',
+  wrong: 'bg-danger/75',
 };
 
 /**
@@ -89,7 +89,7 @@ export default function CoordinateBoard({
                 data-square={square}
                 aria-label="Board square"
                 onClick={() => onSquareClick(square)}
-                className={`${base} cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#39ff88]`}
+                className={`${base} cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent`}
               >
                 {content}
               </button>

@@ -22,7 +22,7 @@ interface TrainerLayoutProps {
 }
 
 const ROUND_BUTTON_CLASS =
-  'p-2 rounded-xl bg-[#16233b] border border-white/15 hover:border-[#39ff88] hover:text-[#39ff88] disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all duration-150 shadow-sm cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center';
+  'p-2 rounded-xl bg-card border border-white/15 hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all duration-150 shadow-sm cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center';
 
 /**
  * Page frame shared by Woodpecker and every training mode: the menu on the left, then the board and
