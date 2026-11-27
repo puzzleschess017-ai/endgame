@@ -24,6 +24,7 @@ import {
   checkWoodpecker,
   defaultWoodpecker,
   isTier,
+  TIERS,
   tierFor,
   unlockHint,
 } from './access.ts';
@@ -89,13 +90,12 @@ describe('the three tiers', () => {
     for (const kind of DRILL_KINDS) assert.ok(ok(checkBlindfoldDrill('premium', kind)), kind);
     for (const limit of ['minute', 'endless'] as const) assert.ok(ok(checkBlindfoldDrillLimit('premium', limit)));
   });
-  it('the engine needs an account, not Premium', () => {
-    assert.equal(ENGINE_TIER, 'free');
-    assert.equal(canUseEngine('guest'), false);
-    assert.equal(canUseEngine('free'), true);
-    assert.equal(canUseEngine('premium'), true);
-    assert.equal(unlockHint('guest', ENGINE_TIER), 'Login to unlock');
-    assert.equal(unlockHint('free', ENGINE_TIER), '');
+  it('the engine is free for everybody, guests included', () => {
+    assert.equal(ENGINE_TIER, 'guest');
+    for (const tier of TIERS) {
+      assert.equal(canUseEngine(tier), true, tier);
+      assert.equal(unlockHint(tier, ENGINE_TIER), '', tier);
+    }
   });
   it('every e-book is free with Premium; everybody else must have bought it', () => {
     assert.equal(EBOOK_TIER, 'premium');

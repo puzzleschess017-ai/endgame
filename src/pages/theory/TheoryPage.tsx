@@ -141,7 +141,7 @@ function LessonView({ lesson, collection }: { lesson: Lesson; collection: Theory
         </div>
         <p className="text-xs font-medium text-white/50">
           Board Analysis is made for larger screens.{' '}
-          {collection.woodpecker ? 'The engine is free with an account; Woodpecker endgame puzzles are part of Premium.' : 'The engine is free with an account.'}
+          {collection.woodpecker ? 'The engine is free for everybody; Woodpecker endgame puzzles are part of Premium.' : 'The engine is free for everybody.'}
         </p>
       </section>
 

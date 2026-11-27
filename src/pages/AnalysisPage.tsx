@@ -117,7 +117,7 @@ export default function AnalysisPage() {
   const status = statusAt(analysis);
   const rows = useMemo(() => moveRows(analysis), [analysis]);
 
-  // The engine needs an account: a switch left on from before a sign-out does nothing.
+  // The engine is limited by ENGINE_TIER (free for everybody now): a switch left on while a tier is not allowed does nothing.
   const engineAllowed = canUseEngine(tier);
   const engine = useEngine(engineOn && engineAllowed, fen);
 

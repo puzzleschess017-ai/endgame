@@ -28,7 +28,7 @@ export function bestEngineMove(state: EngineState): string | null {
   return state.lines[0]?.pv[0] ?? null;
 }
 
-/** "Check with engine": a switch that runs Stockfish on the position of the board. Needs a signed-in account. */
+/** "Check with engine": a switch that runs Stockfish on the position of the board. Free for everybody (ENGINE_TIER says so). */
 export default function EnginePanel({ tier, fen, on, onToggle, state, onHover, onPlay }: EnginePanelProps) {
   const locks = useLocks(tier);
   const needs: Tier = ENGINE_TIER;

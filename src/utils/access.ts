@@ -2,9 +2,8 @@
 //   guest   - not signed in ("Play as a guest")
 //   free    - signed in, no premium
 //   premium - signed in and paid (until payment exists, the tier is set by hand in the database)
-// Board Editor, Board Analysis, Puzzle Streak, Puzzle Survival, Coordinate Training and Statistics are for
-// everybody, except that "Check with engine" in Board Analysis needs an account (ENGINE_TIER). The limits
-// below are for Woodpecker and Blindfold. The same rules are used in the browser (to
+// Board Editor, Board Analysis (with "Check with engine"), Puzzle Streak, Puzzle Survival, Coordinate Training
+// and Statistics are for everybody. The limits below are for Woodpecker and Blindfold. The same rules are used in the browser (to
 // grey out choices) and on the server (to refuse a request that asks for more than the visitor may have).
 import type { CycleCountOption, Difficulty, PuzzleCountOption, PuzzleMode, TrainingConfig } from '../types';
 import type { BlindfoldLevel, MateIn, MemorizeSeconds } from './blindfold';
@@ -69,8 +68,8 @@ export function tierFor<T>(pick: (access: Access) => T[], value: T): Tier | null
   return TIERS.find((tier) => pick(ACCESS[tier]).includes(value)) ?? null;
 }
 
-/** The lowest plan that may use "Check with engine" in Board Analysis: a signed-in account (not Premium). */
-export const ENGINE_TIER: Tier = 'free';
+/** The lowest plan that may use "Check with engine" in Board Analysis: nobody is locked out (the engine is free for guests too). */
+export const ENGINE_TIER: Tier = 'guest';
 
 /** True when the tier may switch the engine on. The engine runs in the browser, so this is checked there only. */
 export function canUseEngine(tier: Tier): boolean {
