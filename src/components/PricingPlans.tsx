@@ -4,6 +4,7 @@
 import type { ReactNode } from 'react';
 import { Check, Crown } from 'lucide-react';
 import {
+  PREMIUM_MONTHLY_CENTS,
   PREMIUM_MONTHLY_LABEL,
   PREMIUM_YEARLY_CENTS,
   PREMIUM_YEARLY_LABEL,
@@ -24,6 +25,16 @@ const PREMIUM_POINTS = [
   'Blindfold with every level and every drill',
   'Every e-book to download',
 ];
+
+/** What Yearly says: everything Monthly has, and why paying once a year is better. */
+function yearlyPoints(): string[] {
+  const months = Math.round((PREMIUM_MONTHLY_CENTS * 12 - PREMIUM_YEARLY_CENTS) / PREMIUM_MONTHLY_CENTS);
+  return [
+    'Everything in Monthly: every Woodpecker set, every Blindfold level and drill, every e-book',
+    `Save ${priceLabel(PREMIUM_MONTHLY_CENTS * 12 - PREMIUM_YEARLY_CENTS)} a year, about ${months} months free`,
+    'One payment a year instead of twelve',
+  ];
+}
 
 function Points({ items, tick }: { items: string[]; tick: string }) {
   return (
@@ -88,7 +99,7 @@ export default function PricingPlans({ action }: { action: (plan: PlanId) => Rea
             That is {priceLabel(Math.round(PREMIUM_YEARLY_CENTS / 12))} a month. Cancel any time.
           </p>
         </div>
-        <Points items={PREMIUM_POINTS} tick="bg-[#39ff88]/20 text-[#39ff88]" />
+        <Points items={yearlyPoints()} tick="bg-[#39ff88]/20 text-[#39ff88]" />
         <div className="mt-auto pt-2">{action('yearly')}</div>
       </section>
     </div>
