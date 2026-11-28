@@ -24,7 +24,8 @@ test('the outlined "Create account" button does not shine', () => {
 test('the shine is switched off for people who ask for less motion, and on a disabled or "still" button', () => {
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{\s*\.btn-shine,\s*\.btn-shine::after \{ animation: none; \}\s*\}/);
   assert.match(css, /@keyframes btn-sweep/);
-  assert.match(css, /@keyframes btn-glow/);
+  // The glow stays still: a shadow animation repaints the whole page on every frame.
+  assert.doesNotMatch(css, /@keyframes btn-glow/);
   assert.match(css, /\.btn-still,\s*\.btn-shine:disabled,\s*\.btn-shine\[aria-disabled='true'\] \{ animation: none; \}/);
   assert.match(css, /@layer components \{\s*\.btn-shine \{/);
 });
