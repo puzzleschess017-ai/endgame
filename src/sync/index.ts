@@ -2,6 +2,7 @@
 // (src/main.tsx does), so every page keeps its results on the account while someone is signed in.
 import { useSyncExternalStore } from 'react';
 import { auth, supabaseConfig } from '../auth';
+import { applyRunOwner } from '../utils/runOwner';
 import { createSyncClient } from './client';
 import { createSyncEngine, type StorageLike, type SyncState } from './engine';
 
@@ -34,6 +35,8 @@ if (typeof window !== 'undefined') {
 
   const attach = () => {
     const { session } = auth.getState();
+    // Unfinished runs stay with the account that started them.
+    applyRunOwner(browserStorage(), session?.userId ?? null);
     if (!session) {
       user = '';
       sync.becomeGuest();
