@@ -38,6 +38,8 @@ interface BoardState {
   locked: boolean;
 }
 
+const SAVE_INTERVAL_MS = 5000;
+
 export default function App() {
   const [username] = useState<string>(() => readSavedUsername());
 
@@ -95,10 +97,37 @@ export default function App() {
     document.title = 'Woodpecker Method: Chess Endgame Training | Chess Tactics Guide';
   }, []);
 
-  // Persist the session whenever it changes and on beforeunload (the appearance saves itself).
+  // Persist the session when it changes. The timer changes it twice a second, and writing the whole session
+  // (all puzzles) that often costs more than it is worth, so timer-only changes are saved at most every 5 s.
+  // The last state is also written when the tab is hidden or closed.
+  const lastSaveRef = useRef(0);
+  const saveTimeoutRef = useRef<number | null>(null);
   useEffect(() => {
-    saveSessionToStorage(session);
+    const flush = () => {
+      if (saveTimeoutRef.current !== null) {
+        window.clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+      lastSaveRef.current = Date.now();
+      saveSessionToStorage(sessionRef.current);
+    };
+    const wait = SAVE_INTERVAL_MS - (Date.now() - lastSaveRef.current);
+    if (wait <= 0) flush();
+    else if (saveTimeoutRef.current === null) saveTimeoutRef.current = window.setTimeout(flush, wait);
   }, [session]);
+  useEffect(() => {
+    const flush = () => saveSessionToStorage(sessionRef.current);
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', onVisibility);
+      flush();
+    };
+  }, []);
 
   // Home shows Woodpecker progress, so every finished cycle is also written to the long-term history.
   useEffect(() => {
@@ -439,8 +468,7 @@ export default function App() {
     [session, currentPuzzle, scheduleTimeout, advanceToNextPuzzle]
   );
 
-  const handleUserMove = useCallback(
-    (orig: Key, dest: Key) => {
+  const handleUserMoveLatest = (orig: Key, dest: Key) => {
       if (boardState.locked || !session || session.status !== 'training') return;
       if (isPromotionMove(chessRef.current, orig as Square, dest as Square)) {
         const promoColor = chessRef.current.turn() === 'w' ? 'white' : 'black';
@@ -452,9 +480,10 @@ export default function App() {
         return;
       }
       executeUserMove(orig, dest);
-    },
-    [boardState.locked, session, executeUserMove]
-  );
+  };
+  const handleUserMoveRef = useRef(handleUserMoveLatest);
+  handleUserMoveRef.current = handleUserMoveLatest;
+  const handleUserMove = useCallback((orig: Key, dest: Key) => handleUserMoveRef.current(orig, dest), []);
 
   const handleSelectPromotion = useCallback(
     (piece: 'q' | 'r' | 'b' | 'n') => {

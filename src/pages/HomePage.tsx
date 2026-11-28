@@ -39,8 +39,10 @@ export default function HomePage() {
   const [username] = useState(() => readSavedUsername());
   const [range, setRange] = useState<Range>(7);
   const { session, tier } = useAuth();
-  // Nothing trained in this browser yet (a first visit, or right after signing out): tell about the site, not zeros.
-  const hasTrained = Object.keys(overview.log).length > 0;
+  // The dashboard is for people with an account. A guest always sees the introduction (a guest may train and
+  // forget to sign in, so the results stay out of sight until there is an account to keep them), and so does
+  // someone who has not trained yet: tell about the site, not zeros.
+  const hasTrained = session !== null && Object.keys(overview.log).length > 0;
   // A new Best Puzzle Streak lights its tile up once, the first time it is shown.
   const [glowBest, setGlowBest] = useState(false);
   useEffect(() => {
