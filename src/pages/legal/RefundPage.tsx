@@ -12,7 +12,10 @@ export default function RefundPage() {
 
       <h2>Cancelling</h2>
       <ul>
-        <li>You can cancel at any time, in Dodo&apos;s customer portal (the link is in your receipt e-mail) or by writing to us.</li>
+        <li>
+          You can cancel at any time: with the Cancel button in the &quot;Your subscription&quot; section of the <a href="/pricing">Pricing</a> page
+          (when you are signed in), in Dodo&apos;s customer portal (the link is in your receipt e-mail), or by writing to us.
+        </li>
         <li>Cancelling stops the next payment. You keep Premium until the end of the period you have already paid for.</li>
         <li>Nothing is charged after you cancel, and you do not need to give a reason.</li>
         <li>Cancel before the renewal date to avoid the next charge. Your receipt shows when it is.</li>

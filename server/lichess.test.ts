@@ -99,6 +99,7 @@ const USER_B = '9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c5d';
 const happy = (url: string, method: string): Answer => {
   if (url.includes('/rest/v1/lichess_links') && method === 'GET') return { body: [] };
   if (url.includes('/rest/v1/lichess_links') && method === 'POST') return { status: 201 };
+  if (url.includes('/rest/v1/profiles') && method === 'PATCH') return { status: 204 };
   if (url === 'https://lichess.org/api/token' && method === 'POST') return { body: { access_token: 'lip_tok' } };
   if (url === 'https://lichess.org/api/token' && method === 'DELETE') return { status: 204 };
   if (url === 'https://lichess.org/api/account') return { body: { username: 'MagnusFan', id: 'magnusfan' } };
@@ -185,5 +186,14 @@ describe('finishing the sign-in', () => {
   it('without the links table the email decides, as before', async () => {
     const f = fake((url, method) => (url.includes('/rest/v1/lichess_links') ? { status: 404 } : happy(url, method)));
     assert.deepEqual(await finishLichessLogin({ code: 'c', verifier: 'v' }, settings, f.impl), { ok: true, tokenHash: 'hash123_-abc' });
+  });
+  it('a profile without a name gets the Lichess name, and only an empty one', async () => {
+    const f = fake(happy);
+    await finishLichessLogin({ code: 'c', verifier: 'v' }, settings, f.impl);
+    const patch = f.calls.find((c) => c.url.includes('/rest/v1/profiles') && c.method === 'PATCH')!;
+    assert.ok(patch.url.endsWith(`?id=eq.${USER_A}&name=eq.`), 'the filter "name is empty" keeps a name that is there');
+    assert.deepEqual(JSON.parse(patch.body!), { name: 'MagnusFan' });
+    const down = fake((url, method) => (url.includes('/rest/v1/profiles') ? { status: 500 } : happy(url, method)));
+    assert.deepEqual(await finishLichessLogin({ code: 'c', verifier: 'v' }, settings, down.impl), { ok: true, tokenHash: 'hash123_-abc' }, 'a failure here does not stop the sign-in');
   });
 });

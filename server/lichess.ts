@@ -236,6 +236,16 @@ async function emailOfUser(userId: string, settings: LichessSettings, fetchImpl:
   return typeof email === 'string' && email ? email : null;
 }
 
+/** A person whose profile has no name yet gets their Lichess name (only an empty name is filled: the filter makes it a no-op otherwise). */
+async function fillEmptyName(userId: string, username: string, settings: LichessSettings, fetchImpl: typeof fetch): Promise<void> {
+  await fetchImpl(`${baseOf(settings)}/rest/v1/profiles?id=eq.${userId}&name=eq.`, {
+    method: 'PATCH',
+    headers: { ...adminHeaders(settings), Prefer: 'return=minimal' },
+    body: JSON.stringify({ name: username }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+}
+
 /** Asks Supabase for a one-time token that signs the user with this email in. Gives back the user id too. */
 async function oneTimeToken(email: string, settings: LichessSettings, fetchImpl: typeof fetch): Promise<{ tokenHash: string; userId: string | null } | null> {
   const link = await fetchImpl(`${baseOf(settings)}/auth/v1/admin/generate_link`, {
@@ -294,6 +304,8 @@ export async function finishLichessLogin(
     if (!token) return { ok: false, reason: 'unavailable' };
     // First time: remember which site account this Lichess account opened (no harm if that cannot be saved just now).
     if (!linked && token.userId) await saveLink(account.id, token.userId, account.username, settings, fetchImpl).catch(() => undefined);
+    const who = linked ?? token.userId;
+    if (who) await fillEmptyName(who, account.username, settings, fetchImpl).catch(() => undefined);
     return { ok: true, tokenHash: token.tokenHash };
   } catch {
     return { ok: false, reason: 'unavailable' };

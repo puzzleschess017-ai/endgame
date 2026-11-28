@@ -5,7 +5,18 @@ import Database from 'better-sqlite3';
 import { parseBlindfoldParams, pickBlindfoldPuzzles } from './server/blindfold.ts';
 import { parseLadderParams, pickLadderPuzzles } from './server/ladder.ts';
 import { EBOOKS, ebookPath, findEbook } from './server/ebooks.ts';
-import { actionFor, createCheckout, createPaymentStore, loadPaymentSettings, verifyWebhook } from './server/payments.ts';
+import {
+  actionFor,
+  cancelUserSubscription,
+  createCheckout,
+  createPaymentStore,
+  loadPaymentSettings,
+  NO_SUBSCRIPTION,
+  createPremiumGuard,
+  subscriptionOf,
+  subscriptionView,
+  verifyWebhook,
+} from './server/payments.ts';
 import { createTablebase } from './server/tablebase.ts';
 import { createTierLookup } from './server/tier.ts';
 import { DEFAULT_SUPABASE_KEY, DEFAULT_SUPABASE_URL } from './src/auth/project.ts';
@@ -565,10 +576,25 @@ async function startServer() {
   });
 
   // Woodpecker sets and Blindfold levels depend on the plan (guest, signed in, Premium): see src/utils/access.ts.
-  const tierOf = createTierLookup({
+  const rawTierOf = createTierLookup({
     url: process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL,
     key: process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_KEY,
   });
+
+  // Safety net for the webhook: when a Premium person's subscription has ended in Dodo and no event turned Premium off, the
+  // plan is set to free here (Dodo is asked at most every 30 minutes per person; a plan is never taken away on a guess).
+  const premiumGuard = payments.checkout && paymentStore ? createPremiumGuard({ store: paymentStore, api: payments.checkout, onDowngraded: (id) => rawTierOf.forget(id) }) : null;
+  const tierOf: typeof rawTierOf = Object.assign(
+    async (authorization: string | undefined) => {
+      const visitor = await rawTierOf(authorization);
+      if (premiumGuard && visitor.ok && visitor.tier === 'premium' && visitor.userId && (await premiumGuard(visitor.userId))) {
+        console.log('[payments] Premium turned off: the subscription has ended in Dodo');
+        return rawTierOf(authorization);
+      }
+      return visitor;
+    },
+    { forget: (id: string) => rawTierOf.forget(id) },
+  );
 
   // A signed-in person links their Lichess account to the account they have (their emails may differ). The page asks here with
   // its sign-in token, which is checked, and gets the address of Lichess to go to; the account id travels in the signed cookie.
@@ -661,6 +687,60 @@ async function startServer() {
       console.error('[payments] checkout failed', err instanceof Error ? err.message : err);
       res.status(502).json({ error: 'The payment page could not be opened. Please try again.' });
     }
+  });
+
+  // The Premium subscription of the signed-in person, for the account section of the Pricing page, and its cancel. The
+  // subscription is found by the id the webhook saved for this person, and Dodo's own record must name the same person.
+  // Cancelling stops the renewal; Premium stays until the end of the period that is already paid.
+  app.get('/api/subscription', async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    const visitor = await tierOf(req.headers.authorization);
+    if (!visitor.ok) {
+      res.status(visitor.status).json({ error: visitor.error });
+      return;
+    }
+    if (visitor.tier !== 'premium' || !visitor.userId) {
+      res.json(NO_SUBSCRIPTION);
+      return;
+    }
+    if (!payments.checkout || !paymentStore) {
+      res.json(NO_SUBSCRIPTION);
+      return;
+    }
+    try {
+      res.json(subscriptionView(await subscriptionOf({ store: paymentStore, api: payments.checkout, userId: visitor.userId })));
+    } catch (err) {
+      console.error('[payments] could not read the subscription', err instanceof Error ? err.message : err);
+      res.status(502).json({ error: 'Your subscription could not be checked just now. Please try again.' });
+    }
+  });
+
+  app.post('/api/subscription/cancel', async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    const visitor = await tierOf(req.headers.authorization);
+    if (!visitor.ok) {
+      res.status(visitor.status).json({ error: visitor.error });
+      return;
+    }
+    if (visitor.tier === 'guest') {
+      res.status(401).json({ error: 'Sign in to manage your subscription.' });
+      return;
+    }
+    if (!visitor.userId) {
+      res.status(503).json({ error: 'Your account could not be checked just now. Please try again.' });
+      return;
+    }
+    if (!payments.checkout || !paymentStore) {
+      res.status(503).json({ error: 'Cancelling is not available just now.' });
+      return;
+    }
+    const result = await cancelUserSubscription({ store: paymentStore, api: payments.checkout, userId: visitor.userId });
+    if (!result.ok) {
+      res.status(result.status).json({ error: result.error });
+      return;
+    }
+    console.log('[payments] subscription cancelled for the end of the period');
+    res.json(result.view);
   });
 
   app.get('/api/ebooks/:slug', async (req, res) => {
