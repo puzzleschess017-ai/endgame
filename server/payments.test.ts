@@ -214,13 +214,13 @@ describe('createPaymentStore', () => {
     return { calls, store: createPaymentStore({ url: 'https://x.supabase.co/', serviceKey, fetchImpl }) };
   }
 
-  it('the plan is a PATCH of one profile', async () => {
+  it('the plan is an upsert of one profile (a missing row is made, an existing one only changes its plan)', async () => {
     const { calls, store: s } = store('eyJ.legacy.jwt');
     await s.apply({ kind: 'set-tier', userId: USER, tier: 'premium' });
     await s.apply({ kind: 'set-tier', userId: USER, tier: 'free' });
-    assert.deepEqual([calls[0].method, calls[0].url, calls[0].body], ['PATCH', `https://x.supabase.co/rest/v1/profiles?id=eq.${USER}`, { tier: 'premium' }]);
-    assert.deepEqual(calls[1].body, { tier: 'free' });
-    assert.equal(calls[0].headers.Prefer, 'return=minimal');
+    assert.deepEqual([calls[0].method, calls[0].url, calls[0].body], ['POST', 'https://x.supabase.co/rest/v1/profiles?on_conflict=id', { id: USER, tier: 'premium' }]);
+    assert.deepEqual(calls[1].body, { id: USER, tier: 'free' });
+    assert.equal(calls[0].headers.Prefer, 'resolution=merge-duplicates,return=minimal');
   });
   it('a legacy key (a JWT) is also the bearer token; a new sb_secret key goes in apikey only', async () => {
     const legacy = store('eyJ.legacy.jwt');
@@ -261,7 +261,7 @@ describe('createPaymentStore', () => {
     assert.deepEqual(state.metadata, { provider: 'google', providers: ['google'], dodo_subscription_id: 'sub_9' });
     assert.deepEqual(
       calls.map((c) => `${c.method} ${c.url.replace('https://x.supabase.co', '')}`),
-      [`PATCH /rest/v1/profiles?id=eq.${USER}`, `GET /auth/v1/admin/users/${USER}`, `PUT /auth/v1/admin/users/${USER}`],
+      ['POST /rest/v1/profiles?on_conflict=id', `GET /auth/v1/admin/users/${USER}`, `PUT /auth/v1/admin/users/${USER}`],
     );
     assert.equal(calls[1].headers.apikey, 'sb_secret_abc');
     assert.equal(await s.subscriptionIdOf(USER), 'sub_9');
@@ -272,7 +272,7 @@ describe('createPaymentStore', () => {
     assert.equal(same.calls.filter((c) => c.method === 'PUT').length, 0);
     const none = withUsers({});
     await none.store.apply({ kind: 'set-tier', userId: USER, tier: 'free' });
-    assert.deepEqual(none.calls.map((c) => c.method), ['PATCH']);
+    assert.deepEqual(none.calls.map((c) => c.method), ['POST']);
   });
   it('a new subscription replaces the saved id', async () => {
     const { state, store: s } = withUsers({ dodo_subscription_id: 'sub_old' });
