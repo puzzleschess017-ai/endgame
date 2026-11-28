@@ -186,14 +186,15 @@ export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean;
             const Icon = guide.icon;
             return (
               <article key={guide.id} id={guide.id} className={`${CARD} p-5 sm:p-7 flex flex-col gap-5`}>
-                <div className="grid gap-5 md:grid-cols-[1.3fr_1fr] items-start">
+                <h4 className="flex items-center gap-3 text-xl sm:text-2xl font-bold text-white tracking-tight">
+                  <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${guide.tint}`}>
+                    <Icon className="w-5 h-5" aria-hidden={true} />
+                  </span>
+                  {guide.title}
+                </h4>
+                {/* The text and the list side by side, both under the title. */}
+                <div className="grid gap-4 md:grid-cols-[1.3fr_1fr] items-start">
                   <div className="flex flex-col gap-3">
-                    <h4 className="flex items-center gap-3 text-xl sm:text-2xl font-bold text-white tracking-tight">
-                      <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${guide.tint}`}>
-                        <Icon className="w-5 h-5" aria-hidden={true} />
-                      </span>
-                      {guide.title}
-                    </h4>
                     <p className="text-[15px] font-medium text-white/80 leading-relaxed">{guide.text}</p>
                     <div className="flex flex-wrap gap-x-5 gap-y-1 pt-1">
                       {guide.links.map((link) => (
