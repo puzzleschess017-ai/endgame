@@ -57,21 +57,20 @@ const GUIDES: Guide[] = [
     extra: (
       <div data-testid="cycle-example">
         <p className="text-xs font-bold uppercase tracking-wider text-white/50">Example: the same 50 puzzles, three cycles</p>
-        <ol className="mt-3 grid gap-3 sm:grid-cols-3">
+        <ol className="mt-3 grid grid-cols-3 gap-3 sm:gap-4">
           {CYCLE_EXAMPLE.map((row) => (
-            <li key={row.cycle} className="rounded-xl bg-[#101b2f] border border-white/10 px-4 py-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-bold text-white/70">Cycle {row.cycle}</span>
-                {row.faster ? (
-                  <span className="rounded-full bg-[#39ff88]/15 px-2.5 py-0.5 text-xs font-bold text-[#39ff88]">{row.faster}</span>
-                ) : (
-                  <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-bold text-white/60">First time</span>
-                )}
-              </div>
-              <p className="text-4xl font-bold text-white tracking-tight tabular-nums">{row.time}</p>
-              <span className="h-2.5 rounded-full bg-white/10 overflow-hidden" aria-hidden="true">
-                <span className="block h-full rounded-full bg-gradient-to-r from-amber-300 to-[#39ff88]" style={{ width: row.width }} />
+            <li key={row.cycle} className="rounded-2xl bg-[#101b2f] border border-white/10 px-3 sm:px-5 pt-4 pb-5 flex flex-col items-center gap-3 text-center">
+              <span className="text-sm font-bold text-white/70">Cycle {row.cycle}</span>
+              <span className="text-2xl sm:text-4xl font-bold text-white tracking-tight tabular-nums">{row.time}</span>
+              {/* The bar grows from the bottom of its track: the shorter, the faster. */}
+              <span className="relative w-full max-w-[84px] h-32 sm:h-40 rounded-xl bg-white/10 overflow-hidden" aria-hidden="true">
+                <span className="absolute inset-x-0 bottom-0 rounded-xl bg-gradient-to-t from-amber-300 to-[#39ff88]" style={{ height: row.width }} />
               </span>
+              {row.faster ? (
+                <span className="rounded-full bg-[#39ff88]/15 px-2.5 py-0.5 text-xs font-bold text-[#39ff88]">{row.faster}</span>
+              ) : (
+                <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-bold text-white/60">First time</span>
+              )}
             </li>
           ))}
         </ol>
