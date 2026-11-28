@@ -8,7 +8,7 @@ import PricingPlans from './PricingPlans';
 const CARD = 'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
 
 const SHOTS = {
-  streak: { src: '/welcome/phone-streak.webp', alt: 'Puzzle Streak on a phone: a puzzle on the board and the current streak under it' },
+  survival: { src: '/welcome/phone-survival.webp', alt: 'Puzzle Survival on a phone: a puzzle on the board and three lives under it' },
   woodpecker: { src: '/welcome/phone-woodpecker.webp', alt: 'The Woodpecker Method on a phone: a puzzle on the board, with the cycle, the accuracy and the timers under it' },
 };
 
@@ -157,7 +157,7 @@ export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean;
         </div>
         {/* Two whole phones, side by side, the left one a little lower: the board and the panel under it show in full. */}
         <div className="flex justify-center items-start gap-4 sm:gap-5">
-          <Phone shot={SHOTS.streak} className="w-[44%] max-w-[250px] mt-12" />
+          <Phone shot={SHOTS.survival} className="w-[44%] max-w-[250px] mt-12" />
           <Phone shot={SHOTS.woodpecker} className="w-[44%] max-w-[250px]" />
         </div>
       </section>

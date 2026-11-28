@@ -17,7 +17,7 @@ import {
 import TrainerLayout from '../../components/TrainerLayout';
 import { authHeaders } from '../../auth';
 import { useAppearance } from '../../hooks/useAppearance';
-import { PREVIEW_FEN } from '../../hooks/usePuzzleSolver';
+import { randomPreviewFen } from '../../utils/preview';
 import { fetchBlindfoldRound, levelDescription, type BlindfoldItem } from '../../utils/blindfold';
 import { recordActivity } from '../../utils/activity';
 import { EMPTY_PLACEMENT } from '../../utils/editor';
@@ -92,6 +92,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
   const [settings, setSettings] = useState<ReconstructSettings>(() => loadReconstructSettings());
   const [phase, setPhase] = useState<Phase>('setup');
   const [items, setItems] = useState<BlindfoldItem[]>([]);
+  const [previewFen] = useState(() => randomPreviewFen());
   const [index, setIndex] = useState(0);
   const [msLeft, setMsLeft] = useState(0);
   const [placement, setPlacement] = useState(EMPTY_PLACEMENT);
@@ -318,7 +319,7 @@ export default function Reconstruct({ username, mode, onModeChange, kind, onKind
   } else {
     board = (
       <ViewBoard
-        fen={PREVIEW_FEN}
+        fen={previewFen}
         orientation="white"
         syncToken={0}
         boardTheme={appearance.boardTheme}
