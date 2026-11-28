@@ -493,7 +493,7 @@
   .goal-celebrate { animation-duration: 0.01ms; }
 }
 
-/* A soft shine on a main (filled) button: a light sweeps across it now and then and its glow breathes a little. The
+/* A soft shine on a main (filled) button: a light sweeps across it now and then and it has a soft glow. (The glow used to breathe, but animating a shadow repaints the page on every frame, which made the pages lag; the sweep only moves a layer, which is cheap.) The
    shared button classes in src/components/panelUi.tsx carry it, and the few filled buttons written by hand have
    .btn-shine too. --glow is the button's colour as "r,g,b" (green unless a class like [--glow:125,211,252] says
    otherwise). .btn-shine-late delays it (so two buttons side by side do not flash together) and .btn-still turns it
@@ -505,7 +505,7 @@
     --glow: 57, 255, 136;
     position: relative;
     overflow: hidden;
-    animation: btn-glow 3.6s ease-in-out infinite;
+    box-shadow: 0 6px 22px rgba(var(--glow), 0.2);
   }
   .btn-shine::after {
     content: '';
@@ -531,10 +531,6 @@
 @keyframes btn-sweep {
   0%, 62% { transform: translateX(-140%) skewX(-18deg); }
   100%    { transform: translateX(380%) skewX(-18deg); }
-}
-@keyframes btn-glow {
-  0%, 100% { box-shadow: 0 6px 20px rgba(var(--glow), 0.16); }
-  50%      { box-shadow: 0 6px 24px rgba(var(--glow), 0.28), 0 0 0 1px rgba(var(--glow), 0.14); }
 }
 @media (prefers-reduced-motion: reduce) {
   .btn-shine,
