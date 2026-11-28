@@ -57,21 +57,22 @@ const GUIDES: Guide[] = [
     extra: (
       <div data-testid="cycle-example">
         <p className="text-xs font-bold uppercase tracking-wider text-white/50">Example: the same 50 puzzles, three cycles</p>
-        <ol className="mt-3 grid gap-3 sm:grid-cols-3">
+        <ol className="mt-3 flex flex-col gap-3">
           {CYCLE_EXAMPLE.map((row) => (
-            <li key={row.cycle} className="rounded-xl bg-[#101b2f] border border-white/10 px-4 py-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-bold text-white/70">Cycle {row.cycle}</span>
-                {row.faster ? (
-                  <span className="rounded-full bg-[#39ff88]/15 px-2.5 py-0.5 text-xs font-bold text-[#39ff88]">{row.faster}</span>
-                ) : (
-                  <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-bold text-white/60">First time</span>
-                )}
-              </div>
-              <p className="text-4xl font-bold text-white tracking-tight tabular-nums">{row.time}</p>
-              <span className="h-2.5 rounded-full bg-white/10 overflow-hidden" aria-hidden="true">
+            <li
+              key={row.cycle}
+              className="rounded-xl bg-[#101b2f] border border-white/10 px-4 sm:px-5 py-3.5 grid grid-cols-[1fr_auto] sm:grid-cols-[5.5rem_5.5rem_1fr_7.5rem] items-center gap-x-4 gap-y-2"
+            >
+              <span className="text-sm font-bold text-white/70 sm:order-1">Cycle {row.cycle}</span>
+              <span className="text-2xl sm:text-3xl font-bold text-white tracking-tight tabular-nums justify-self-end sm:justify-self-start sm:order-2">{row.time}</span>
+              <span className="col-span-2 sm:col-span-1 order-last sm:order-3 h-2.5 rounded-full bg-white/10 overflow-hidden" aria-hidden="true">
                 <span className="block h-full rounded-full bg-gradient-to-r from-amber-300 to-[#39ff88]" style={{ width: row.width }} />
               </span>
+              {row.faster ? (
+                <span className="hidden sm:block sm:order-4 justify-self-end rounded-full bg-[#39ff88]/15 px-2.5 py-0.5 text-xs font-bold text-[#39ff88]">{row.faster}</span>
+              ) : (
+                <span className="hidden sm:block sm:order-4 justify-self-end rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-bold text-white/60">First time</span>
+              )}
             </li>
           ))}
         </ol>
