@@ -17,7 +17,6 @@ import TrainerLayout from '../../components/TrainerLayout';
 import { UnlockLinks, LOCKED_CLASS, LockMark, UnlockNotice, useLocks } from '../../components/locks';
 import { authHeaders, useAuth } from '../../auth';
 import { canOpenBlindfold, clampBlindfold, tierFor, unlockHint } from '../../utils/access';
-import { randomPreviewFen } from '../../utils/preview';
 import { useAppearance } from '../../hooks/useAppearance';
 import {
   BLINDFOLD_LEVELS,
@@ -67,7 +66,6 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
   }));
   const [appearance, setAppearance] = useAppearance();
 
-  const [previewFen] = useState(() => randomPreviewFen());
   const [phase, setPhase] = useState<Phase>('setup');
   const [items, setItems] = useState<BlindfoldItem[]>([]);
   const [index, setIndex] = useState(0);
@@ -273,7 +271,8 @@ export default function Mate({ username, mode, onModeChange }: BlindfoldModeProp
   const sideName = current ? (current.position.playerColor === 'white' ? 'White' : 'Black') : '';
   const running = phase === 'memorize' || phase === 'answer' || phase === 'feedback';
 
-  let boardFen = previewFen;
+  // Before a round the board is empty, as in Coordinate Training: in blindfold chess you do not see the pieces.
+  let boardFen = EMPTY_FEN;
   let orientation: 'white' | 'black' = 'white';
   let lastMove: [Key, Key] | undefined;
   let arrow: [Key, Key] | null = null;
