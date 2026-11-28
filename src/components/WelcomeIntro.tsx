@@ -39,11 +39,12 @@ const CYCLE_EXAMPLE = [
 const BLINDFOLD_STEPS = [
   { title: 'Memorize', text: 'The position stays for 5 to 20 seconds.' },
   { title: 'The pieces vanish', text: 'Only the empty board is left.' },
-  { title: 'Type the move', text: 'Find the checkmate and type it, for example Rd8#.' },
+  { title: 'Type the move', text: 'Find the checkmate and type it.' },
 ];
 
-/** A back-rank mate in one (Rd8#), the position of the first step. */
-const MINI_FEN = '6k1/5ppp/8/8/8/8/5PPP/3R2K1';
+/** A mate in one for White (Qxf7#), the position of the first step. */
+const MINI_FEN = 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR';
+const MINI_MATE = 'Qxf7#';
 
 /** A small board for the steps, drawn from a FEN (pieces only; "" for an empty one). */
 function MiniBoard({ fen, faded = false }: { fen: string; faded?: boolean }) {
@@ -130,7 +131,7 @@ const GUIDES: Guide[] = [
               )}
               {i === 2 && (
                 <div className="w-full max-w-[168px] aspect-square flex flex-col items-center justify-center gap-3" aria-hidden="true">
-                  <span className="w-full rounded-xl bg-[#0b1424] border border-white/15 px-4 py-3 text-2xl font-bold text-white tabular-nums tracking-wide">Rd8#</span>
+                  <span className="w-full rounded-xl bg-[#0b1424] border border-white/15 px-4 py-3 text-2xl font-bold text-white tabular-nums tracking-wide">{MINI_MATE}</span>
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[#39ff88]/15 px-3 py-1 text-xs font-bold text-[#39ff88]">
                     <Check className="w-3.5 h-3.5" /> Checkmate
                   </span>
