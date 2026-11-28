@@ -80,6 +80,7 @@ export default function SurvivalPage() {
   useEffect(() => clearTimers, [clearTimers]);
 
   const solver = usePuzzleSolver({
+    mode: 'survival',
     onSolved: () => handleSolvedRef.current(),
     onFailed: (p, info) => handleFailedRef.current(p, info),
   });

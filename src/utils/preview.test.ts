@@ -1,26 +1,21 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Chess } from 'chess.js';
-import { PREVIEW_FENS, randomPreviewFen } from './preview.ts';
+import { PREVIEW_BY_MODE, previewFen, type PreviewMode } from './preview.ts';
+
+const MODES = Object.keys(PREVIEW_BY_MODE) as PreviewMode[];
 
 test('every waiting position is an ordinary position that is not over', () => {
-  assert.ok(PREVIEW_FENS.length >= 10);
-  assert.equal(new Set(PREVIEW_FENS).size, PREVIEW_FENS.length);
-  for (const fen of PREVIEW_FENS) {
-    const chess = new Chess(fen);
-    assert.equal(chess.isGameOver(), false, fen);
-    assert.equal(chess.inCheck(), false, fen);
-    assert.ok(chess.moves().length > 0, fen);
+  assert.equal(MODES.length, 3);
+  for (const mode of MODES) {
+    const chess = new Chess(PREVIEW_BY_MODE[mode]);
+    assert.equal(chess.isGameOver(), false, mode);
+    assert.equal(chess.inCheck(), false, mode);
+    assert.ok(chess.moves().length > 0, mode);
   }
 });
 
-test('the position changes: it is one of the list, and not the one just shown', () => {
-  const seen = new Set<string>();
-  for (let i = 0; i < 200; i++) {
-    const fen = randomPreviewFen();
-    assert.ok(PREVIEW_FENS.includes(fen));
-    seen.add(fen);
-    assert.notEqual(randomPreviewFen(fen), fen);
-  }
-  assert.ok(seen.size > 5);
+test('the three modes have three different positions, and each one stays the same', () => {
+  assert.equal(new Set(MODES.map((m) => previewFen(m))).size, 3);
+  for (const mode of MODES) assert.equal(previewFen(mode), previewFen(mode));
 });

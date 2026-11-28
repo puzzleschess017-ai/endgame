@@ -10,7 +10,7 @@ import type { PendingPromotion } from '../components/ChessboardPanel';
 import type { Puzzle } from '../types';
 import { applyUciMove, getLegalDests, isPromotionMove } from '../utils/chessHelpers';
 import { playMoveSound } from '../utils/sound';
-import { randomPreviewFen } from '../utils/preview';
+import { previewFen, type PreviewMode } from '../utils/preview';
 
 
 const SETUP_MOVE_DELAY_MS = 200;
@@ -36,6 +36,8 @@ export interface FailedInfo {
 }
 
 interface Options {
+  /** Which mode this is: its board waits on its own position. */
+  mode: PreviewMode;
   onSolved: (puzzle: Puzzle) => void;
   onFailed: (puzzle: Puzzle, info: FailedInfo) => void;
 }
@@ -55,14 +57,13 @@ function previewBoard(fen: string): SolverBoard {
 const colorOf = (chess: Chess): Color => (chess.turn() === 'w' ? 'white' : 'black');
 const asKey = (square: string) => square as Key;
 
-export function usePuzzleSolver({ onSolved, onFailed }: Options) {
-  const [firstPreview] = useState(() => randomPreviewFen());
-  const [board, setBoard] = useState<SolverBoard>(() => previewBoard(firstPreview));
+export function usePuzzleSolver({ mode, onSolved, onFailed }: Options) {
+  const [board, setBoard] = useState<SolverBoard>(() => previewBoard(previewFen(mode)));
   const [syncToken, setSyncToken] = useState(0);
   const [hintArrow, setHintArrow] = useState<[Key, Key] | null>(null);
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion | null>(null);
 
-  const chessRef = useRef(new Chess(firstPreview));
+  const chessRef = useRef(new Chess(previewFen(mode)));
   const puzzleRef = useRef<Puzzle | null>(null);
   const moveIndexRef = useRef(1);
   const settledRef = useRef(true);
@@ -141,11 +142,11 @@ export function usePuzzleSolver({ onSolved, onFailed }: Options) {
     setHintArrow(null);
     puzzleRef.current = null;
     settledRef.current = true;
-    const preview = randomPreviewFen();
+    const preview = previewFen(mode);
     chessRef.current = new Chess(preview);
     setBoard(previewBoard(preview));
     setSyncToken((t) => t + 1);
-  }, [clearTimers]);
+  }, [clearTimers, mode]);
 
   /** Freezes the board where it is (time is up, run was ended). */
   const lock = useCallback(() => {

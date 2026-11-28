@@ -25,7 +25,7 @@ import { playMoveSound } from './utils/sound';
 import { recordFinishedCycles } from './utils/woodpeckerHistory';
 import { nextCycle, resumeAfterReview, reviewSession, trimOldAttempts, type ReviewItem } from './utils/review';
 import { readSavedUsername } from './utils/profile';
-import { randomPreviewFen } from './utils/preview';
+import { previewFen } from './utils/preview';
 
 
 interface BoardState {
@@ -57,7 +57,7 @@ export default function App() {
     message: string;
   }>({ type: 'idle', message: 'Find the best move' });
 
-  const [firstPreview] = useState(() => randomPreviewFen());
+  const firstPreview = previewFen('woodpecker');
   const [boardState, setBoardState] = useState<BoardState>({
     fen: firstPreview,
     playerColor: 'white',
@@ -183,7 +183,7 @@ export default function App() {
 
     if (!session || session.status !== 'training' || !currentPuzzle) {
       if (!session) {
-        const preview = randomPreviewFen();
+        const preview = previewFen('woodpecker');
         chessRef.current = new Chess(preview);
         setBoardState({
           fen: preview,
