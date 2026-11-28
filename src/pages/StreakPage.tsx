@@ -132,7 +132,7 @@ export default function StreakPage() {
     [finishRun],
   );
 
-  const solver = usePuzzleSolver({ onSolved: handleSolved, onFailed: handleFailed });
+  const solver = usePuzzleSolver({ mode: 'streak', onSolved: handleSolved, onFailed: handleFailed });
 
   /** Loads the next puzzle of this run. Safe to call again after an error. */
   const showNextPuzzle = useCallback(async () => {
