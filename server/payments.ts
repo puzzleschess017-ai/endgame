@@ -285,6 +285,8 @@ export interface SubscriptionState {
   id: string;
   /** The person it belongs to, from the metadata the server put in the checkout. */
   userId: string | null;
+  /** Dodo's own status of the subscription ("active", "cancelled", "expired", "on_hold", "paused", ...), null when it gave none. */
+  status: string | null;
   /** True while the subscription is running (Dodo status "active"); a cancelled one that is still paid for is also active. */
   active: boolean;
   /** When the next payment is due, or, when the cancel is scheduled, when the paid period ends (an ISO date). */
@@ -330,6 +332,7 @@ export async function fetchSubscription(api: DodoApi, id: string, fetchImpl: typ
   return {
     id,
     userId: typeof raw === 'string' && USER_ID.test(raw) ? raw.toLowerCase() : null,
+    status: typeof data.status === 'string' ? data.status : null,
     active: data.status === 'active',
     nextBillingDate: dateOf(data.next_billing_date),
     cancelScheduled: data.cancel_at_next_billing_date === true,
@@ -422,4 +425,62 @@ export async function createCheckout(request: CheckoutRequest): Promise<string> 
   const url = ((await res.json()) as { checkout_url?: unknown }).checkout_url;
   if (typeof url !== 'string' || !url.startsWith('https://')) throw new Error('Dodo gave no checkout address');
   return url;
+}
+
+// ---------------------------------------------------------------------------------------------
+// A safety net for the webhook: Premium must not outlive the subscription
+// ---------------------------------------------------------------------------------------------
+
+/** The Dodo statuses in which the webhook turns Premium off (see actionFor). */
+const ENDED_STATUSES = new Set(['cancelled', 'expired', 'on_hold', 'paused']);
+
+/**
+ * True only when Dodo itself says that the subscription saved for this person has ended while the profile still says
+ * Premium. Anything uncertain (no subscription saved, for example Premium given by hand; Dodo cannot be reached; the
+ * subscription is somebody else's) is false, so a plan is never taken away on a guess.
+ */
+export async function premiumHasEnded(options: { store: PaymentStore; api: DodoApi; userId: string; fetchImpl?: typeof fetch }): Promise<boolean> {
+  const id = await options.store.subscriptionIdOf(options.userId);
+  if (!id) return false;
+  const state = await fetchSubscription(options.api, id, options.fetchImpl);
+  return !!state && state.userId === options.userId.toLowerCase() && state.status !== null && ENDED_STATUSES.has(state.status);
+}
+
+export interface PremiumGuardOptions {
+  store: PaymentStore;
+  api: DodoApi;
+  fetchImpl?: typeof fetch;
+  now?: () => number;
+  /** How long a person's subscription is trusted before Dodo is asked again. */
+  everyMs?: number;
+  /** Called after the plan was set to free, so the server forgets what it remembered about the person. */
+  onDowngraded?: (userId: string) => void;
+}
+
+/**
+ * Asks Dodo about a Premium person's subscription now and then (at most once in `everyMs`, 30 minutes by default); when it
+ * has ended and the webhook did not (yet) turn Premium off, sets the plan to free. Returns true when it did.
+ */
+export function createPremiumGuard(options: PremiumGuardOptions): (userId: string) => Promise<boolean> {
+  const now = options.now ?? (() => Date.now());
+  const every = options.everyMs ?? 30 * 60_000;
+  const checked = new Map<string, number>();
+  return async (userId) => {
+    const key = userId.toLowerCase();
+    const last = checked.get(key);
+    if (last !== undefined && now() - last < every) return false;
+    if (checked.size >= 1000) checked.clear();
+    checked.set(key, now());
+    try {
+      if (!(await premiumHasEnded({ store: options.store, api: options.api, userId: key, fetchImpl: options.fetchImpl }))) return false;
+      await options.store.apply({ kind: 'set-tier', userId: key, tier: 'free' });
+      options.onDowngraded?.(key);
+      return true;
+    } catch (err) {
+      // Dodo or Supabase did not answer: nothing is taken away, and the next request asks again after a short while.
+      checked.set(key, now() - every + 60_000);
+      console.error('[payments] could not check the subscription', err instanceof Error ? err.message : err);
+      return false;
+    }
+  };
 }
