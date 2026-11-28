@@ -254,12 +254,17 @@ export function createPaymentStore(options: { url: string; serviceKey: string; f
 
   return {
     async apply(action) {
-      // An upsert: an account whose profile row is missing (deleted by hand) gets one, and an existing row only changes its plan.
-      await send('rest/v1/profiles?on_conflict=id', {
-        method: 'POST',
-        prefer: 'resolution=merge-duplicates,return=minimal',
-        body: { id: action.userId, tier: action.tier },
-      });
+      // The plan of an existing profile is changed with a PATCH (it asks for the changed rows back). Only when no row matched, an
+      // account whose profile was deleted by hand, a row is made: that needs the right to add rows, so it is the fallback.
+      const changed = await send(`rest/v1/profiles?id=eq.${action.userId}`, { method: 'PATCH', prefer: 'return=representation', body: { tier: action.tier } });
+      const rows = await changed.json().catch(() => null);
+      if (!Array.isArray(rows) || rows.length === 0) {
+        await send('rest/v1/profiles?on_conflict=id', {
+          method: 'POST',
+          prefer: 'resolution=merge-duplicates,return=minimal',
+          body: { id: action.userId, tier: action.tier },
+        });
+      }
       if (action.subscriptionId) {
         // Read, add one key, write everything back: the other keys (provider, providers) must stay as they are.
         const metadata = await readMetadata(action.userId);
