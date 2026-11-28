@@ -59,3 +59,10 @@ test('between the introduction and the prices come the Woodpecker, Blindfold and
   // Someone with Premium has no prices to see, but still reads about the training.
   assert.match(renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: true, premium: true })), /welcome-guides/);
 });
+
+test('each of the three guides is its own row with something extra under it: the cycles, the steps, the covers', () => {
+  const html = renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: false, premium: false }));
+  assert.match(html, /data-testid="cycle-example"/);
+  assert.match(html, /data-testid="blindfold-steps"/);
+  assert.equal((html.match(/<img [^>]*src="\/covers\/[a-z-]+\.webp"/g) ?? []).length, 7);
+});
