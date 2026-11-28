@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
 import { Chessground } from 'chessground';
 import type { Api } from 'chessground/api';
@@ -437,7 +437,10 @@ function editorConfig(editRef: MutableRefObject<BoardEditOptions | undefined>): 
   };
 }
 
-export default function ChessboardPanel({
+// Memoised: Woodpecker re-renders its page twice a second for the timer, and the board has no reason to follow.
+export default memo(ChessboardPanel);
+
+function ChessboardPanel({
   fen,
   orientation,
   turnColor,
