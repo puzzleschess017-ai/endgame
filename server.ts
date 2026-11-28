@@ -14,6 +14,19 @@ import type { BlindfoldLevel, MateIn } from './src/utils/blindfold.ts';
 import type { PuzzleCountOption } from './src/types.ts';
 import { contentFor } from './server/prerender.ts';
 import { preloadTags, readManifest } from './server/preload.ts';
+import {
+  FLOW_COOKIE,
+  authorizeUrl,
+  clearFlowCookieHeader,
+  finishLichessLogin,
+  flowCookieHeader,
+  loadLichessSettings,
+  newPkce,
+  openFlow,
+  readCookie,
+  safeNext,
+  sealFlow,
+} from './server/lichess.ts';
 import { cleanSiteUrl, pageFor, renderPage, robotsTxt, sitemapXml } from './server/seo.ts';
 import {
   RATING_BANDS,
@@ -430,6 +443,45 @@ async function startServer() {
       console.log(`[payments] ${(event as { type: string }).type} ignored`);
     }
     res.status(200).json({ ok: true });
+  });
+
+  // "Continue with Lichess" (see server/lichess.ts). Off until SUPABASE_SERVICE_ROLE_KEY is set; the login page then says so.
+  const lichess = loadLichessSettings(process.env, siteUrl, supabaseUrl);
+  const secureCookies = siteUrl.startsWith('https://');
+  const lichessFail = (res: express.Response, reason: string) => {
+    res.set('Cache-Control', 'no-store');
+    res.append('Set-Cookie', clearFlowCookieHeader(secureCookies));
+    res.redirect(302, `/login?lichess=${encodeURIComponent(reason)}`);
+  };
+  app.get('/auth/lichess', (req, res) => {
+    if (!lichess) return lichessFail(res, 'unavailable');
+    // The cookie of the flow belongs to one host: start on the host of the site, the one Lichess sends the person back to.
+    const wanted = new URL(siteUrl).host;
+    if (req.headers.host && req.headers.host !== wanted) {
+      const query = typeof req.query.next === 'string' ? `?next=${encodeURIComponent(req.query.next)}` : '';
+      res.redirect(302, `${siteUrl}/auth/lichess${query}`);
+      return;
+    }
+    const pkce = newPkce();
+    res.set('Cache-Control', 'no-store');
+    res.append('Set-Cookie', flowCookieHeader(sealFlow(lichess.cookieKey, { verifier: pkce.verifier, state: pkce.state, next: safeNext(req.query.next) }), secureCookies));
+    res.redirect(302, authorizeUrl(lichess, pkce));
+  });
+  app.get('/auth/lichess/callback', async (req, res) => {
+    if (!lichess) return lichessFail(res, 'unavailable');
+    const flow = openFlow(lichess.cookieKey, readCookie(req.headers.cookie, FLOW_COOKIE));
+    const code = typeof req.query.code === 'string' ? req.query.code : '';
+    if (typeof req.query.error === 'string') return lichessFail(res, 'denied');
+    if (!flow || !code || req.query.state !== flow.state) return lichessFail(res, 'unavailable');
+    const result = await finishLichessLogin({ code, verifier: flow.verifier }, lichess);
+    if (!result.ok) {
+      console.error(`[lichess] sign-in failed: ${result.reason}`);
+      return lichessFail(res, result.reason);
+    }
+    res.set('Cache-Control', 'no-store');
+    res.append('Set-Cookie', clearFlowCookieHeader(secureCookies));
+    // In the fragment, so the one-time token is never sent to any server or written in a log.
+    res.redirect(302, `/login#lichess=${encodeURIComponent(result.tokenHash)}&next=${encodeURIComponent(flow.next)}`);
   });
 
   app.use(express.json({ limit: '100kb' }));

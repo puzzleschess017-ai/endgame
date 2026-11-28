@@ -170,6 +170,15 @@ export function createAuthStore(parts: AuthStoreParts) {
       return result;
     },
 
+    /** Signs in with the one-time token that the server makes after a Lichess sign-in. */
+    async signInWithTokenHash(tokenHash: string): Promise<AuthResult<AuthSession>> {
+      const result = await client.signInWithTokenHash(tokenHash);
+      if (!result.ok) return result;
+      set(result.value, null);
+      await loadProfile();
+      return result;
+    },
+
     /** `session: null` in the answer means the email has to be confirmed before signing in. */
     async signUp(email: string, password: string, name: string): Promise<AuthResult<SignUpOutcome>> {
       const result = await client.signUp({ email, password, name });

@@ -248,3 +248,27 @@ describe('store', () => {
     assert.equal(nameFor(null, null), '');
   });
 });
+
+describe('signing in with the one-time token of a Lichess sign-in', () => {
+  it('trades the token for a session through /auth/v1/verify', async () => {
+    const { client, calls } = clientWith(() => ({ body: sessionBody() }));
+    const result = await client.signInWithTokenHash('abcDEF123_-xyz789');
+    assert.ok(result.ok);
+    assert.equal(calls[0].url, 'https://x.supabase.co/auth/v1/verify');
+    assert.deepEqual(calls[0].body, { type: 'magiclink', token_hash: 'abcDEF123_-xyz789' });
+  });
+  it('a token that does not look like one is not even sent; an expired one is refused', async () => {
+    const { client, calls } = clientWith(() => ({ status: 403, body: { error_code: 'otp_expired' } }));
+    const odd = await client.signInWithTokenHash('x y');
+    assert.ok(!odd.ok);
+    assert.equal(calls.length, 0);
+    const expired = await client.signInWithTokenHash('abcDEF123_-xyz789');
+    assert.ok(!expired.ok && /expired/.test(expired.error));
+  });
+  it('the store becomes signed in, with the plan of the profile', async () => {
+    const h = harness((c) => (c.url.includes('/auth/v1/verify') ? { body: sessionBody() } : profileFor('free')));
+    const result = await h.store.signInWithTokenHash('abcDEF123_-xyz789');
+    assert.ok(result.ok);
+    assert.deepEqual([h.store.getState().tier, h.store.getState().name], ['free', 'Ana']);
+  });
+});

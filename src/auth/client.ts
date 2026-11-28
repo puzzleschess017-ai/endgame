@@ -168,6 +168,16 @@ export function createAuthClient(config: AuthConfig, now: () => number = () => M
       return session ? { ok: true, value: session } : fail('Something went wrong. Please try again.');
     },
 
+    /** Trades a one-time token (made by the server after a Lichess sign-in) for a session. */
+    async signInWithTokenHash(tokenHash: string): Promise<AuthResult<AuthSession>> {
+      if (!/^[A-Za-z0-9_-]{8,256}$/.test(tokenHash)) return fail('The sign-in link is not valid. Please try again.', { rejected: true });
+      const response = await call('/auth/v1/verify', { method: 'POST', body: { type: 'magiclink', token_hash: tokenHash } });
+      if (!response) return unreachable;
+      if (!response.ok) return fail('The sign-in link has expired. Please try again.', { rejected: true });
+      const session = toSession(response.body, now());
+      return session ? { ok: true, value: session } : fail('Something went wrong. Please try again.');
+    },
+
     /** `rejected` means the refresh token is no good any more (sign the visitor out); `network` means try again later. */
     async refresh(refreshToken: string): Promise<AuthResult<AuthSession>> {
       const response = await call('/auth/v1/token?grant_type=refresh_token', {
