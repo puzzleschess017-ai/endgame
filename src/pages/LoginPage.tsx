@@ -4,6 +4,7 @@ import AppShell from '../components/AppShell';
 import { CARD_CLASS, LOGIN_BUTTON_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from '../components/panelUi';
 import { auth, useAuth } from '../auth';
 import { chooseGuest } from '../auth/guest';
+import { lichessMessage, lichessStartHref, parseLichessHash } from '../auth/lichess';
 import { signOutAndSync, useSyncState } from '../sync';
 import { readSavedUsername } from '../utils/profile';
 
@@ -52,6 +53,29 @@ export default function LoginPage() {
 
   useEffect(() => {
     document.title = 'Sign in | Chess Tactics Guide';
+  }, []);
+
+  // Back from Lichess: the server put a one-time token in the address (after the #), which is traded for a session here.
+  // Or Lichess sign-in failed, and the address says why.
+  useEffect(() => {
+    const returned = parseLichessHash(window.location.hash);
+    if (returned) {
+      window.history.replaceState(null, '', window.location.pathname);
+      setBusy(true);
+      setNotice('Signing you in with Lichess…');
+      void auth.signInWithTokenHash(returned.token).then((result) => {
+        if (result.ok) {
+          window.location.assign(returned.next);
+          return;
+        }
+        setBusy(false);
+        setNotice(null);
+        setError(result.error);
+      });
+      return;
+    }
+    const failed = lichessMessage(window.location.search);
+    if (failed) setError(failed);
   }, []);
 
   const goNext = () => window.location.assign(nextPath(window.location.search));
@@ -225,6 +249,14 @@ export default function LoginPage() {
             <div className="flex items-center gap-3 text-xs font-semibold text-white/50" aria-hidden="true">
               <span className="h-px flex-1 bg-white/15" /> or <span className="h-px flex-1 bg-white/15" />
             </div>
+
+            <a
+              href={lichessStartHref(new URLSearchParams(window.location.search).get('next') ?? '/')}
+              data-testid="lichess-signin"
+              className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2 no-underline`}
+            >
+              <span aria-hidden="true">♞</span> Continue with Lichess
+            </a>
 
             <div className="flex flex-col gap-1.5">
               <a href="/" data-testid="play-as-guest" onClick={chooseGuest} className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center no-underline`}>

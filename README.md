@@ -311,6 +311,17 @@ colours and sound stay on the device. On the server they are one row per key in 
 - Known limit: two devices that train on the same day while offline both count that day; when they meet, the
   larger day total is kept, so a few sessions of that day can be missed.
 
+## Sign in with Lichess
+
+The login page has "Continue with Lichess". Supabase has no Lichess provider, so `server/lichess.ts` does the OAuth 2 + PKCE
+part (public client: no secret, no registration; the client id is the host of `SITE_URL`, the redirect is
+`SITE_URL/auth/lichess/callback`). It reads the Lichess username and email (`email:read`), revokes the Lichess token, makes
+sure a confirmed Supabase user with that email exists (the name is the Lichess username), asks Supabase for a one-time
+magic-link token (`admin/generate_link`, never emailed) and sends the browser to `/login#lichess=<token>`; the page trades it
+for a normal session (`/auth/v1/verify`). The same email as an existing account means the same account.
+It needs only `SUPABASE_SERVICE_ROLE_KEY` (already used by the payment webhook) and a correct `SITE_URL`. Without the key the
+button sends people back to the login page with a message.
+
 ## Saved progress
 
 Training sessions and settings are stored in the browser (`localStorage`). Results (not settings or the
