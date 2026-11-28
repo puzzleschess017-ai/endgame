@@ -7,6 +7,8 @@ import {
   cancelUserSubscription,
   createCheckout,
   createPaymentStore,
+  createPremiumGuard,
+  premiumHasEnded,
   fetchSubscription,
   loadPaymentSettings,
   NO_SUBSCRIPTION,
@@ -321,7 +323,7 @@ describe('subscriptions', () => {
   it('fetchSubscription reads the status, the next payment and whether the cancel is scheduled', async () => {
     const { calls, fetchImpl } = dodo(record({ cancel_at_next_billing_date: true }));
     const state = await fetchSubscription(api, 'sub_1', fetchImpl);
-    assert.deepEqual(state, { id: 'sub_1', userId: USER, active: true, nextBillingDate: '2026-12-27T10:00:00.000Z', cancelScheduled: true });
+    assert.deepEqual(state, { id: 'sub_1', userId: USER, status: 'active', active: true, nextBillingDate: '2026-12-27T10:00:00.000Z', cancelScheduled: true });
     assert.equal(calls[0].url, 'https://test.dodopayments.com/subscriptions/sub_1');
     assert.equal(calls[0].headers.Authorization, 'Bearer dodo_test_x');
   });
@@ -333,7 +335,7 @@ describe('subscriptions', () => {
     assert.equal(await fetchSubscription(api, '../customers', fetchImpl), null);
     assert.equal(calls.length, 0);
     const odd = dodo(record({ status: 'cancelled', metadata: {}, next_billing_date: 'soon' }));
-    assert.deepEqual(await fetchSubscription(api, 'sub_1', odd.fetchImpl), { id: 'sub_1', userId: null, active: false, nextBillingDate: null, cancelScheduled: false });
+    assert.deepEqual(await fetchSubscription(api, 'sub_1', odd.fetchImpl), { id: 'sub_1', userId: null, status: 'cancelled', active: false, nextBillingDate: null, cancelScheduled: false });
   });
   it('cancelSubscription asks Dodo to stop at the end of the paid period, not now', async () => {
     const { calls, fetchImpl } = dodo(record());
@@ -391,11 +393,45 @@ describe('subscriptions', () => {
   });
   it('the view for the page', () => {
     assert.deepEqual(subscriptionView(null), NO_SUBSCRIPTION);
-    assert.deepEqual(subscriptionView({ id: 'sub_1', userId: USER, active: true, nextBillingDate: '2026-12-27T10:00:00.000Z', cancelScheduled: false }), {
+    assert.deepEqual(subscriptionView({ id: 'sub_1', userId: USER, status: 'active', active: true, nextBillingDate: '2026-12-27T10:00:00.000Z', cancelScheduled: false }), {
       managed: true,
       nextBillingDate: '2026-12-27T10:00:00.000Z',
       cancelScheduled: false,
     });
+  });
+  it('premiumHasEnded: only when Dodo says that this person\'s saved subscription has ended', async () => {
+    for (const status of ['cancelled', 'expired', 'on_hold', 'paused']) {
+      assert.equal(await premiumHasEnded({ store: saved('sub_1'), api, userId: USER, fetchImpl: dodo(record({ status })).fetchImpl }), true, status);
+    }
+    assert.equal(await premiumHasEnded({ store: saved('sub_1'), api, userId: USER, fetchImpl: dodo(record()).fetchImpl }), false, 'active');
+    assert.equal(await premiumHasEnded({ store: saved('sub_1'), api, userId: USER, fetchImpl: dodo(record({ status: 'cancelled', cancel_at_next_billing_date: true })).fetchImpl }), true);
+    // not on a guess: no subscription saved (Premium given by hand), unknown to Dodo, somebody else's
+    assert.equal(await premiumHasEnded({ store: saved(null), api, userId: USER, fetchImpl: dodo(record({ status: 'cancelled' })).fetchImpl }), false);
+    assert.equal(await premiumHasEnded({ store: saved('sub_1'), api, userId: USER, fetchImpl: dodo(null).fetchImpl }), false);
+    const other = record({ status: 'cancelled', metadata: { user_id: '11111111-2222-4333-8444-555555555555' } });
+    assert.equal(await premiumHasEnded({ store: saved('sub_1'), api, userId: USER, fetchImpl: dodo(other).fetchImpl }), false);
+  });
+  it('the premium guard sets the plan to free once, asks Dodo at most every 30 minutes, and never fails the request', async () => {
+    let clock = 1_000_000;
+    const applied: unknown[] = [];
+    const forgotten: string[] = [];
+    const store: PaymentStore = { apply: async (a) => void applied.push(a), subscriptionIdOf: async () => 'sub_1' };
+    const ended = dodo(record({ status: 'cancelled' }));
+    const guard = createPremiumGuard({ store, api, fetchImpl: ended.fetchImpl, now: () => clock, onDowngraded: (id) => forgotten.push(id) });
+    assert.equal(await guard(USER), true);
+    assert.deepEqual(applied, [{ kind: 'set-tier', userId: USER.toLowerCase(), tier: 'free' }]);
+    assert.deepEqual(forgotten, [USER.toLowerCase()]);
+    clock += 60_000;
+    assert.equal(await guard(USER), false, 'asked a minute ago: not asked again');
+    assert.equal(ended.calls.length, 1);
+    clock += 30 * 60_000;
+    assert.equal(await guard(USER), true, 'after 30 minutes it asks again');
+
+    const active = dodo(record());
+    const calm = createPremiumGuard({ store, api, fetchImpl: active.fetchImpl, now: () => clock });
+    assert.equal(await calm(USER), false);
+    const broken = createPremiumGuard({ store, api, fetchImpl: (async () => new Response('{}', { status: 500 })) as typeof fetch, now: () => clock });
+    assert.equal(await broken(USER), false, 'Dodo down: the plan stays');
   });
 });
 

@@ -12,6 +12,7 @@ import {
   createPaymentStore,
   loadPaymentSettings,
   NO_SUBSCRIPTION,
+  createPremiumGuard,
   subscriptionOf,
   subscriptionView,
   verifyWebhook,
@@ -569,10 +570,25 @@ async function startServer() {
   });
 
   // Woodpecker sets and Blindfold levels depend on the plan (guest, signed in, Premium): see src/utils/access.ts.
-  const tierOf = createTierLookup({
+  const rawTierOf = createTierLookup({
     url: process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL,
     key: process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_KEY,
   });
+
+  // Safety net for the webhook: when a Premium person's subscription has ended in Dodo and no event turned Premium off, the
+  // plan is set to free here (Dodo is asked at most every 30 minutes per person; a plan is never taken away on a guess).
+  const premiumGuard = payments.checkout && paymentStore ? createPremiumGuard({ store: paymentStore, api: payments.checkout, onDowngraded: (id) => rawTierOf.forget(id) }) : null;
+  const tierOf: typeof rawTierOf = Object.assign(
+    async (authorization: string | undefined) => {
+      const visitor = await rawTierOf(authorization);
+      if (premiumGuard && visitor.ok && visitor.tier === 'premium' && visitor.userId && (await premiumGuard(visitor.userId))) {
+        console.log('[payments] Premium turned off: the subscription has ended in Dodo');
+        return rawTierOf(authorization);
+      }
+      return visitor;
+    },
+    { forget: (id: string) => rawTierOf.forget(id) },
+  );
 
   // The e-books are free to download for Premium. The files are not in public/ or dist/, so these routes are the only
   // way to get one: the browser sends the sign-in token and the plan is checked here, on the server.
