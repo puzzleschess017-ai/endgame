@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { ArrowRight, BookOpen, Check, EyeOff, LogIn, Repeat } from 'lucide-react';
 import { LOGIN_BUTTON_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
 import PricingPlans from './PricingPlans';
+import { EBOOKS } from '../utils/ebooks';
 
 const CARD = 'bg-[#16233b] border border-white/10 rounded-2xl shadow-[0_16px_44px_rgba(4,9,20,0.45)]';
 
@@ -17,10 +18,25 @@ interface Guide {
   title: string;
   icon: typeof Repeat;
   tint: string;
-  text: ReactNode;
+  text: string;
   points: string[];
   links: Array<{ href: string; label: string }>;
+  /** Something extra under the text: an example, the steps, the covers. */
+  extra: ReactNode;
 }
+
+/** The same 50 puzzles, three cycles: the time falls. Only an example, to show the idea. */
+const CYCLE_EXAMPLE = [
+  { cycle: 1, time: '18:40', width: '100%' },
+  { cycle: 2, time: '11:20', width: '61%' },
+  { cycle: 3, time: '7:05', width: '38%' },
+];
+
+const BLINDFOLD_STEPS = [
+  { title: 'Memorize', text: 'The position stays for 5 to 20 seconds.' },
+  { title: 'The pieces vanish', text: 'Only the empty board is left.' },
+  { title: 'Type the move', text: 'For example Qh7#.' },
+];
 
 const GUIDES: Guide[] = [
   {
@@ -28,79 +44,80 @@ const GUIDES: Guide[] = [
     title: 'The Woodpecker Method',
     icon: Repeat,
     tint: 'bg-amber-300/15 text-amber-300',
-    text: (
-      <>
-        <p>
-          A training idea from the grandmasters Hans Tikkanen and Axel Smith (their book came out in 2018). You take one fixed set
-          of puzzles and solve the very same set again and again. Each round, called a cycle, you try to be faster than the last
-          one without making more mistakes.
-        </p>
-        <p>
-          Seeing the same positions over and over turns the patterns into habit, so in your own games you spot a fork, a pin or
-          a mating net at a glance instead of calculating it from the start.
-        </p>
-      </>
-    ),
-    points: [
-      'You choose how many puzzles and how many cycles',
-      'Puzzles of every kind, or endgames only, from easy to expert',
-      'Your time and accuracy are tracked for every cycle, then you review what you missed',
-    ],
+    text: 'Solve one fixed set of puzzles, then the same set again, faster each time. Seeing the same positions over and over turns patterns into habit, so you spot them at a glance in your own games.',
+    points: ['You choose the number of puzzles and cycles', 'Time and accuracy for every cycle', 'A review of the puzzles you missed'],
     links: [
       { href: '/woodpecker', label: 'Start a Woodpecker set' },
       { href: '/about', label: 'Read more' },
     ],
+    extra: (
+      <div data-testid="cycle-example">
+        <p className="text-xs font-bold uppercase tracking-wider text-white/50">Example: the same 50 puzzles, three cycles</p>
+        <ul className="mt-3 flex flex-col gap-2.5">
+          {CYCLE_EXAMPLE.map((row) => (
+            <li key={row.cycle} className="flex items-center gap-3 text-sm font-semibold text-white/80">
+              <span className="w-16 shrink-0">Cycle {row.cycle}</span>
+              <span className="flex-1 h-3 rounded-full bg-white/10 overflow-hidden" aria-hidden="true">
+                <span className="block h-full rounded-full bg-gradient-to-r from-amber-300 to-[#39ff88]" style={{ width: row.width }} />
+              </span>
+              <span className="w-12 shrink-0 text-right tabular-nums text-white">{row.time}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ),
   },
   {
     id: 'blindfold',
     title: 'Blindfold training',
     icon: EyeOff,
     tint: 'bg-pink-400/15 text-pink-300',
-    text: (
-      <>
-        <p>
-          Memorize the position, then the pieces vanish and you find the checkmate from memory, typing the move yourself. Seeing
-          the board in your head is the skill behind calculating long lines, and like any skill it can be trained.
-        </p>
-        <p>
-          Start with few pieces and a mate in one, then add pieces, shorten the time you may look, and go for mate in two or
-          three. A second part, Drills, trains the board in your head with quick questions against the clock.
-        </p>
-      </>
-    ),
-    points: [
-      'Mate in 1, 2 or 3, with 5 to 20 seconds to memorize the position',
-      'Drills: square colours, checks, attacks, diagonals, knight moves, distances, counting and more',
-      'Rebuild a whole position on the empty board from memory',
-    ],
+    text: 'Memorize the position, then the pieces vanish and you find the checkmate from memory. Seeing the board in your head is the skill behind calculating long lines, and it can be trained.',
+    points: ['Mate in 1, 2 or 3', 'Drills: colours, checks, attacks, knight moves and more', 'Rebuild a position from memory'],
     links: [{ href: '/blindfold', label: 'Try blindfold' }],
+    extra: (
+      <ol className="grid gap-3 sm:grid-cols-3" data-testid="blindfold-steps">
+        {BLINDFOLD_STEPS.map((step, i) => (
+          <li key={step.title} className="rounded-xl bg-[#101b2f] border border-white/10 px-4 py-3 flex gap-3">
+            <span className="w-7 h-7 rounded-full bg-pink-400/15 text-pink-300 text-sm font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+            <span>
+              <span className="block text-[15px] font-bold text-white">{step.title}</span>
+              <span className="block text-sm font-medium text-white/65 leading-snug">{step.text}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    ),
   },
   {
     id: 'books',
     title: 'Free chess books',
     icon: BookOpen,
     tint: 'bg-fuchsia-300/15 text-fuchsia-300',
-    text: (
-      <>
-        <p>
-          Seven chess books as PDF files, with diagrams, plans, traps and exercises. They are free to download with Premium, with
-          nothing more to buy, and you keep the files.
-        </p>
-        <p>
-          Read about an idea in a book, then train it here: the endgame book goes with Woodpecker and Endgame Theory, the tactics
-          workbook with Puzzle Streak.
-        </p>
-      </>
-    ),
-    points: [
-      'The Queen’s Gambit: A Practical Guide and a Caro-Kann repertoire',
-      '100 Checkmate Patterns and 100 Essential Endgames',
-      'The Ultimate Chess Tactics Workbook, Openings Made Simple and How to Think Like a Chess Master',
-    ],
+    text: 'Seven chess books as PDF files, with diagrams, plans, traps and exercises. They are free to download with Premium, with nothing more to buy.',
+    points: ['Openings, endgames, tactics and checkmate patterns', 'Exercises with solutions', 'Yours to keep'],
     links: [
       { href: '/ebooks', label: 'See the books' },
       { href: '/pricing', label: 'See Premium' },
     ],
+    extra: (
+      <ul className="grid grid-cols-4 sm:grid-cols-7 gap-3" data-testid="book-covers">
+        {EBOOKS.map((book) => (
+          <li key={book.slug}>
+            <a href="/ebooks" title={book.title} className="block">
+              <img
+                src={`/covers/${book.slug}.webp`}
+                alt={book.title}
+                width={480}
+                height={720}
+                loading="lazy"
+                className="w-full h-auto rounded-lg border border-white/10 shadow-[0_8px_20px_rgba(4,9,20,0.5)] transition-transform duration-150 hover:-translate-y-1"
+              />
+            </a>
+          </li>
+        ))}
+      </ul>
+    ),
   },
 ];
 
@@ -164,32 +181,37 @@ export default function WelcomeIntro({ signedIn, premium }: { signedIn: boolean;
 
       <section className="flex flex-col gap-4" aria-label="How the training works" data-testid="welcome-guides">
         <h3 className="text-2xl font-bold text-white tracking-tight">How the training works</h3>
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="flex flex-col gap-5">
           {GUIDES.map((guide) => {
             const Icon = guide.icon;
             return (
-              <article key={guide.id} id={guide.id} className={`${CARD} p-5 sm:p-6 flex flex-col gap-3`}>
-                <h4 className="flex items-center gap-3 text-xl font-bold text-white tracking-tight">
-                  <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${guide.tint}`}>
-                    <Icon className="w-5 h-5" aria-hidden={true} />
-                  </span>
-                  {guide.title}
-                </h4>
-                <div className="flex flex-col gap-2 text-[15px] font-medium text-white/80 leading-relaxed">{guide.text}</div>
-                <ul className="flex flex-col gap-1.5">
-                  {guide.points.map((point) => (
-                    <li key={point} className="flex items-start gap-2 text-sm font-medium text-white/75 leading-snug">
-                      <Check className="w-4 h-4 text-[#39ff88] shrink-0 mt-px" aria-hidden={true} /> {point}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-auto pt-2 flex flex-wrap gap-x-5 gap-y-1">
-                  {guide.links.map((link) => (
-                    <a key={link.href} href={link.href} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#39ff88] no-underline hover:underline underline-offset-2">
-                      {link.label} <ArrowRight className="w-4 h-4" aria-hidden={true} />
-                    </a>
-                  ))}
+              <article key={guide.id} id={guide.id} className={`${CARD} p-5 sm:p-7 flex flex-col gap-5`}>
+                <div className="grid gap-5 md:grid-cols-[1.3fr_1fr] items-start">
+                  <div className="flex flex-col gap-3">
+                    <h4 className="flex items-center gap-3 text-xl sm:text-2xl font-bold text-white tracking-tight">
+                      <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${guide.tint}`}>
+                        <Icon className="w-5 h-5" aria-hidden={true} />
+                      </span>
+                      {guide.title}
+                    </h4>
+                    <p className="text-[15px] font-medium text-white/80 leading-relaxed">{guide.text}</p>
+                    <div className="flex flex-wrap gap-x-5 gap-y-1 pt-1">
+                      {guide.links.map((link) => (
+                        <a key={link.href} href={link.href} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#39ff88] no-underline hover:underline underline-offset-2">
+                          {link.label} <ArrowRight className="w-4 h-4" aria-hidden={true} />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                  <ul className="flex flex-col gap-2 md:pt-1">
+                    {guide.points.map((point) => (
+                      <li key={point} className="flex items-start gap-2 text-sm font-medium text-white/75 leading-snug">
+                        <Check className="w-4 h-4 text-[#39ff88] shrink-0 mt-px" aria-hidden={true} /> {point}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
+                <div className="border-t border-white/10 pt-5">{guide.extra}</div>
               </article>
             );
           })}
