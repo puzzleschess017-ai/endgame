@@ -2,7 +2,7 @@
 // the server (GET /api/ebooks), which says which of the two products are set up; the Pricing page asks once and hands
 // the answer to both cards.
 import { useEffect, useState } from 'react';
-import { LOGIN_BUTTON_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
+import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from './panelUi';
 import { auth, authHeaders } from '../auth';
 import { PREMIUM_MONTHLY_LABEL, PREMIUM_YEARLY_LABEL, type PremiumPlan } from '../utils/premium';
 
@@ -81,9 +81,9 @@ export default function PremiumBuy({ plan, open, signedIn, returnTo, unlocking }
         <a
           href={`/login?next=${encodeURIComponent(returnTo)}`}
           data-testid={`premium-signin-${plan}`}
-          className={`${LOGIN_BUTTON_CLASS} flex items-center justify-center no-underline`}
+          className={`${buttonClass} !min-h-[48px] flex items-center justify-center no-underline`}
         >
-          Login to get Premium
+          Login to get {plan === 'monthly' ? 'Monthly' : 'Yearly'} · {price}
         </a>
       ) : open === null ? (
         <p className="text-sm font-medium text-white/70">Checking…</p>
