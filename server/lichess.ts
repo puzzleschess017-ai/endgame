@@ -6,6 +6,9 @@
 //                             token away, makes sure a Supabase user with that email exists, and asks Supabase for a
 //                             one-time sign-in token (a "magic link" token, never emailed)
 //   3. the browser is sent to /login#lichess=<token>, where the page trades the token for a normal session
+// Who is who: the Lichess account id is remembered in the table lichess_links (supabase/schema.sql), so the same Lichess
+// account always opens the same site account, whatever email it has. A signed-in person can link their Lichess account to
+// the account they already have (their email can differ from the one at Lichess); without a link, the email decides.
 // Needs SUPABASE_SERVICE_ROLE_KEY (the same one the payment webhook uses). Nothing else has to be set up: Lichess does not
 // ask apps to register, the client id is just the name of the site.
 import crypto from 'node:crypto';
@@ -40,6 +43,8 @@ export function loadLichessSettings(env: Env, siteUrl: string, supabaseUrl: stri
 // PKCE and the cookie that remembers it between the two requests
 // ---------------------------------------------------------------------------------------------
 
+const USER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const b64url = (buffer: Buffer) => buffer.toString('base64url');
 
 export interface Pkce {
@@ -62,6 +67,8 @@ export interface FlowCookie {
   state: string;
   /** Where to go after signing in (a path of this site). */
   next: string;
+  /** Set when a signed-in person links their Lichess account: the id of their account (checked when the flow started). */
+  link?: string;
 }
 
 export const FLOW_COOKIE = 'ctg_lichess';
@@ -86,7 +93,8 @@ export function openFlow(key: Buffer, value: string | undefined, nowSeconds: num
     const parsed = JSON.parse(Buffer.from(data, 'base64url').toString('utf8')) as Partial<FlowCookie> & { exp?: unknown };
     if (typeof parsed.exp !== 'number' || parsed.exp < nowSeconds) return null;
     if (typeof parsed.verifier !== 'string' || typeof parsed.state !== 'string' || typeof parsed.next !== 'string') return null;
-    return { verifier: parsed.verifier, state: parsed.state, next: safeNext(parsed.next) };
+    const link = typeof parsed.link === 'string' && USER_ID.test(parsed.link) ? parsed.link.toLowerCase() : undefined;
+    return { verifier: parsed.verifier, state: parsed.state, next: safeNext(parsed.next), ...(link ? { link } : {}) };
   } catch {
     return null;
   }
@@ -131,19 +139,24 @@ export function authorizeUrl(settings: LichessSettings, pkce: Pkce): string {
 // After Lichess has answered
 // ---------------------------------------------------------------------------------------------
 
-export type LichessFailure = 'denied' | 'no_email' | 'unavailable';
+export const LICHESS_UNAVAILABLE = 'Lichess sign-in is not available right now.';
 
-export type LichessResult = { ok: true; tokenHash: string } | { ok: false; reason: LichessFailure };
+export type LichessFailure = 'denied' | 'no_email' | 'unavailable' | 'other_link';
+
+export type LichessResult = { ok: true; tokenHash: string } | { ok: true; linked: true } | { ok: false; reason: LichessFailure };
 
 const LICHESS = 'https://lichess.org';
 const TIMEOUT_MS = 8000;
 
 interface LichessAccount {
+  /** The Lichess id (the lower case form of the name; it does not change when only the capitals of the name change). */
+  id: string;
   username: string;
-  email: string;
+  /** null when the account has none we can use. */
+  email: string | null;
 }
 
-async function readAccount(code: string, verifier: string, settings: LichessSettings, fetchImpl: typeof fetch): Promise<LichessAccount | 'denied' | 'no_email' | null> {
+async function readAccount(code: string, verifier: string, settings: LichessSettings, fetchImpl: typeof fetch): Promise<LichessAccount | 'denied' | null> {
   const tokenRes = await fetchImpl(`${LICHESS}/api/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
@@ -167,56 +180,121 @@ async function readAccount(code: string, verifier: string, settings: LichessSett
       fetchImpl(`${LICHESS}/api/account/email`, { headers: auth, signal: AbortSignal.timeout(TIMEOUT_MS) }),
     ]);
     if (!accountRes.ok || !emailRes.ok) return null;
-    const username = ((await accountRes.json().catch(() => null)) as { username?: unknown } | null)?.username;
+    const account = (await accountRes.json().catch(() => null)) as { username?: unknown; id?: unknown } | null;
+    const username = account?.username;
+    const id = account?.id;
     const email = ((await emailRes.json().catch(() => null)) as { email?: unknown } | null)?.email;
     if (typeof username !== 'string' || !/^[A-Za-z0-9_-]{1,30}$/.test(username)) return null;
-    if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return 'no_email';
-    return { username, email: email.trim().toLowerCase() };
+    if (typeof id !== 'string' || !/^[a-z0-9_-]{1,30}$/.test(id)) return null;
+    const usable = typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    return { id, username, email: usable ? (email as string).trim().toLowerCase() : null };
   } finally {
     // The site only needed to know who this is: the token is not kept.
     void fetchImpl(`${LICHESS}/api/token`, { method: 'DELETE', headers: auth, signal: AbortSignal.timeout(TIMEOUT_MS) }).catch(() => undefined);
   }
 }
 
-/** Makes sure a user with this email exists, then asks Supabase for a one-time token that signs that user in. */
-async function supabaseTokenFor(account: LichessAccount, settings: LichessSettings, fetchImpl: typeof fetch): Promise<string | null> {
-  const base = settings.supabaseUrl.replace(/\/+$/, '');
+function adminHeaders(settings: LichessSettings): Record<string, string> {
   // A legacy service role key is a JWT and is also sent as the bearer token; a new "sb_secret_..." key only goes in apikey.
   const headers: Record<string, string> = { apikey: settings.serviceKey, 'Content-Type': 'application/json' };
   if (settings.serviceKey.startsWith('eyJ')) headers.Authorization = `Bearer ${settings.serviceKey}`;
+  return headers;
+}
 
-  // A new user is created confirmed (Lichess has confirmed the address). An existing one answers 4xx and is left as it is.
-  const created = await fetchImpl(`${base}/auth/v1/admin/users`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ email: account.email, email_confirm: true, user_metadata: { name: account.username, lichess: account.username } }),
+const baseOf = (settings: LichessSettings) => settings.supabaseUrl.replace(/\/+$/, '');
+
+/** The site account that is linked to a Lichess account: its id, null when there is none, undefined when it could not be read. */
+async function linkedUser(lichessId: string, settings: LichessSettings, fetchImpl: typeof fetch): Promise<string | null | undefined> {
+  const res = await fetchImpl(`${baseOf(settings)}/rest/v1/lichess_links?select=user_id&lichess_id=eq.${encodeURIComponent(lichessId)}`, {
+    headers: adminHeaders(settings),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
-  if (!created.ok && created.status >= 500) return null;
+  // The table is made by supabase/schema.sql. Until it is there, the email decides (as it did before the links).
+  if (!res.ok) return res.status === 404 || res.status === 400 ? null : undefined;
+  const rows = (await res.json().catch(() => null)) as { user_id?: unknown }[] | null;
+  const id = Array.isArray(rows) ? rows[0]?.user_id : undefined;
+  return typeof id === 'string' && USER_ID.test(id) ? id.toLowerCase() : null;
+}
 
-  const link = await fetchImpl(`${base}/auth/v1/admin/generate_link`, {
+/** Remembers that this Lichess account belongs to this site account (replacing an older link of the same Lichess account). */
+async function saveLink(lichessId: string, userId: string, username: string, settings: LichessSettings, fetchImpl: typeof fetch): Promise<'ok' | 'other_link' | 'failed'> {
+  const res = await fetchImpl(`${baseOf(settings)}/rest/v1/lichess_links?on_conflict=lichess_id`, {
     method: 'POST',
-    headers,
-    body: JSON.stringify({ type: 'magiclink', email: account.email }),
+    headers: { ...adminHeaders(settings), Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify({ lichess_id: lichessId, user_id: userId, username }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  if (res.ok) return 'ok';
+  // 409 is the unique key on user_id: this site account is linked to another Lichess account already.
+  return res.status === 409 ? 'other_link' : 'failed';
+}
+
+async function emailOfUser(userId: string, settings: LichessSettings, fetchImpl: typeof fetch): Promise<string | null> {
+  const res = await fetchImpl(`${baseOf(settings)}/auth/v1/admin/users/${userId}`, { headers: adminHeaders(settings), signal: AbortSignal.timeout(TIMEOUT_MS) });
+  if (!res.ok) return null;
+  const email = ((await res.json().catch(() => null)) as { email?: unknown } | null)?.email;
+  return typeof email === 'string' && email ? email : null;
+}
+
+/** Asks Supabase for a one-time token that signs the user with this email in. Gives back the user id too. */
+async function oneTimeToken(email: string, settings: LichessSettings, fetchImpl: typeof fetch): Promise<{ tokenHash: string; userId: string | null } | null> {
+  const link = await fetchImpl(`${baseOf(settings)}/auth/v1/admin/generate_link`, {
+    method: 'POST',
+    headers: adminHeaders(settings),
+    body: JSON.stringify({ type: 'magiclink', email }),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!link.ok) return null;
-  const body = (await link.json().catch(() => null)) as { hashed_token?: unknown; properties?: { hashed_token?: unknown } } | null;
+  const body = (await link.json().catch(() => null)) as { id?: unknown; hashed_token?: unknown; properties?: { hashed_token?: unknown } } | null;
   const tokenHash = body?.hashed_token ?? body?.properties?.hashed_token;
-  return typeof tokenHash === 'string' && tokenHash ? tokenHash : null;
+  if (typeof tokenHash !== 'string' || !tokenHash) return null;
+  return { tokenHash, userId: typeof body?.id === 'string' && USER_ID.test(body.id) ? body.id.toLowerCase() : null };
+}
+
+/** Makes sure a user with this email exists. A new one is created confirmed (Lichess has confirmed the address); an existing one answers 4xx and is left as it is. */
+async function ensureUser(account: LichessAccount & { email: string }, settings: LichessSettings, fetchImpl: typeof fetch): Promise<boolean> {
+  const created = await fetchImpl(`${baseOf(settings)}/auth/v1/admin/users`, {
+    method: 'POST',
+    headers: adminHeaders(settings),
+    body: JSON.stringify({ email: account.email, email_confirm: true, user_metadata: { name: account.username, lichess: account.username } }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  return created.ok || created.status < 500;
 }
 
 export async function finishLichessLogin(
-  input: { code: string; verifier: string },
+  input: { code: string; verifier: string; link?: string },
   settings: LichessSettings,
   fetchImpl: typeof fetch = fetch,
 ): Promise<LichessResult> {
   try {
     const account = await readAccount(input.code, input.verifier, settings, fetchImpl);
-    if (account === 'denied' || account === 'no_email') return { ok: false, reason: account };
+    if (account === 'denied') return { ok: false, reason: 'denied' };
     if (!account) return { ok: false, reason: 'unavailable' };
-    const tokenHash = await supabaseTokenFor(account, settings, fetchImpl);
-    return tokenHash ? { ok: true, tokenHash } : { ok: false, reason: 'unavailable' };
+
+    // A signed-in person links this Lichess account to the account they have.
+    if (input.link) {
+      const saved = await saveLink(account.id, input.link, account.username, settings, fetchImpl);
+      if (saved === 'ok') return { ok: true, linked: true };
+      return { ok: false, reason: saved === 'other_link' ? 'other_link' : 'unavailable' };
+    }
+
+    // A Lichess account that is linked opens its site account, whatever email either has.
+    const linked = await linkedUser(account.id, settings, fetchImpl);
+    if (linked === undefined) return { ok: false, reason: 'unavailable' };
+    let email = linked ? await emailOfUser(linked, settings, fetchImpl) : null;
+    if (linked && !email) return { ok: false, reason: 'unavailable' };
+
+    if (!email) {
+      if (!account.email) return { ok: false, reason: 'no_email' };
+      if (!(await ensureUser({ ...account, email: account.email }, settings, fetchImpl))) return { ok: false, reason: 'unavailable' };
+      email = account.email;
+    }
+    const token = await oneTimeToken(email, settings, fetchImpl);
+    if (!token) return { ok: false, reason: 'unavailable' };
+    // First time: remember which site account this Lichess account opened (no harm if that cannot be saved just now).
+    if (!linked && token.userId) await saveLink(account.id, token.userId, account.username, settings, fetchImpl).catch(() => undefined);
+    return { ok: true, tokenHash: token.tokenHash };
   } catch {
     return { ok: false, reason: 'unavailable' };
   }

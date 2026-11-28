@@ -69,3 +69,17 @@ create policy "change own data" on public.user_data for update to authenticated 
 
 revoke all on public.user_data from anon, authenticated;
 grant select, insert, update on public.user_data to authenticated;
+
+-- ---------------------------------------------------------------------------------------------
+-- Which Lichess account belongs to which account ("Continue with Lichess"). Only the server reads and writes it
+-- (with the service role key): nobody signed in can see or change it.
+-- ---------------------------------------------------------------------------------------------
+create table if not exists public.lichess_links (
+  lichess_id text primary key check (char_length(lichess_id) <= 30),
+  user_id uuid not null unique references auth.users (id) on delete cascade,
+  username text not null default '',
+  created_at timestamptz not null default now()
+);
+
+alter table public.lichess_links enable row level security;
+revoke all on public.lichess_links from anon, authenticated;

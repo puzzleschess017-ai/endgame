@@ -318,7 +318,10 @@ part (public client: no secret, no registration; the client id is the host of `S
 `SITE_URL/auth/lichess/callback`). It reads the Lichess username and email (`email:read`), revokes the Lichess token, makes
 sure a confirmed Supabase user with that email exists (the name is the Lichess username), asks Supabase for a one-time
 magic-link token (`admin/generate_link`, never emailed) and sends the browser to `/login#lichess=<token>`; the page trades it
-for a normal session (`/auth/v1/verify`). The same email as an existing account means the same account.
+for a normal session (`/auth/v1/verify`). Which Lichess account is which site account is kept in `public.lichess_links` (run `supabase/schema.sql` once; the server is the
+only one that can read it). The first sign-in links by email; a signed-in person can also press "Link my Lichess account" on the
+Login page (`POST /api/auth/lichess/link`), for when the Lichess email differs from the one of their account. Without the table the
+email alone decides.
 It needs only `SUPABASE_SERVICE_ROLE_KEY` (already used by the payment webhook) and a correct `SITE_URL`. Without the key the
 button sends people back to the login page with a message.
 
