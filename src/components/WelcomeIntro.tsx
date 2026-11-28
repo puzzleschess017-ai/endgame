@@ -27,10 +27,14 @@ interface Guide {
 
 /** The same 50 puzzles, three cycles: the time falls. Only an example, to show the idea. */
 const CYCLE_EXAMPLE = [
-  { cycle: 1, time: '18:40', width: '100%' },
-  { cycle: 2, time: '11:20', width: '61%' },
-  { cycle: 3, time: '7:05', width: '38%' },
-];
+  { cycle: 1, time: '18:40', seconds: 1120 },
+  { cycle: 2, time: '11:20', seconds: 680 },
+  { cycle: 3, time: '7:05', seconds: 425 },
+].map((row, _i, all) => ({
+  ...row,
+  width: `${Math.round((row.seconds / all[0].seconds) * 100)}%`,
+  faster: row.cycle === 1 ? null : `${Math.round((1 - row.seconds / all[0].seconds) * 100)}% faster`,
+}));
 
 const BLINDFOLD_STEPS = [
   { title: 'Memorize', text: 'The position stays for 5 to 20 seconds.' },
@@ -53,17 +57,24 @@ const GUIDES: Guide[] = [
     extra: (
       <div data-testid="cycle-example">
         <p className="text-xs font-bold uppercase tracking-wider text-white/50">Example: the same 50 puzzles, three cycles</p>
-        <ul className="mt-3 flex flex-col gap-2.5">
+        <ol className="mt-3 grid gap-3 sm:grid-cols-3">
           {CYCLE_EXAMPLE.map((row) => (
-            <li key={row.cycle} className="flex items-center gap-3 text-sm font-semibold text-white/80">
-              <span className="w-16 shrink-0">Cycle {row.cycle}</span>
-              <span className="flex-1 h-3 rounded-full bg-white/10 overflow-hidden" aria-hidden="true">
+            <li key={row.cycle} className="rounded-xl bg-[#101b2f] border border-white/10 px-4 py-4 flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-bold text-white/70">Cycle {row.cycle}</span>
+                {row.faster ? (
+                  <span className="rounded-full bg-[#39ff88]/15 px-2.5 py-0.5 text-xs font-bold text-[#39ff88]">{row.faster}</span>
+                ) : (
+                  <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-bold text-white/60">First time</span>
+                )}
+              </div>
+              <p className="text-4xl font-bold text-white tracking-tight tabular-nums">{row.time}</p>
+              <span className="h-2.5 rounded-full bg-white/10 overflow-hidden" aria-hidden="true">
                 <span className="block h-full rounded-full bg-gradient-to-r from-amber-300 to-[#39ff88]" style={{ width: row.width }} />
               </span>
-              <span className="w-12 shrink-0 text-right tabular-nums text-white">{row.time}</span>
             </li>
           ))}
-        </ul>
+        </ol>
       </div>
     ),
   },
