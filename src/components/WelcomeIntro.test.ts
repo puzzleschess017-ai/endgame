@@ -66,3 +66,12 @@ test('each of the three guides is its own row with something extra under it: the
   assert.match(html, /data-testid="blindfold-steps"/);
   assert.equal((html.match(/<img [^>]*src="\/covers\/[a-z-]+\.webp"/g) ?? []).length, 7);
 });
+
+test('the small board of the blindfold steps is a mate in one, and the move shown is that mate', async () => {
+  const { Chess } = await import('chess.js');
+  const html = renderToStaticMarkup(createElement(WelcomeIntro, { signedIn: false, premium: false }));
+  const chess = new Chess('r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4');
+  assert.deepEqual(chess.moves().filter((move) => move.endsWith('#')), ['Qxf7#']);
+  assert.match(html, /Qxf7#/);
+  assert.doesNotMatch(html, /for example Qxf7#/);
+});

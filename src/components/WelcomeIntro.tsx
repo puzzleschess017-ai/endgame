@@ -39,8 +39,35 @@ const CYCLE_EXAMPLE = [
 const BLINDFOLD_STEPS = [
   { title: 'Memorize', text: 'The position stays for 5 to 20 seconds.' },
   { title: 'The pieces vanish', text: 'Only the empty board is left.' },
-  { title: 'Type the move', text: 'For example Qh7#.' },
+  { title: 'Type the move', text: 'Find the checkmate and type it.' },
 ];
+
+/** A mate in one for White (Qxf7#), the position of the first step. */
+const MINI_FEN = 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR';
+const MINI_MATE = 'Qxf7#';
+
+/** A small board for the steps, drawn from a FEN (pieces only; "" for an empty one). */
+function MiniBoard({ fen, faded = false }: { fen: string; faded?: boolean }) {
+  const squares: Array<string | null> = [];
+  for (const ch of fen) {
+    if (ch === '/') continue;
+    if (/\d/.test(ch)) for (let i = 0; i < Number(ch); i++) squares.push(null);
+    else squares.push(`${ch === ch.toUpperCase() ? 'w' : 'b'}${ch.toUpperCase()}`);
+  }
+  while (squares.length < 64) squares.push(null);
+  return (
+    <div
+      className={`grid grid-cols-8 w-full max-w-[168px] aspect-square rounded-lg overflow-hidden border border-white/15 shadow-[0_10px_26px_rgba(4,9,20,0.5)] ${faded ? 'opacity-70' : ''}`}
+      aria-hidden="true"
+    >
+      {squares.slice(0, 64).map((piece, i) => (
+        <span key={i} className={`aspect-square ${(Math.floor(i / 8) + (i % 8)) % 2 === 0 ? 'bg-[#eeeed2]' : 'bg-[#779656]'}`}>
+          {piece && <img src={`/pieces/cburnett/${piece}.svg`} alt="" width={45} height={45} className="w-full h-full block" />}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 const GUIDES: Guide[] = [
   {
@@ -87,14 +114,35 @@ const GUIDES: Guide[] = [
     points: ['Mate in 1, 2 or 3', 'Drills: colours, checks, attacks, knight moves and more', 'Rebuild a position from memory'],
     links: [{ href: '/blindfold', label: 'Try blindfold' }],
     extra: (
-      <ol className="grid gap-3 sm:grid-cols-3" data-testid="blindfold-steps">
+      <ol className="grid gap-3 sm:gap-4 md:grid-cols-3" data-testid="blindfold-steps">
         {BLINDFOLD_STEPS.map((step, i) => (
-          <li key={step.title} className="rounded-xl bg-[#101b2f] border border-white/10 px-4 py-3 flex gap-3">
-            <span className="w-7 h-7 rounded-full bg-pink-400/15 text-pink-300 text-sm font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-            <span>
-              <span className="block text-[15px] font-bold text-white">{step.title}</span>
-              <span className="block text-sm font-medium text-white/65 leading-snug">{step.text}</span>
-            </span>
+          <li key={step.title} className="rounded-2xl bg-[#101b2f] border border-white/10 px-5 pt-5 pb-5 flex flex-col items-center gap-4 text-center">
+            <div className="w-full flex justify-center">
+              {i === 0 && <MiniBoard fen={MINI_FEN} />}
+              {i === 1 && (
+                <div className="relative w-full max-w-[168px]">
+                  <MiniBoard fen="" faded />
+                  <span className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                    <span className="w-12 h-12 rounded-full bg-[#101b2f]/85 border border-white/15 flex items-center justify-center">
+                      <EyeOff className="w-6 h-6 text-pink-300" />
+                    </span>
+                  </span>
+                </div>
+              )}
+              {i === 2 && (
+                <div className="w-full max-w-[168px] aspect-square flex flex-col items-center justify-center gap-3" aria-hidden="true">
+                  <span className="w-full rounded-xl bg-[#0b1424] border border-white/15 px-4 py-3 text-2xl font-bold text-white tabular-nums tracking-wide">{MINI_MATE}</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#39ff88]/15 px-3 py-1 text-xs font-bold text-[#39ff88]">
+                    <Check className="w-3.5 h-3.5" /> Checkmate
+                  </span>
+                </div>
+              )}
+            </div>
+            <div>
+              <span className="mx-auto mb-2 w-7 h-7 rounded-full bg-pink-400/15 text-pink-300 text-sm font-bold flex items-center justify-center">{i + 1}</span>
+              <span className="block text-base font-bold text-white">{step.title}</span>
+              <span className="block mt-0.5 text-sm font-medium text-white/65 leading-snug">{step.text}</span>
+            </div>
           </li>
         ))}
       </ol>
