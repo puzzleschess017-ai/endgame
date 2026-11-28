@@ -27,6 +27,7 @@ import { contentFor } from './server/prerender.ts';
 import { preloadTags, readManifest } from './server/preload.ts';
 import {
   FLOW_COOKIE,
+  LICHESS_UNAVAILABLE,
   authorizeUrl,
   clearFlowCookieHeader,
   finishLichessLogin,
@@ -484,13 +485,18 @@ async function startServer() {
     const code = typeof req.query.code === 'string' ? req.query.code : '';
     if (typeof req.query.error === 'string') return lichessFail(res, 'denied');
     if (!flow || !code || req.query.state !== flow.state) return lichessFail(res, 'unavailable');
-    const result = await finishLichessLogin({ code, verifier: flow.verifier }, lichess);
+    const result = await finishLichessLogin({ code, verifier: flow.verifier, link: flow.link }, lichess);
     if (!result.ok) {
       console.error(`[lichess] sign-in failed: ${result.reason}`);
       return lichessFail(res, result.reason);
     }
     res.set('Cache-Control', 'no-store');
     res.append('Set-Cookie', clearFlowCookieHeader(secureCookies));
+    // Linked: the person is signed in already and goes back to their account.
+    if ('linked' in result) {
+      res.redirect(302, '/login?lichess=linked');
+      return;
+    }
     // In the fragment, so the one-time token is never sent to any server or written in a log.
     res.redirect(302, `/login#lichess=${encodeURIComponent(result.tokenHash)}&next=${encodeURIComponent(flow.next)}`);
   });
@@ -589,6 +595,28 @@ async function startServer() {
     },
     { forget: (id: string) => rawTierOf.forget(id) },
   );
+
+  // A signed-in person links their Lichess account to the account they have (their emails may differ). The page asks here with
+  // its sign-in token, which is checked, and gets the address of Lichess to go to; the account id travels in the signed cookie.
+  app.post('/api/auth/lichess/link', async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    if (!lichess) {
+      res.status(503).json({ error: LICHESS_UNAVAILABLE });
+      return;
+    }
+    const visitor = await tierOf(req.headers.authorization);
+    if (!visitor.ok) {
+      res.status(visitor.status).json({ error: visitor.error });
+      return;
+    }
+    if (visitor.tier === 'guest' || !visitor.userId) {
+      res.status(401).json({ error: 'Sign in first.' });
+      return;
+    }
+    const pkce = newPkce();
+    res.append('Set-Cookie', flowCookieHeader(sealFlow(lichess.cookieKey, { verifier: pkce.verifier, state: pkce.state, next: '/login', link: visitor.userId }), secureCookies));
+    res.json({ url: authorizeUrl(lichess, pkce) });
+  });
 
   // The e-books are free to download for Premium. The files are not in public/ or dist/, so these routes are the only
   // way to get one: the browser sends the sign-in token and the plan is checked here, on the server.

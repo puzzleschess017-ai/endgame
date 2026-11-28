@@ -13,13 +13,16 @@ export function parseLichessHash(hash: string): { token: string; next: string } 
 const MESSAGES: Record<string, string> = {
   denied: 'Lichess sign-in was cancelled.',
   no_email: 'Your Lichess account has no email address we can use. Add one in your Lichess settings, or sign in with an email and password.',
+  other_link: 'Your account is linked to another Lichess account already.',
   unavailable: 'Lichess sign-in is not available right now. Please try again, or sign in with an email and password.',
 };
 
-/** The sentence for ?lichess=<reason>; null when the address has no such reason. */
-export function lichessMessage(search: string): string | null {
+/** What ?lichess=<reason> says: "linked" is good news, the rest are failures. Null when the address has no such reason. */
+export function lichessNotice(search: string): { tone: 'ok' | 'error'; text: string } | null {
   const reason = new URLSearchParams(search).get('lichess');
-  return reason === null ? null : (MESSAGES[reason] ?? MESSAGES.unavailable);
+  if (reason === null) return null;
+  if (reason === 'linked') return { tone: 'ok', text: 'Your Lichess account is linked. From now on "Continue with Lichess" opens this account.' };
+  return { tone: 'error', text: MESSAGES[reason] ?? MESSAGES.unavailable };
 }
 
 /** The address that starts the sign-in; it comes back to `next` (a path of this site). */

@@ -4,7 +4,7 @@ import AppShell from '../components/AppShell';
 import { CARD_CLASS, LOGIN_BUTTON_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from '../components/panelUi';
 import { auth, useAuth } from '../auth';
 import { chooseGuest } from '../auth/guest';
-import { lichessMessage, lichessStartHref, parseLichessHash } from '../auth/lichess';
+import { lichessNotice, lichessStartHref, parseLichessHash } from '../auth/lichess';
 import { signOutAndSync, useSyncState } from '../sync';
 import { readSavedUsername } from '../utils/profile';
 
@@ -74,9 +74,31 @@ export default function LoginPage() {
       });
       return;
     }
-    const failed = lichessMessage(window.location.search);
-    if (failed) setError(failed);
+    const said = lichessNotice(window.location.search);
+    if (said?.tone === 'error') setError(said.text);
+    else if (said) setNotice(said.text);
   }, []);
+
+  // Links the Lichess account to this account: the server checks the sign-in and gives back the address of Lichess.
+  const linkLichess = async () => {
+    const token = state.session?.accessToken;
+    if (!token || busy) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const response = await fetch('/api/auth/lichess/link', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+      const body = (await response.json().catch(() => null)) as { url?: string; error?: string } | null;
+      if (response.ok && typeof body?.url === 'string' && body.url.startsWith('https://lichess.org/oauth?')) {
+        window.location.assign(body.url);
+        return;
+      }
+      setError(body?.error ?? 'Could not reach Lichess. Please try again.');
+    } catch {
+      setError('Could not reach the server. Check your connection and try again.');
+    }
+    setBusy(false);
+  };
 
   const goNext = () => window.location.assign(nextPath(window.location.search));
 
@@ -150,9 +172,22 @@ export default function LoginPage() {
                   ? `Your results could not be saved on the account yet (${syncState.error}) They stay in this browser and we will try again.`
                   : 'Saving your results on the account…'}
             </p>
+            {notice && (
+              <p role="status" data-testid="auth-notice" className="text-sm font-semibold text-[#d6ffe6] bg-[#12382a] border border-[#39ff88]/40 rounded-xl px-3.5 py-2.5">
+                {notice}
+              </p>
+            )}
+            {error && (
+              <p role="alert" data-testid="auth-error" className="text-sm font-semibold text-[#ffd2cc] bg-[#401a22] border border-[#8f3848] rounded-xl px-3.5 py-2.5">
+                {error}
+              </p>
+            )}
             <a href="/" className={`${PRIMARY_BUTTON_CLASS} flex items-center justify-center no-underline`}>
               Continue
             </a>
+            <button type="button" data-testid="lichess-link" disabled={busy} onClick={() => void linkLichess()} className={`${SECONDARY_BUTTON_CLASS} flex items-center justify-center gap-2`}>
+              <span aria-hidden="true">♞</span> Link my Lichess account
+            </button>
             <button
               type="button"
               data-testid="sign-out"
