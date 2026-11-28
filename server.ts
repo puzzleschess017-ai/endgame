@@ -442,7 +442,8 @@ async function startServer() {
         await paymentStore.apply(action);
         // The server remembers a plan for a minute: forget it, so the person sees the new plan at once.
         tierOf.forget(action.userId);
-        console.log(`[payments] ${(event as { type?: string }).type} -> ${action.kind}`);
+        const status = (event as { data?: { status?: unknown } }).data?.status;
+        console.log(`[payments] ${(event as { type?: string }).type} (status ${typeof status === 'string' ? status : '-'}) -> ${action.kind} ${action.tier}`);
       } catch (err) {
         console.error('[payments] could not save', err instanceof Error ? err.message : err);
         res.status(500).json({ error: 'Could not save the payment.' });
@@ -450,7 +451,8 @@ async function startServer() {
       }
     } else if (typeof (event as { type?: unknown } | null)?.type === 'string' && /^(subscription|payment|refund)\./.test((event as { type: string }).type)) {
       // Not an error, but worth a line: a payment event that changed nothing (for example one without a user id).
-      console.log(`[payments] ${(event as { type: string }).type} ignored`);
+      const status = (event as { data?: { status?: unknown } }).data?.status;
+      console.log(`[payments] ${(event as { type: string }).type} (status ${typeof status === 'string' ? status : '-'}) ignored`);
     }
     res.status(200).json({ ok: true });
   });
