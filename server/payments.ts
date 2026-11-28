@@ -254,7 +254,12 @@ export function createPaymentStore(options: { url: string; serviceKey: string; f
 
   return {
     async apply(action) {
-      await send(`rest/v1/profiles?id=eq.${action.userId}`, { method: 'PATCH', prefer: 'return=minimal', body: { tier: action.tier } });
+      // An upsert: an account whose profile row is missing (deleted by hand) gets one, and an existing row only changes its plan.
+      await send('rest/v1/profiles?on_conflict=id', {
+        method: 'POST',
+        prefer: 'resolution=merge-duplicates,return=minimal',
+        body: { id: action.userId, tier: action.tier },
+      });
       if (action.subscriptionId) {
         // Read, add one key, write everything back: the other keys (provider, providers) must stay as they are.
         const metadata = await readMetadata(action.userId);
